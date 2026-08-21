@@ -1,0 +1,24 @@
+name: Build PDF Report
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-latex:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install LaTeX
+        run: sudo apt-get update && sudo apt-get install -y texlive-xetex texlive-lang-chinese texlive-latex-extra
+      - name: Build PDF
+        run: |
+          cd hengda_final_report
+          python3 build_report.py
+          xelatex -interaction=nonstopmode hengda_full_report.tex
+      - name: Upload PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: hengda-report-pdf
+          path: hengda_final_report/hengda_full_report.pdf
