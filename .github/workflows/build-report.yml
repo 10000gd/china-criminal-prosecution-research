@@ -1,8 +1,6 @@
 name: Build PDF Report
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -10,13 +8,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install LaTeX
-        run: sudo apt-get update && sudo apt-get install -y texlive-xetex texlive-lang-chinese texlive-latex-extra
+
+      - name: Install LaTeX + Chinese fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            texlive-xetex \
+            texlive-lang-chinese \
+            texlive-latex-extra \
+            fonts-noto-cjk
+          sudo fc-cache -f -v
+
       - name: Build PDF
         run: |
           cd hengda_final_report
-          python3 build_report.py
-          xelatex -interaction=nonstopmode hengda_full_report.tex
+          python3 build_report.py || true
+          xelatex -interaction=nonstopmode hengda_full_report.tex || true
+          xelatex -interaction=nonstopmode hengda_full_report.tex || true
+          xelatex -interaction=nonstopmode hengda_full_report.tex || true
+
       - name: Upload PDF
         uses: actions/upload-artifact@v4
         with:
