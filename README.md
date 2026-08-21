@@ -1,1 +1,133 @@
-IyDmgZLlpKfpm4blm6LmoYjlhajpk77mnaHliJHkuovov73or4nlj6/ooYzmgKfliIbmnpDmiqXlkYoKCjxkaXYgYWxpZ249ImNlbnRlciI+CgpbIVtMaWNlbnNlOiBDQyBCWSA0LjBdKGh0dHBzOi8vaW1nLnNoaWVsZHMuaW8vYmFkZ2UvTGljZW5zZS1DQyUyMEJZJTIwNC4wLWxpZ2h0Z3JleS5zdmcpXShodHRwczovL2NyZWF0aXZlY29tbW9ucy5vcmcvbGljZW5zZXMvYnkvNC4wLykKWyFbTGFuZ3VhZ2U6IENoaW5lc2VdKGh0dHBzOi8vaW1nLnNoaWVsZHMuaW8vYmFkZ2UvTGFuZ3VhZ2UtQ2hpbmVzZS1icmlnaHRncmVlbildKFJFQURNRS5tZCkKWyFbUmVzZWFyY2ggU3RhbmRhcmQ6IDAgSGFsbHVjaW5hdGlvbl0oaHR0cHM6Ly9pbWcuc2hpZWxkcy5pby9iYWRnZS9TdGFuZGFyZC0wJTIwSGFsbHVjaW5hdGlvbiUyMENpdGF0aW9uLWJsdWUpXShodHRwczovL2dpdGh1Yi5jb20vMTAwMDBnZC9ldmVyZ3JhbmRlLXByb3NlY3V0aW9uKQpbIVtCdWlsZDogTGFUZVhdKGh0dHBzOi8vaW1nLnNoaWVsZHMuaW8vYmFkZ2UvQnVpbGQtTGFUZVgtb3JhbmdlKV0oaGVuZ2RhX2ZpbmFsX3JlcG9ydC8pCgoqKkV2ZXJncmFuZGUgR3JvdXAgRnVsbC1DaGFpbiBDcmltaW5hbCBQcm9zZWN1dGlvbiBGZWFzaWJpbGl0eSBBbmFseXNpcyBSZXBvcnQqKgoKKuWFqOmTvuadoeWIkeS6i+i/veivieWPr+ihjOaAp+WIhuaekCB8IEZ1bGwtQ2hhaW4gRXZpZGVuY2UgQ2hhaW4gUmVzZWFyY2ggfCBaZXJvIEhhbGx1Y2luYXRpb24gQ2l0YXRpb24gU3RhbmRhcmQqCgo8L2Rpdj4KCi0tLQoKIyMg8J+TiyDpobnnm67mpoLov7AKCuacrOmhueebruWvueaBkuWkp+mbhuWbouahiOi/m+ihjOezu+e7n+aAp+WIkeS6i+i/veivieWPr+ihjOaAp+WIhuaekO+8jOWfuuS6ju+8mgotIOS4reWbveOAiuWIkeS6i+ivieiuvOazleOAi+WujOaVtOivgeaNrumTvuagh+WHhgotIOept+WwveW8j+azleW+i+adoeaWh+S4juahiOS+i+eglOeptgotIDDlubvop4nlvJXnlKjmoIflh4bvvIjmiYDmnInlvJXnlKjlj6/muq/mupDpqozor4HvvIkKCioq5oql5ZGK6K+t6KiA77yaKiog5Lit5paH5Li65Li777yM5qC45b+D5pGY6KaB6Iux5paHIHwgKipNYWluIGxhbmd1YWdlOioqIENoaW5lc2UsIEVuZ2xpc2ggc3VtbWFyeSBhdmFpbGFibGUKCi0tLQoKIyMg8J+TgSDpobnnm67nu5PmnoQKCmBgYApldmVyZ3JhbmRlLXByb3NlY3V0aW9uLwrilJzilIDilIAgUkVBRE1FLm1kICAgICAgICAgICAgICAgICAgICAgICAgICAjIOacrOaWh+S7tgrilJzilIDilIAgTElDRU5TRSAgICAgICAgICAgICAgICAgICAgICAgICAgICAjIENDIEJZIDQuMCDorrjlj6/or4EK4pSc4pSA4pSAIENPTlRSSUJVVElORy5tZCAgICAgICAgICAgICAgICAgICAgIyDotKHnjK7mjIfljZcK4pSc4pSA4pSAIC5naXRodWIvCuKUgiAgIOKUlOKUgOKUgCB3b3JrZmxvd3MvCuKUgiAgICAgICDilJTilIDilIAgYnVpbGQtcmVwb3J0LnltbCAgICAgICAgICAgIyBHaXRIdWIgQWN0aW9ucyDoh6rliqjmnoTlu7oK4pSc4pSA4pSAIGV2ZXJncmFuZGUtcHJvc2VjdXRpb24vCuKUgiAgIOKUnOKUgOKUgCDmgZLlpKfpm4blm6LmoYjlhajpk77mnaHliJHkuovov73or4nlj6/ooYzmgKfliIbmnpDmiqXlkYoubWQK4pSCICAg4pSc4pSA4pSAIOivgeaNrumTvuWujOaVtOeJiC5wZGYK4pSCICAg4pSU4pSA4pSAIOivgeaNrumTvnY5LnBkZgrilJzilIDilIAgaGVuZ2RhX2ZpbmFsX3JlcG9ydC8K4pSCICAg4pSc4pSA4pSAIGJ1aWxkX3JlcG9ydC5weSAgICAgICAgICAgICAgICAjIFB5dGhvbiDoh6rliqjljJbmiqXlkYrnlJ/miJAK4pSCICAg4pSc4pSA4pSAIGhlbmdkYV9mdWxsX3JlcG9ydC50ZXggICAgICAgICAjIExhVGVYIOa6kOaWh+S7tgrilIIgICDilJzilIDilIAgaGVuZ2RhX2Z1bGxfcmVwb3J0LnBkZiAgICAgICAgICMg5pyA57uIIFBERiDmiqXlkYoK4pSCICAg4pSU4pSA4pSAIHJlZmVyZW5jZXMuYmliICAgICAgICAgICAgICAgICAjIOWPguiAg+aWh+eMrgrilJzilIDilIAgeHUtamlheWluLWV2aWRlbmNlLWFuYWx5c2lzLm1kICAgICAjIOiuuOWutuWNsOS4k+mhueivgeaNruWIhuaekArilJzilIDilIAg5oGS5aSn5qGI5Yik5Yaz5YiG5p6QLm1kICAgICAgICAgICAgICAgICAgICMg5Yik5Yaz5Lmm5rex5bqm6Kej5p6QCuKUnOKUgOKUgCAwNl9ldmlkZW5jZV9jaGFpbi5tZCAgICAgICAgICAgICAgICMg5YiR5LqL56uL5qGI5a6M5pW06K+B5o2u6ZO+56CU56m2CuKUlOKUgOKUgCByZXNlYXJjaF9vdXRwdXQvICAgICAgICAgICAgICAgICAgICMg56CU56m26L6T5Ye655uu5b2VCmBgYAoKLS0tCgojIyDwn46vIOeglOeptuiMg+WbtAoKfCDnq6DoioIgfCDlhoXlrrkgfCDooYzmlbAgfAp8LS0tLS0tfC0tLS0tLXwtLS0tLS18CnwgMDEgfCDoqIDorrrooajovr7nsbvniq/nvarov73or4not6/lvoQgfCA3MTXooYwgfAp8IDAyIHwg5pWw5a2X572R57uc54qv572q6L+96K+J6Lev5b6EIHwgODY56KGMIHwKfCAwMyB8IOe7j+a1juWVhuS4mueKr+e9qui/veiviei3r+W+hCB8IDEsNDY26KGMIHwKfCAwNCB8IOekvuS8mueuoeeQhuexu+eKr+e9qui/veiviei3r+W+hCB8IDEsMDI26KGMIHwKfCAwNSB8IOWbveWutuWuieWFqOexu+eKr+e9qui/veiviei3r+W+hCB8IDkwOeihjCB8CnwgMDYgfCDor4Hmja7pk77lrozmlbTmnoTlu7rkvZPns7sgfCA5MzfooYwgfAp8IDA3IHwg54m55a6a5Li75L2T54qv572q6L+96K+J6Lev5b6EIHwgMSwyNDnooYwgfAp8IDA4IHwg546v5aKD6LWE5rqQ57G754qv572q6L+96K+J6Lev5b6EIHwgMSwxMzfooYwgfAoKKirmgLvnoJTnqbbph4/vvJoxMCwzMznooYwgTWFya2Rvd24g56CU56m25paH5qGjKioKCi0tLQoKIyMg8J+UrCDotKjph4/moIflh4YKCi0gKiow5bm76KeJ5byV55SoKirvvJrmiYDmnInms5XlvovmnaHmlofjgIHmoYjkvovjgIHmlbDmja7lnYflj6/muq/mupAKLSAqKuivgeaNrumTvuWPr+WkjeeOsCoq77ya5q+P6aG55oyH5o6n6ZmE5a6M5pW06K+B5o2u6ZO+Ci0gKipOYXR1cmXmoLzlvI8qKu+8mumHh+eUqOWbvemZheWtpuacr+WHuueJiOinhOiMgwotICoq6Ieq5Yqo5YyW55Sf5oiQKirvvJpQeXRob24gKyBMYVRlWCDnq6/liLDnq68gcGlwZWxpbmUKCi0tLQoKIyMg8J+boO+4jyDmnKzlnLDmnoTlu7oKCiMjIyDkvp3otZYKCmBgYGJhc2gKIyBQeXRob24gMy44KwpwaXAgaW5zdGFsbCAtciByZXF1aXJlbWVudHMudHh0CgojIExhVGVYIOeOr+Wig++8iExpbnV477yJCmFwdCBpbnN0YWxsIHRleGxpdmUteGV0ZXggdGV4bGl2ZS1sYW5nLWNoaW5lc2UKYGBgCgojIyMg5p6E5bu65oql5ZGKCgpgYGBiYXNoCmNkIGhlbmdkYV9maW5hbF9yZXBvcnQKcHl0aG9uIGJ1aWxkX3JlcG9ydC5weQpgYGAKCui+k+WHuu+8mmBoZW5nZGFfZnVsbF9yZXBvcnQucGRmYAoKLS0tCgojIyDwn5OcIOiuuOWPr+ivgQoK5pys6aG555uu6YeH55SoIFtDcmVhdGl2ZSBDb21tb25zIEF0dHJpYnV0aW9uIDQuMCBJbnRlcm5hdGlvbmFsIChDQyBCWSA0LjApXShodHRwczovL2NyZWF0aXZlY29tbW9ucy5vcmcvbGljZW5zZXMvYnkvNC4wLykg6K645Y+v6K+B44CCCgoqKuaCqOWPr+S7pe+8mioqCi0g4pyFIOiHqueUseWIhuS6q+WSjOS8oOaSrQotIOKchSDlnKjku7vkvZXlqpLku4vmiJbmoLzlvI8gcmVtaXjjgIF0cmFuc2Zvcm0KLSDinIUg55So5LqO5ZWG5Lia55uu55qECgoqKuWUr+S4gOimgeaxgu+8mioqCi0g4pyFIOW/hemhu+e7meWHuumAguW9k+eahOe9suWQjQoKLS0tCgojIyDwn5mPIOiHtOiwogoKLSDkuK3lm73ms5XlvovkvZPns7vnoJTnqbbmlK/mjIEKLSDliJHkuovor4norrzms5XmnaHmlofmnaXmupAKLSBMYVRlWCDmjpLniYjns7vnu58KCi0tLQoKPGRpdiBhbGlnbj0iY2VudGVyIj4KCioq4q2QIOWmguaenOWvueS9oOacieW4ruWKqe+8jOivtyBTdGFyIOaUr+aMge+8gSoqCgoqQnVpbHQgd2l0aCBwcmVjaXNpb24g4oCiIDAgSGFsbHVjaW5hdGlvbiBTdGFuZGFyZCoKCjwvZGl2Pgo=
+# 恒大集团案全链条刑事追诉可行性分析报告
+
+<div align="center">
+
+[![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
+[![Language: Chinese](https://img.shields.io/badge/Language-Chinese-brightgreen)](README.md)
+[![Research Standard: 0 Hallucination](https://img.shields.io/badge/Standard-0%20Hallucination%20Citation-blue)](https://github.com/10000gd/evergrande-prosecution)
+[![Build: LaTeX](https://img.shields.io/badge/Build-LaTeX-orange)](hengda_final_report/)
+
+**Evergrande Group Full-Chain Criminal Prosecution Feasibility Analysis Report**
+
+*全链条刑事追诉可行性分析 | Full-Chain Evidence Chain Research | Zero Hallucination Citation Standard*
+
+</div>
+
+---
+
+## 📋 项目概述
+
+本项目对恒大集团案进行系统性刑事追诉可行性分析，基于：
+- 中国《刑事诉讼法》完整证据链标准
+- 穷尽式法律条文与案例研究
+- 0幻觉引用标准（所有引用可溯源验证）
+
+**报告语言：** 中文为主，核心摘要英文 | **Main language:** Chinese, English summary available
+
+---
+
+## 📁 项目结构
+
+```
+evergrande-prosecution/
+├── README.md                          # 本文件
+├── LICENSE                            # CC BY 4.0 许可证
+├── CONTRIBUTING.md                    # 贡献指南
+├── .github/
+│   └── workflows/
+│       └── build-report.yml           # GitHub Actions 自动构建
+├── evergrande-prosecution/
+│   ├── 恒大集团案全链条刑事追诉可行性分析报告.md
+│   ├── 证据链完整版.pdf
+│   └── 证据链v9.pdf
+├── hengda_final_report/
+│   ├── build_report.py                # Python 自动化报告生成
+│   ├── hengda_full_report.tex         # LaTeX 源文件
+│   ├── hengda_full_report.pdf         # 最终 PDF 报告
+│   └── references.bib                 # 参考文献
+├── xu-jiayin-evidence-analysis.md     # 许家印专项证据分析
+├── 恒大案判决分析.md                   # 判决书深度解析
+├── 06_evidence_chain.md               # 刑事立案完整证据链研究
+└── research_output/                   # 研究输出目录
+```
+
+---
+
+## 🎯 研究范围
+
+| 章节 | 内容 | 行数 |
+|------|------|------|
+| 01 | 言论表达类犯罪追诉路径 | 715行 |
+| 02 | 数字网络犯罪追诉路径 | 869行 |
+| 03 | 经济商业犯罪追诉路径 | 1,466行 |
+| 04 | 社会管理类犯罪追诉路径 | 1,026行 |
+| 05 | 国家安全类犯罪追诉路径 | 909行 |
+| 06 | 证据链完整构建体系 | 937行 |
+| 07 | 特定主体犯罪追诉路径 | 1,249行 |
+| 08 | 环境资源类犯罪追诉路径 | 1,137行 |
+
+**总研究量：10,339行 Markdown 研究文档**
+
+---
+
+## 🔬 质量标准
+
+- **0幻觉引用**：所有法律条文、案例、数据均可溯源
+- **证据链可复现**：每项指控附完整证据链
+- **Nature格式**：采用国际学术出版规范
+- **自动化生成**：Python + LaTeX 端到端 pipeline
+
+---
+
+## 🛠️ 本地构建
+
+### 依赖
+
+```bash
+# Python 3.8+
+pip install -r requirements.txt
+
+# LaTeX 环境（Linux）
+apt install texlive-xetex texlive-lang-chinese
+```
+
+### 构建报告
+
+```bash
+cd hengda_final_report
+python build_report.py
+```
+
+输出：`hengda_full_report.pdf`
+
+---
+
+## 📜 许可证
+
+本项目采用 [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/) 许可证。
+
+**您可以：**
+- ✅ 自由分享和传播
+- ✅ 在任何媒介或格式 remix、transform
+- ✅ 用于商业目的
+
+**唯一要求：**
+- ✅ 必须给出适当的署名
+
+---
+
+## 🙏 致谢
+
+- 中国法律体系研究支持
+- 刑事诉讼法条文来源
+- LaTeX 排版系统
+
+---
+
+<div align="center">
+
+**⭐ 如果对你有帮助，请 Star 支持！**
+
+*Built with precision • 0 Hallucination Standard*
+
+</div>
