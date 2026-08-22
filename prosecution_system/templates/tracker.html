@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>案件跟踪 · 追诉系统</title>
+  <style>
+    :root { --bg:#FBF9F1; --text:#13233A; --accent:#9B2D20; --gold:#C8A45C; --muted:#8B7E6A; --card:#FFFFFF; --border:#E8E2D8; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Noto Sans CJK SC',Arial,sans-serif; background:var(--bg); color:var(--text); font-size:15px; }
+    a { color:var(--accent); text-decoration:none; }
+    .topbar { background:var(--text); color:#fff; padding:0 2rem; display:flex; align-items:center; gap:2rem; height:56px; }
+    .topbar .logo { font-size:1.1rem; font-weight:bold; color:var(--gold); }
+    .topbar nav { display:flex; gap:1.5rem; }
+    .topbar nav a { color:rgba(255,255,255,0.8); font-size:0.9rem; }
+    .topbar nav a:hover { color:#fff; text-decoration:none; }
+    .container { max-width:1000px; margin:2rem auto; padding:0 2rem; }
+    h1 { font-size:1.4rem; margin-bottom:1.5rem; }
+    table { width:100%; border-collapse:collapse; background:var(--card); border-radius:8px; overflow:hidden; }
+    th { background:var(--text); color:#fff; padding:0.75rem 1rem; text-align:left; font-size:0.85rem; }
+    td { padding:0.75rem 1rem; border-bottom:1px solid var(--border); font-size:0.9rem; }
+    tr:hover td { background:#faf8f4; }
+    .badge { padding:0.15rem 0.5rem; border-radius:3px; font-size:0.75rem; }
+    .badge-investigating { background:#FFF3E0; color:#E65100; }
+    .badge-prosecuted { background:#E3F2FD; color:#1565C0; }
+    .badge-judged { background:#F3E5F5; color:#6A1B9A; }
+    .badge-appealed { background:#E8F5E9; color:#2E7D32; }
+    .no-data { text-align:center; padding:3rem; color:var(--muted); }
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">⚖️ 追诉系统</div>
+  <nav>
+    <a href="/">案件库</a>
+    <a href="/search">搜索</a>
+    <a href="/tracker">案件跟踪</a>
+  </nav>
+</div>
+
+<div class="container">
+  <h1>📡 案件跟踪管理</h1>
+
+  {% if tracked_cases %}
+  <table>
+    <thead>
+      <tr>
+        <th>案件ID</th>
+        <th>案号</th>
+        <th>审理法院</th>
+        <th>当前状态</th>
+        <th>最近检查</th>
+        <th>最近事件</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in tracked_cases %}
+      <tr>
+        <td><a href="/case/{{ c.case_id }}">{{ c.case_id }}</a></td>
+        <td>{{ c.case_num }}</td>
+        <td>{{ c.court }}</td>
+        <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
+        <td>{{ c.last_check or '—' }}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ c.last_event or '—' }}</td>
+        <td>
+          <a href="/case/{{ c.case_id }}">详情</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="no-data">
+    <p>暂无跟踪案件</p>
+    <p style="margin-top:0.5rem;font-size:0.9rem;">在案件详情页点击「开启跟踪」添加案件</p>
+  </div>
+  {% endif %}
+
+  <div style="margin-top:2rem;padding:1rem;background:var(--card);border:1px solid var(--border);border-radius:8px;">
+    <h3 style="font-size:0.95rem;margin-bottom:0.75rem;">🔔 实时更新说明</h3>
+    <ul style="font-size:0.85rem;color:var(--muted);padding-left:1.5rem;">
+      <li>使用官方 Wenshu API Token（需向 court.gov.cn 申请）进行自动跟踪</li>
+      <li>设置环境变量 <code>WENSHU_TOKEN</code> 启用自动更新</li>
+      <li>无 Token 时使用手动记录功能：案件详情页 → 记录事件</li>
+      <li>建议每天运行一次自动检查，避免频繁请求</li>
+      <li>运行命令：<code>python src/wenshu_updater.py --check-updates</code></li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
