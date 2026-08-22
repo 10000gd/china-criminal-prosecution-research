@@ -1,0 +1,553 @@
+meta:
+  case_id: CASE-001
+  case_name: 恒大集团案
+  case_name_full: 恒大集团、恒大地产、许家印案
+  case_type: financial_crime
+  status: judged
+  confidentiality: public
+  report_date: '2026-08-20'
+  report_lang: zh
+case_info:
+  case_number: 待核实
+  court: 广东省深圳市中级人民法院
+  court_level: 中级
+  trial_level: first
+  judgment_date: '2026-08-20'
+  source_url: https://www.news.cn/legal/20260820/
+  source_media: 新华社
+  source_media_url: https://www.news.cn/legal/20260820/737dfb54ab564fb8a549ba392af9fb0a/c.html
+  case_number_note: 案号需从判决文书网或法院公告核实。新华社原文未公开案号。
+defendants_corp:
+- name: 恒大集团有限公司
+  alias: 恒大集团
+  role: 主犯单位
+  status: unit_defendant
+  charges:
+  - crime_176
+  - crime_192
+  - crime_160
+  - crime_161
+  - crime_393
+  - crime_185_1
+  verdict_fine: 8820000000
+  assets_frozen: true
+- name: 恒大地产集团有限公司
+  alias: 恒大地产
+  role: 主犯单位
+  status: unit_defendant
+  charges:
+  - crime_176
+  - crime_192
+  - crime_160
+  - crime_161
+  - crime_186
+  verdict_fine: 7000000000
+defendants_person:
+- name: 许家印
+  role: 实际控制人/董事长
+  status: person_defendant
+  charges:
+  - crime_176
+  - crime_192
+  - crime_186
+  - crime_160
+  - crime_161
+  - crime_393
+  - crime_185_1
+  - crime_271
+  verdict_punishment: 无期徒刑
+  deprivation_of_politics: true
+  confiscation_of_property: true
+  additional: 违法所得继续追缴，不足部分责令退赔
+- name: 夏xxx
+  role: 高管
+  status: person_defendant
+  charges:
+  - crime_176
+  - crime_192
+  verdict_punishment: 有期徒刑
+  prison_term: 18年至1年10个月不等
+  num_co_defendants: 56
+charges:
+  charges_judged:
+    crime_176:
+      name: 非法吸收公众存款罪
+      statute: 刑法第176条
+      charge_weight: primary
+      evidence_type:
+      - bank_records
+      - contracts
+      - investor_testimony
+      - regulatory_filings
+    crime_192:
+      name: 集资诈骗罪
+      statute: 刑法第192条
+      charge_weight: primary
+      evidence_type:
+      - bank_records
+      - contracts
+      - financial_statements
+      - fraud_indicators
+    crime_186:
+      name: 违法发放贷款罪
+      statute: 刑法第186条
+      charge_weight: supporting
+      evidence_type:
+      - loan_approval_docs
+      - bank_records
+      - regulatory_inspection
+    crime_160:
+      name: 欺诈发行证券罪
+      statute: 刑法第160条
+      charge_weight: primary
+      evidence_type:
+      - prospectus
+      - financial_statements
+      - underwriting_contracts
+      - false_filing
+    crime_161:
+      name: 违规披露重要信息罪
+      statute: 刑法第161条
+      charge_weight: supporting
+      evidence_type:
+      - annual_reports
+      - regulatory_filings
+      - board_meeting_records
+    crime_393:
+      name: 单位行贿罪
+      statute: 刑法第393条
+      charge_weight: supporting
+      evidence_type:
+      - bribe_contracts
+      - payment_records
+      - beneficiary_confirm
+    crime_185_1:
+      name: 违法运用资金罪
+      statute: 刑法第185条之一
+      charge_weight: supporting
+      evidence_type:
+      - insurance_fund_records
+      - regulatory_reports
+      - fund_flow
+    crime_271:
+      name: 职务侵占罪
+      statute: 刑法第271条
+      charge_weight: supporting
+      evidence_type:
+      - dividend_records
+      - board_resolutions
+      - transfer_documents
+  charges_missed:
+    crime_176_supplement:
+      name: 非法吸收公众存款罪（加重情节：数额特别巨大+严重情节）
+      statute: 刑法第176条 + 司法解释
+      reason: 涉案金额超万亿，属数额特别巨大+严重情节，应升档量刑
+    crime_159:
+      name: 欺诈发行债券罪
+      statute: 刑法第159条
+      reason: 恒大发行大量企业债/公司债，涉及欺诈发行债券
+    crime_175:
+      name: 骗取贷款、票据承兑、金融票证罪
+      statute: 刑法第175条
+      reason: 通过虚假材料骗取银行信贷资金
+    crime_176_supplement_2:
+      name: 非法吸收公众存款罪（单位犯罪直接责任人追责）
+      statute: 刑法第176条
+      reason: 对其他直接责任人应单独追究
+    crime_185:
+      name: 挪用资金罪
+      statute: 刑法第185条
+      reason: 挪用保险资金归恒大使用
+    crime_224:
+      name: 合同诈骗罪
+      statute: 刑法第224条
+      reason: 购房合同诈骗、理财产品合同诈骗
+    crime_224_1:
+      name: 组织领导传销活动罪
+      statute: 刑法第224条之一
+      reason: 恒大财富非法集资具有传销特征
+    crime_225:
+      name: 非法经营罪
+      statute: 刑法第225条
+      reason: 无金融资质从事金融业务
+    crime_266:
+      name: 诈骗罪
+      statute: 刑法第266条
+      reason: 对特定受害者的诈骗行为
+    crime_382_385:
+      name: 贪污罪/受贿罪（国家工作人员）
+      statute: 刑法第382条、第385条
+      reason: 金融机构中国家工作人员收受贿赂
+    crime_396:
+      name: 私分国有资产罪
+      statute: 刑法第396条
+      reason: 以分红名义私分国有资产
+    crime_224_2:
+      name: 集资诈骗罪（加重情节）
+      statute: 刑法第192条 + 司法解释
+      reason: 数额特别巨大+特别严重情节，升档量刑
+evidence_gaps:
+- gap_id: EG-001
+  crime: crime_192
+  gap_type: fraud_intent_missing
+  description: 集资诈骗罪核心要件'非法占有目的'证据链断裂
+  severity: critical
+  recommended_evidence:
+  - 资金流向全记录
+  - 隐匿资产清单
+  - 境外账户流水
+  - 实际控制人指令记录
+- gap_id: EG-002
+  crime: crime_186
+  gap_type: procedure_violation_unproven
+  description: 违法发放贷款罪'违反国家规定'程序违规未经证实
+  severity: high
+  recommended_evidence:
+  - 贷款审批流程文件
+  - 内部合规审查记录
+  - 监管现场检查笔录
+- gap_id: EG-003
+  crime: crime_393
+  gap_type: bribery_amount_unclear
+  description: 单位行贿罪行贿金额不明确，受贿方处理情况不明
+  severity: medium
+  recommended_evidence:
+  - 行受贿资金流水
+  - 官员处理情况公示
+  - 恒大内部行贿审批记录
+victims:
+- category: 房产投资者
+  count_approx: 6000000
+  loss_approx: 2000000000000
+  evidence_needed:
+  - 购房合同
+  - 付款凭证
+  - 违约通知
+  liquidation_priority: 4
+  count_approx_note: （据公开资料估算，非判决书数据，以下同）
+  loss_approx_note: （据公开资料估算，非判决书数据，以下同）
+- category: 理财产品投资者
+  count_approx: 150000
+  loss_approx: 400000000000
+  evidence_needed:
+  - 理财合同
+  - 银行转账记录
+  - 恒大财富平台截图
+  liquidation_priority: 3
+  count_approx_note: （据公开资料估算，非判决书数据，以下同）
+  loss_approx_note: （据公开资料估算，非判决书数据，以下同）
+- category: 合作供应商
+  count_approx: 8000
+  loss_approx: 1000000000000
+  evidence_needed:
+  - 供货合同
+  - 发票
+  - 结算单
+  liquidation_priority: 5
+  count_approx_note: （据公开资料估算，非判决书数据，以下同）
+  loss_approx_note: （据公开资料估算，非判决书数据，以下同）
+- category: 银行债权人
+  count_approx: 128
+  loss_approx: 600000000000
+  evidence_needed:
+  - 贷款合同
+  - 担保文件
+  - 银行内部评级报告
+  liquidation_priority: 2
+  count_approx_note: （据公开资料估算，非判决书数据，以下同）
+  loss_approx_note: （据公开资料估算，非判决书数据，以下同）
+- category: 股票投资者
+  count_approx: 800000
+  loss_approx: 300000000000
+  evidence_needed:
+  - 证券账户记录
+  - 交易流水
+  - 虚假陈述公告
+  liquidation_priority: 6
+  count_approx_note: （据公开资料估算，非判决书数据，以下同）
+  loss_approx_note: （据公开资料估算，非判决书数据，以下同）
+- category: 债券持有人
+  count_approx: 500
+  loss_approx: 2000000000000
+  evidence_needed:
+  - 债券募集说明书
+  - 认购协议
+  - 评级报告
+  liquidation_priority: 1
+  count_approx_note: （据公开资料估算，非判决书数据，以下同）
+  loss_approx_note: （据公开资料估算，非判决书数据，以下同）
+- category: 员工
+  count_approx: 160000
+  loss_approx: 100000000000
+  evidence_needed:
+  - 劳动合同
+  - 工资单
+  - 社保缴纳记录
+  liquidation_priority: 7
+  count_approx_note: （据公开资料估算，非判决书数据，以下同）
+  loss_approx_note: （据公开资料估算，非判决书数据，以下同）
+comparable_cases:
+  domestic:
+  - case_name: 康得新案（钟玉）
+    court: 江苏省高级人民法院
+    case_num: (2025)苏刑终17号
+    charges:
+    - 欺诈发行债券罪
+    - 违规披露重要信息罪
+    verdict: 终审维持原判
+    key_findings: 重大财务造假+债券欺诈
+  - case_name: 乐视案（贾跃亭）
+    court: 北京金融法院
+    case_num: 特别代表人诉讼
+    charges:
+    - 欺诈发行证券罪
+    - 违规披露重要信息罪
+    verdict: 民事判决+刑事追诉
+    key_findings: 七年内持续造假+境外转移资产
+  - case_name: 海航系陈峰案
+    court: 海口市中级人民法院
+    charges:
+    - 非法吸收公众存款罪
+    - 集资诈骗罪
+    verdict: 刑事判决
+    key_findings: 空手套白狼+跨境资本运作
+  - case_name: 德隆系唐万新案
+    court: 武汉市中级人民法院
+    case_num: (2006)武刑初字第28号
+    charges:
+    - 操纵证券市场罪
+    - 非法吸收公众存款罪
+    verdict: 有期徒刑15年
+    key_findings: 庄家操纵+关联交易
+  - case_name: 小牛资本彭铁案
+    court: 深圳市中级人民法院
+    charges:
+    - 非法吸收公众存款罪
+    - 集资诈骗罪
+    verdict: 二审刑事裁定
+    key_findings: P2P网贷+资金池模式
+  - case_name: 黄光裕案
+    court: 北京市第二中级人民法院
+    charges:
+    - 非法经营罪
+    - 内幕交易罪
+    - 操纵证券交易价格罪
+    verdict: 有期徒刑14年
+    key_findings: 首富犯罪+内幕交易
+  - case_name: 徐翔操纵证券市场案
+    court: 青岛市中级人民法院
+    case_num: (2016)鲁02刑初148号
+    charges:
+    - 操纵证券市场罪
+    verdict: 有期徒刑5年6个月
+    key_findings: 私募一哥+股价操纵
+  - case_name: 鲜言操纵证券市场案
+    court: 上海市第一中级人民法院
+    charges:
+    - 操纵证券市场罪
+    - 背信损害上市公司利益罪
+    verdict: 有期徒刑34个月+罚金10亿
+    key_findings: 匹凸匹+1001项议案
+  - case_name: 獐子岛吴厚刚案
+    court: 大连市中级人民法院
+    charges:
+    - 违规披露重要信息罪
+    - 欺诈发行债券罪
+    verdict: 二审裁定
+    key_findings: 扇贝跑了+财务造假
+  - case_name: 钱宝网张小雷案
+    court: 南京市中级人民法院
+    charges:
+    - 非法吸收公众存款罪
+    - 集资诈骗罪
+    verdict: 刑事判决
+    key_findings: 看广告赚钱+庞氏骗局
+  - case_name: 团贷网唐军案
+    court: 东莞市中级人民法院
+    charges:
+    - 非法吸收公众存款罪
+    - 集资诈骗罪
+    verdict: 一审判决
+    key_findings: P2P+自融
+  - case_name: 顾雏军案
+    court: 最高人民法院第一巡回法庭
+    case_num: (2018)最高法刑再4号
+    charges:
+    - 挪用资金罪
+    - 违规披露重要信息罪
+    verdict: 再审改判部分无罪
+    key_findings: 再审纠错+知识产权
+  - case_name: 善林金融周伯云案
+    court: 上海市第一中级人民法院
+    charges:
+    - 非法吸收公众存款罪
+    - 集资诈骗罪
+    verdict: 刑事判决
+    key_findings: 线下理财+门店推广
+  - case_name: 安邦吴小晖案
+    court: 上海市第一中级人民法院
+    charges:
+    - 集资诈骗罪
+    - 职务侵占罪
+    - 违规运用资金罪
+    verdict: 有期徒刑18年
+    key_findings: 万亿安邦+虚假增资
+  - case_name: 明天系肖建华案
+    court: 待定
+    charges:
+    - 非法吸收公众存款罪
+    - 违法发放贷款罪
+    verdict: 调查中
+    key_findings: 金融帝国+跨境隐匿
+  - case_name: 华信能源叶简明案
+    court: 待定
+    charges:
+    - 行贿罪
+    - 欺诈发行债券罪
+    verdict: 调查中
+    key_findings: 能源+政治关联
+  - case_name: 中植系解直锟案
+    court: 待定
+    charges:
+    - 非法吸收公众存款罪
+    verdict: 待定
+    key_findings: 万亿规模+定融产品
+  - case_name: 泛海系卢志强案
+    court: 待定
+    charges:
+    - 违规披露重要信息罪
+    - 违法发放贷款罪
+    verdict: 调查中
+    key_findings: 房地产+金融控股
+  - case_name: 宝能系姚振华案
+    court: 待定
+    charges:
+    - 违规披露重要信息罪
+    - 欺诈发行债券罪
+    verdict: 待定
+    key_findings: 万科收购战+险资运用
+  international:
+  - case_name: Wirecard案（Markus Braun）
+    court: 德国慕尼黑地区法院
+    country: 德国
+    year: 2025
+    charges:
+    - 欺诈罪
+    - 特别严重的欺诈
+    - 市场操纵罪
+    verdict: 刑事判决
+    key_findings: 虚假账户+境外逃亡
+  - case_name: 帕玛拉特案（Calisto Tanzi）
+    court: 意大利帕尔马法院
+    country: 意大利
+    year: 2010
+    charges:
+    - 欺诈罪
+    - 虚假财务报告罪
+    verdict: 有期徒刑17年
+    key_findings: 虚假账户+能源贸易
+  - case_name: 麦道夫案（Bernie Madoff）
+    court: 美国联邦地区法院（曼哈顿）
+    country: 美国
+    case_num: 10 Cr.640(BRJ)
+    year: 2009
+    charges:
+    - 证券欺诈罪
+    - 洗钱罪
+    verdict: 有期徒刑150年
+    key_findings: 庞氏骗局+650亿美元
+  - case_name: 安然案（Kenneth Lay）
+    court: 美国联邦地区法院（休斯敦）
+    country: 美国
+    year: 2006
+    charges:
+    - 证券欺诈罪
+    - 共谋罪
+    verdict: 死刑（心脏病去世未执行）
+    key_findings: 会计造假+高管抛售+员工退休金
+  - case_name: 世通案（Bernard Ebbers）
+    court: 美国联邦地区法院
+    country: 美国
+    year: 2005
+    charges:
+    - 证券欺诈罪
+    - 共谋罪
+    verdict: 有期徒刑25年
+    key_findings: 虚增收入+110亿美元欺诈
+  - case_name: 富国银行账户欺诈案
+    court: 美国司法部(DOJ)
+    country: 美国
+    year: 2020
+    charges:
+    - 欺诈罪
+    verdict: 和解协议30亿美元
+    key_findings: 未经授权账户+员工指控
+  - case_name: 大众排放门（Volkswagen）
+    court: 美国环境保护署(EPA)+德国法院
+    country: 美德联合
+    year: 2016
+    charges:
+    - 欺诈罪
+    - 违反清洁空气法
+    verdict: 和解协议147亿美元+刑事罚款
+    key_findings: 排放造假软件+全球召回
+  - case_name: 西尔斯控股破产案
+    court: 美国破产法院
+    country: 美国
+    year: 2018
+    charges:
+    - unavailable
+    verdict: 破产保护
+    key_findings: 管理层掏空+债务重组
+assets:
+  total_debt_approx: 待核实
+  assets_frozen: true
+  main_assets:
+  - type: 土地储备
+    value_approx: 1000000000000
+    status: 查封
+  - type: 物业资产
+    value_approx: 500000000000
+    status: 查封
+  - type: 股权投资
+    value_approx: 200000000000
+    status: 冻结
+  - type: 境外资产
+    value_approx: unknown
+    status: 待追缴
+    value_note: 境外资产价值未知，需专项追缴
+  total_debt_approx_note: （据公开资料估算，非官方数据）
+policy_recommendations:
+- area: 立法完善
+  recommendations:
+  - 完善上市公司财务造假刑事追诉标准
+  - 建立集团犯罪跨法域追诉机制
+  - 强化中介机构刑事责任
+  - 完善投资者保护基金制度
+- area: 司法实践
+  recommendations:
+  - 统一非法集资数额认定标准
+  - 明确'非法占有目的'司法推定规则
+  - 建立受害投资者优先受偿机制
+- area: 监管改革
+  recommendations:
+  - 建立房地产企业杠杆率动态监测
+  - 完善关联交易信息披露制度
+  - 强化境外上市企业境内监管
+sources:
+- name: 新华社
+  url: https://www.news.cn/legal/20260820/737dfb54ab564fb8a549ba392af9fb0a/c.html
+  type: primary
+  access_date: '2026-08-20'
+- name: 中国证监会
+  url: https://www.csrc.gov.cn
+  type: regulatory
+- name: 国家金融监督管理总局
+  url: https://www.nfra.gov.cn
+  type: regulatory
+- name: 最高人民法院
+  url: https://www.court.gov.cn
+  type: judicial
+- name: 中国裁判文书网
+  url: https://wenshu.court.gov.cn
+  type: case_database
