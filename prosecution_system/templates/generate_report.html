@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>生成报告 · {{ case_name }}</title>
+  <style>
+    body { font-family:'Noto Sans CJK SC',Arial,sans-serif; background:#FBF9F1; color:#13233A; }
+    .container { max-width:600px; margin:4rem auto; padding:2rem; text-align:center; }
+    .card { background:#fff; border:1px solid #E8E2D8; border-radius:8px; padding:2rem; }
+    h1 { font-size:1.3rem; margin-bottom:0.5rem; }
+    p { color:#8B7E6A; margin-bottom:1.5rem; font-size:0.9rem; }
+    .btn { padding:0.7rem 2rem; border:none; border-radius:4px; font-size:1rem; cursor:pointer; margin:0.5rem; }
+    .btn-primary { background:#9B2D20; color:#fff; }
+    .btn-outline { background:transparent; border:1px solid #9B2D20; color:#9B2D20; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="card">
+    <h1>📄 生成追诉研究报告</h1>
+    <p>{{ case_name }}</p>
+    <form action="/case/{{ case_id }}/generate" method="post" style="display:inline;">
+      <input type="hidden" name="format" value="tex" />
+      <button type="submit" class="btn btn-outline">📄 下载 LaTeX 源文件</button>
+    </form>
+    <form action="/case/{{ case_id }}/generate" method="post" style="display:inline;">
+      <input type="hidden" name="format" value="pdf" />
+      <button type="submit" class="btn btn-primary">📕 下载 PDF 报告</button>
+    </form>
+    <div style="margin-top:1.5rem;font-size:0.85rem;color:#8B7E6A;">
+      <a href="/case/{{ case_id }}">← 返回案件详情</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>
