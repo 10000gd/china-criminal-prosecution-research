@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>搜索 "{{ query }}" · 追诉系统</title>
+  <style>
+    :root { --bg:#FBF9F1; --text:#13233A; --accent:#9B2D20; --gold:#C8A45C; --muted:#8B7E6A; --card:#FFFFFF; --border:#E8E2D8; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Noto Sans CJK SC',Arial,sans-serif; background:var(--bg); color:var(--text); font-size:15px; }
+    a { color:var(--accent); text-decoration:none; }
+    .topbar { background:var(--text); color:#fff; padding:0 2rem; display:flex; align-items:center; gap:2rem; height:56px; }
+    .topbar .logo { font-size:1.1rem; font-weight:bold; color:var(--gold); }
+    .topbar nav { display:flex; gap:1.5rem; }
+    .topbar nav a { color:rgba(255,255,255,0.8); font-size:0.9rem; }
+    .topbar nav a:hover { color:#fff; text-decoration:none; }
+    .search-box { margin-left:auto; }
+    .search-box input { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:0.4rem 0.8rem; border-radius:4px; font-size:0.9rem; width:220px; }
+    .container { max-width:900px; margin:2rem auto; padding:0 2rem; }
+    .search-form { margin:1.5rem 0; display:flex; gap:0.5rem; }
+    .search-input { flex:1; padding:0.6rem 1rem; border:1px solid var(--border); border-radius:4px; font-size:1rem; background:var(--card); }
+    .btn { padding:0.6rem 1.5rem; background:var(--accent); color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:0.9rem; }
+    h2 { font-size:1.1rem; color:var(--text); border-left:3px solid var(--accent); padding-left:0.75rem; margin:1.5rem 0 1rem; }
+    .result-item { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:1rem; margin-bottom:0.75rem; }
+    .result-item .case-id { font-size:0.75rem; color:var(--muted); font-family:monospace; }
+    .result-item .case-name { font-size:1rem; font-weight:bold; margin:0.25rem 0; }
+    .result-item .case-name a { color:var(--text); }
+    .result-item .case-name a:hover { color:var(--accent); }
+    .badge { padding:0.15rem 0.5rem; border-radius:3px; font-size:0.7rem; font-weight:bold; }
+    .badge-investigating { background:#FFF3E0; color:#E65100; }
+    .badge-judged { background:#F3E5F5; color:#6A1B9A; }
+    .no-results { text-align:center; padding:3rem; color:var(--muted); }
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">⚖️ 追诉系统</div>
+  <nav>
+    <a href="/">案件库</a>
+    <a href="/search">搜索</a>
+    <a href="/tracker">案件跟踪</a>
+  </nav>
+  <div class="search-box">
+    <form action="/search" method="get">
+      <input type="text" name="q" value="{{ query }}" placeholder="搜索案件、罪名、当事人…" />
+    </form>
+  </div>
+</div>
+
+<div class="container">
+  <div class="search-form">
+    <form action="/search" method="get" style="display:flex;flex:1;gap:0.5rem;">
+      <input type="text" name="q" value="{{ query }}" class="search-input" placeholder="搜索案件、罪名、当事人…" />
+      <button type="submit" class="btn">搜索</button>
+    </form>
+  </div>
+
+  {% if query %}
+  <h2>搜索结果：{{ query }}</h2>
+
+  {% if name_matches %}
+  <h2>按名称匹配（{{ name_matches|length }}）</h2>
+  {% for c in name_matches %}
+  <div class="result-item">
+    <div class="case-id">{{ c.case_id }} · {{ c.get('case_type', '') }}</div>
+    <div class="case-name"><a href="/case/{{ c.case_id }}">{{ c.case_name_full or c.case_name }}</a></div>
+    <span class="badge badge-{{ c.status }}">{{ c.status }}</span>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {% if results %}
+  <h2>全文匹配（{{ results|length }}）</h2>
+  {% for r in results %}
+  <div class="result-item">
+    <div class="case-id">{{ r.case_id }}</div>
+    <div class="case-name"><a href="/case/{{ r.case_id }}">{{ r.case_name or r.case_id }}</a></div>
+    <span class="badge badge-{{ r.status }}">{{ r.status }}</span>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {% if not name_matches and not results %}
+  <div class="no-results">
+    <p>未找到与「{{ query }}」相关的案件</p>
+    <p style="margin-top:0.5rem;font-size:0.9rem;">尝试其他关键词，或在 <code>cases/</code> 目录添加新案件</p>
+  </div>
+  {% endif %}
+  {% endif %}
+</div>
+</body>
+</html>
