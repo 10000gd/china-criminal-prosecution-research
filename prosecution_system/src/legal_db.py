@@ -105,7 +105,10 @@ class LegalDB:
         return self._china_law_db
 
     def search_laws(self, keyword: str, category: Optional[str] = None) -> List[Dict]:
-        return self.china_law_db.search(keyword, category=category)
+        results = self.china_law_db.search(keyword)
+        if category:
+            results = [r for r in results if r.get('category') == category]
+        return results
 
     def get_law_fulltext(self, law_name: str) -> Optional[Any]:
         return self.china_law_db.get_by_name(law_name)
@@ -146,10 +149,10 @@ class LegalDB:
         except Exception:
             pass
         try:
-            db = self.china_law_db
-            stats["china_law_total"] = db.total_count
-            stats["china_law_chars"] = db.total_chars
-            stats["china_law_by_category"] = db.category_counts
+            law_stats = db.get_stats()
+            stats["china_law_total"] = law_stats["total_laws"]
+            stats["china_law_chars"] = law_stats["total_size_chars"]
+            stats["china_law_by_category"] = law_stats["by_category"]
         except Exception:
             pass
         try:

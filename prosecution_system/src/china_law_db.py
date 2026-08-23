@@ -86,7 +86,8 @@ class ChinaLawDatabase:
                         elif '发布' in stripped:
                             parts = stripped.split(':', 1)
                             if len(parts) == 2:
-                                meta['date'] = parts[1].strip()
+                                date_val = parts[1].strip().split('_')[0]
+                                meta['date'] = date_val
                         elif '来源' in stripped:
                             parts = stripped.split(':', 1)
                             if len(parts) == 2:
