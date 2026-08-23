@@ -81,13 +81,16 @@ class LatexTable:
         """初始化列定义。
 
         Args:
-            columns: 列标题列表，或 ("标题", ...) 元组列表
-            widths:  每列宽度（p{} 格式），与 columns 等长
-                    例如 ["3cm", "4cm", "5cm"]
-                    缺省时默认等宽分布
+            columns: 列标题列表，如 ['罪名', '法条']
+                     或 [('罪名', '3cm'), ('法条', '4cm')] 元组列表（自动提取标题和宽度）
         """
-        self.columns = columns
-        self.widths = widths
+        # 支持元组列表格式 (标题, 宽度)
+        if columns and isinstance(columns[0], tuple):
+            self.columns = [c[0] for c in columns]
+            self.widths = widths or [c[1] for c in columns]
+        else:
+            self.columns = columns
+            self.widths = widths
         self._rows = []
 
     # ---- 公共 API ----
