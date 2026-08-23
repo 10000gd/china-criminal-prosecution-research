@@ -8,13 +8,18 @@
 - 验证必填字段完整性
 - 提供案件列表管理
 - 支持案件搜索/过滤
+- 倒排索引加速搜索
 """
 
 import os
+import re
 import yaml
 from pathlib import Path
 from typing import Optional, Dict, List, Any
 from cachetools import TTLCache
+import logging
+
+logger = logging.getLogger(__name__)
 
 CASES_DIR = Path(__file__).parent.parent / "cases"
 
@@ -34,12 +39,127 @@ def _set_cache(case_id: str, data: Dict):
     _case_cache[case_id] = data
 
 
+# ---- 倒排索引 ----
+
+class CaseSearchIndex:
+    """案件倒排索引，用于快速全文搜索（替代逐文件遍历）"""
+
+    def __init__(self, cases_dir: Path):
+        self.cases_dir = cases_dir
+        # 倒排索引: term -> [case_id, ...]
+        self.index: Dict[str, List[str]] = {}
+        # 案件元数据缓存: case_id -> meta dict
+        self.case_meta: Dict[str, Dict] = {}
+        self._rebuild()
+
+    def _tokenize(self, text: str) -> List[str]:
+        """简单分词：中文按单字，英文按单词（均小写）"""
+        if not text:
+            return []
+        text = text.lower()
+        # 中文字符（每个字作为一个词项）
+        chinese = re.findall(r'[\u4e00-\u9fff]', text)
+        # 英文单词和数字
+        english = re.findall(r'[a-z0-9]+', text)
+        return chinese + english
+
+    def _index_text(self, case_id: str, text: str):
+        """将文本分词后加入倒排索引"""
+        if not text:
+            return
+        words = self._tokenize(text)
+        for word in words:
+            if word not in self.index:
+                self.index[word] = []
+            if case_id not in self.index[word]:
+                self.index[word].append(case_id)
+
+    def _build_index(self):
+        """遍历所有案件文件，构建倒排索引"""
+        self.index.clear()
+        self.case_meta.clear()
+
+        for f in sorted(self.cases_dir.glob("*.yaml")):
+            if f.name.startswith("_"):
+                continue
+            try:
+                with open(f, "r", encoding="utf-8") as fh:
+                    d = yaml.safe_load(fh)
+                if not d:
+                    continue
+
+                meta = d.get("meta", {})
+                case_id = meta.get("case_id", f.stem)
+
+                # 索引可搜索的文本字段
+                searchable_texts = [
+                    str(meta),
+                    str(d.get("case_info", {})),
+                    str(d.get("charges", {})),
+                    str(d.get("evidence_gaps", [])),
+                    str(d.get("comparable_cases", {})),
+                    str(d.get("assets", {})),
+                    str(d.get("defendants_person", [])),
+                    str(d.get("defendants_corp", [])),
+                    str(d.get("victims", [])),
+                ]
+                for txt in searchable_texts:
+                    self._index_text(case_id, txt)
+
+                # 缓存元数据（用于结果返回）
+                self.case_meta[case_id] = {
+                    "case_id": case_id,
+                    "case_name": meta.get("case_name", ""),
+                    "status": meta.get("status", ""),
+                    "matched": True,
+                }
+            except Exception:
+                pass
+
+    def search(self, query: str, top_n: int = 20) -> List[Dict]:
+        """快速搜索：基于倒排索引，按命中词项数排序"""
+        tokens = self._tokenize(query)
+        if not tokens:
+            return []
+
+        # 统计每个案件的命中次数
+        scores: Dict[str, int] = {}
+        for token in tokens:
+            if token in self.index:
+                for case_id in self.index[token]:
+                    scores[case_id] = scores.get(case_id, 0) + 1
+
+        # 按命中数降序，取 top_n
+        sorted_ids = sorted(scores, key=lambda x: scores[x], reverse=True)[:top_n]
+        return [self.case_meta[cid] for cid in sorted_ids if cid in self.case_meta]
+
+    def rebuild(self):
+        """重新构建索引（外部调用入口）"""
+        self._build_index()
+
+
+# ---- 案件加载器 ----
+
 class CaseLoader:
     """案件加载器"""
 
     def __init__(self, cases_dir: Path = CASES_DIR):
         self.cases_dir = cases_dir
         self._local_cache: Dict[str, Dict] = {}  # 本地实例缓存（无 TTL）
+        self._search_index: Optional[CaseSearchIndex] = None  # 倒排索引（惰性初始化）
+
+    # ---- 搜索索引（惰性初始化）----
+
+    @property
+    def search_index(self) -> CaseSearchIndex:
+        """获取搜索索引（首次访问时构建）"""
+        if self._search_index is None:
+            self._search_index = CaseSearchIndex(self.cases_dir)
+        return self._search_index
+
+    def rebuild_search_index(self):
+        """重建搜索索引"""
+        self._search_index = CaseSearchIndex(self.cases_dir)
 
     # ---- 基础加载 ----
 
@@ -119,11 +239,21 @@ class CaseLoader:
                                 "confidentiality": meta.get("confidentiality", ""),
                             })
             except Exception as e:
-                print(f"警告：加载案件 {f.name} 失败: {e}")
+                logger.warning(f"加载案件 {f.name} 失败: {e}")
         return results
 
     def search_cases(self, query: str) -> List[Dict]:
-        """全文搜索案件"""
+        """
+        全文搜索案件（优先使用倒排索引，索引未就绪时回退到逐文件扫描）
+        """
+        try:
+            return self.search_index.search(query)
+        except Exception:
+            # 索引异常时回退到原始逐文件搜索
+            return self._search_cases_fallback(query)
+
+    def _search_cases_fallback(self, query: str) -> List[Dict]:
+        """逐文件扫描搜索（search_cases 的兜底实现）"""
         results = []
         for f in sorted(self.cases_dir.glob("*.yaml")):
             if f.name.startswith("_"):
@@ -132,6 +262,7 @@ class CaseLoader:
                 with open(f, "r", encoding="utf-8") as fh:
                     content = fh.read()
                     if query.lower() in content.lower():
+                        fh.seek(0)
                         d = yaml.safe_load(fh)
                         if d:
                             meta = d.get("meta", {})

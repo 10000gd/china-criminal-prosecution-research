@@ -25,6 +25,9 @@ import aiohttp
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Tuple
+import logging
+
+logger = logging.getLogger(__name__)
 
 sys.path.insert(0, str(Path(__file__).parent))
 from case_loader import CaseLoader
@@ -416,6 +419,7 @@ class FactChecker:
         with open(report_path, "w", encoding="utf-8") as f:
             f.write(self.get_report())
 
+        logger.info(f"核查报告已保存：{path} 和 {report_path}")
         print(f"✅ 核查报告已保存：{path} 和 {report_path}")
         return path
 
@@ -434,7 +438,7 @@ def main():
     try:
         loader.load(args.case)
     except FileNotFoundError:
-        print(f"案件未找到: {args.case}")
+        logger.error(f"案件未找到: {args.case}")
         return
 
     checker = FactChecker(args.case, loader)
@@ -443,7 +447,9 @@ def main():
     if args.json:
         print(json.dumps(results, ensure_ascii=False, indent=2))
     else:
-        print(checker.get_report())
+        report_text = checker.get_report()
+        print(report_text)
+        logger.info(f"核查完成，字段总数: {results['total_fields']}，问题数: {len(results['issues'])}")
 
     if args.save:
         checker.save_report()

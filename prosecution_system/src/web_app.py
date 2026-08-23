@@ -22,6 +22,10 @@ from typing import Optional
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
 
+import logging as _logging
+from logging_config import setup_logging as _setup_logging
+_logger = _setup_logging("web_app")
+
 from flask import Flask, render_template, request, jsonify, redirect, url_for, send_file
 import yaml
 
@@ -305,6 +309,7 @@ def api_charges(case_id):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
+    _logger.info(f"🚀 追诉系统启动: http://localhost:{port}，调试模式: {debug}，案件数量: {len(loader.list_cases())}")
     print(f"🚀 追诉系统启动: http://localhost:{port}")
     print(f"   调试模式: {debug}")
     print(f"   案件数量: {len(loader.list_cases())}")

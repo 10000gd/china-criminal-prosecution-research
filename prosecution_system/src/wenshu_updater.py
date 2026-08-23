@@ -22,11 +22,16 @@ import aiohttp
 import requests
 from pathlib import Path
 from datetime import datetime
+from filelock import FileLock
 from typing import Optional, Dict, List, Any
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+import logging
+
+logger = logging.getLogger(__name__)
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 TRACKER_FILE = DATA_DIR / "case_tracker.json"
+TRACKER_LOCK_FILE = DATA_DIR / "case_tracker.lock"
 
 
 def _ensure_data_dir():
@@ -80,6 +85,7 @@ class WenshuAPI:
         按案号搜索案件文书（同步包装，自动重试 3 次）
         """
         if not self.token:
+            logger.warning("Wenshu API Token 未设置，请设置环境变量 WENSHU_TOKEN 或访问 https://wenshu.court.gov.cn 申请API权限")
             print("⚠️ Wenshu API Token 未设置，请设置环境变量 WENSHU_TOKEN")
             print("   或访问 https://wenshu.court.gov.cn 申请API权限")
             return []
@@ -87,6 +93,7 @@ class WenshuAPI:
         try:
             return asyncio.run(self._async_search(case_num, court, max_results))
         except Exception as e:
+            logger.error(f"Wenshu API 请求失败（已达最大重试次数）: {e}")
             print(f"Wenshu API 请求失败（已达最大重试次数）: {e}")
             return []
 
@@ -103,6 +110,7 @@ class WenshuAPI:
             if response.status_code == 200:
                 return self._parse_doc_html(response.text)
         except Exception as e:
+            logger.warning(f"获取文书详情失败: {e}")
             print(f"获取文书详情失败: {e}")
 
         return None
@@ -174,8 +182,10 @@ class WenshuScraper:
             )
             # 解析结果（此处为伪代码，需根据实际响应调整）
             if response.status_code == 200:
-                print(f"⚠️ 爬虫已请求，请手动验证结果页面")
+                logger.warning("⚠️ 爬虫已请求，请手动验证结果页面")
+            print(f"⚠️ 爬虫已请求，请手动验证结果页面")
         except Exception as e:
+            logger.error(f"爬虫请求失败: {e}")
             print(f"爬虫请求失败: {e}")
 
         return results
@@ -198,14 +208,18 @@ class CaseTracker:
         self.tracked: Dict[str, Dict] = self._load()
 
     def _load(self) -> Dict:
-        if self.tracker_file.exists():
-            with open(self.tracker_file, "r", encoding="utf-8") as f:
-                return json.load(f)
-        return {}
+        lock = FileLock(TRACKER_LOCK_FILE, timeout=10)
+        with lock:
+            if self.tracker_file.exists():
+                with open(self.tracker_file, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            return {}
 
     def _save(self):
-        with open(self.tracker_file, "w", encoding="utf-8") as f:
-            json.dump(self.tracked, f, ensure_ascii=False, indent=2)
+        lock = FileLock(TRACKER_LOCK_FILE, timeout=10)
+        with lock:
+            with open(self.tracker_file, "w", encoding="utf-8") as f:
+                json.dump(self.tracked, f, ensure_ascii=False, indent=2)
 
     def add_case(self, case_id: str, case_num: str = "", court: str = "",
                  status: str = "investigating", notes: str = ""):
@@ -228,12 +242,14 @@ class CaseTracker:
             ],
         }
         self._save()
+        logger.info(f"已添加跟踪: {case_id}")
         print(f"✅ 已添加跟踪: {case_id}")
 
     def update_status(self, case_id: str, new_status: str,
                       event: str = "", notes: str = ""):
         """更新案件状态"""
         if case_id not in self.tracked:
+            logger.warning(f"案件未在跟踪列表中: {case_id}")
             print(f"⚠️ 案件未在跟踪列表中: {case_id}")
             return
 
@@ -259,8 +275,10 @@ class CaseTracker:
         self._save()
 
         if new_status != old_status:
+            logger.info(f"案件状态变更 [{case_id}]: {old_status} → {new_status}")
             print(f"🔔 案件状态变更 [{case_id}]: {old_status} → {new_status}")
         else:
+            logger.debug(f"案件状态已确认 [{case_id}]: {new_status}（无变化）")
             print(f"✅ 案件状态已确认 [{case_id}]: {new_status}（无变化）")
 
     def check_for_updates(self, api_client: WenshuAPI = None) -> List[Dict]:
@@ -324,8 +342,10 @@ class CaseTracker:
         if case_id in self.tracked:
             del self.tracked[case_id]
             self._save()
+            logger.info(f"已移除跟踪: {case_id}")
             print(f"✅ 已移除跟踪: {case_id}")
         else:
+            logger.warning(f"案件不在跟踪列表中: {case_id}")
             print(f"⚠️ 案件不在跟踪列表中: {case_id}")
 
 
@@ -346,14 +366,18 @@ class ManualTracker:
         self.tracked: Dict[str, Dict] = self._load()
 
     def _load(self) -> Dict:
-        if self.tracker_file.exists():
-            with open(self.tracker_file, "r", encoding="utf-8") as f:
-                return json.load(f)
-        return {}
+        lock = FileLock(TRACKER_LOCK_FILE, timeout=10)
+        with lock:
+            if self.tracker_file.exists():
+                with open(self.tracker_file, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            return {}
 
     def _save(self):
-        with open(self.tracker_file, "w", encoding="utf-8") as f:
-            json.dump(self.tracked, f, ensure_ascii=False, indent=2)
+        lock = FileLock(TRACKER_LOCK_FILE, timeout=10)
+        with lock:
+            with open(self.tracker_file, "w", encoding="utf-8") as f:
+                json.dump(self.tracked, f, ensure_ascii=False, indent=2)
 
     def log_event(self, case_id: str, event: str, source: str = "",
                   url: str = "", date: str = None):
@@ -377,6 +401,7 @@ class ManualTracker:
         }
         self.tracked[case_id]["events"].append(entry)
         self._save()
+        logger.info(f"事件已记录 [{case_id}]: {date} - {event}")
         print(f"✅ 事件已记录 [{case_id}]: {date} - {event}")
 
     def get_events(self, case_id: str) -> List[Dict]:
@@ -422,11 +447,13 @@ def main():
                               event=args.event or "")
 
     elif args.list:
+        logger.info("列出所有跟踪案件")
         for c in tracker.list_tracked():
             print(f"[{c['case_id']}] {c['case_num']} | {c['court']} | {c['status']}")
             print(f"    最近事件: {c.get('last_event', '无')}")
 
     elif args.history:
+        logger.info(f"查看案件历史: {args.history}")
         for h in tracker.get_case_history(args.history):
             print(f"  {h.get('date', '')}: {h.get('status', '')} — {h.get('event', '')}")
 
@@ -439,12 +466,15 @@ def main():
         manual.log_event(case_id, event, source=source)
 
     elif args.check_updates:
+        logger.info("批量检查案件更新")
         api = WenshuAPI()
         updates = tracker.check_for_updates(api)
         if updates:
+            logger.info(f"检测到 {len(updates)} 个案件更新")
             for u in updates:
                 print(f"🔔 检测到更新 [{u['case_id']}]: {u['change_type']}")
         else:
+            logger.info("未检测到更新")
             print("✅ 未检测到更新")
 
     else:
