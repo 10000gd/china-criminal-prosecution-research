@@ -19,10 +19,20 @@ import sys
 import argparse
 from pathlib import Path
 from datetime import datetime
+from jinja2 import Environment, FileSystemLoader, select_autoescape, TemplateNotFound
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
 from case_loader import CaseLoader
+
+# Jinja2 模板环境
+TEMPLATE_DIR = Path(__file__).parent.parent / "templates" / "reports"
+jinja_env = Environment(
+    loader=FileSystemLoader(str(TEMPLATE_DIR)),
+    autoescape=select_autoescape(["html", "xml"]),
+    trim_blocks=True,
+    lstrip_blocks=True,
+)
 
 OUTPUT_DIR = Path(__file__).parent.parent / "output"
 

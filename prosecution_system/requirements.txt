@@ -1,0 +1,19 @@
+# prosecution_system/requirements.txt
+# 追诉系统 Python 依赖
+
+# 核心依赖
+PyYAML>=6.0
+flask>=3.0.0
+jinja2>=3.1.0
+
+# 异步网络
+aiohttp>=3.9.0
+
+# 缓存
+cachetools>=5.3.0
+
+# 重试机制
+tenacity>=8.2.0
+
+# 类型提示（仅开发/类型检查时需要）
+typing-extensions>=4.8.0

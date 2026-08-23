@@ -14,8 +14,24 @@ import os
 import yaml
 from pathlib import Path
 from typing import Optional, Dict, List, Any
+from cachetools import TTLCache
 
 CASES_DIR = Path(__file__).parent.parent / "cases"
+
+# TTL 缓存：每项缓存 1 小时（3600 秒），最大 200 条案件
+_case_cache: TTLCache = TTLCache(maxsize=200, ttl=3600)
+
+
+def _get_cache(case_id: str, loader: "CaseLoader" = None):
+    """从模块级 TTL 缓存读取"""
+    if case_id in _case_cache:
+        return _case_cache[case_id]
+    return None
+
+
+def _set_cache(case_id: str, data: Dict):
+    """写入模块级 TTL 缓存"""
+    _case_cache[case_id] = data
 
 
 class CaseLoader:
@@ -23,7 +39,7 @@ class CaseLoader:
 
     def __init__(self, cases_dir: Path = CASES_DIR):
         self.cases_dir = cases_dir
-        self._cache: Dict[str, Dict] = {}
+        self._local_cache: Dict[str, Dict] = {}  # 本地实例缓存（无 TTL）
 
     # ---- 基础加载 ----
 
@@ -32,8 +48,13 @@ class CaseLoader:
         加载指定案件配置
         case_id: 案件编号，如 "CASE-001" 或 "hengda"
         """
-        if use_cache and case_id in self._cache:
-            return self._cache[case_id]
+        # 优先从模块级 TTL 缓存读取
+        if use_cache:
+            cached = _get_cache(case_id)
+            if cached is not None:
+                return cached
+            if case_id in self._local_cache:
+                return self._local_cache[case_id]
 
         # 尝试多种匹配方式
         yaml_file = self._resolve_file(case_id)
@@ -46,7 +67,9 @@ class CaseLoader:
         if data is None:
             raise ValueError(f"案件配置文件为空或格式错误: {yaml_file}")
 
-        self._cache[case_id] = data
+        # 同时写入模块级 TTL 缓存和本地缓存
+        _set_cache(case_id, data)
+        self._local_cache[case_id] = data
         return data
 
     def _resolve_file(self, case_id: str) -> Optional[Path]:

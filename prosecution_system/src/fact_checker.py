@@ -20,7 +20,8 @@ import os
 import sys
 import json
 import yaml
-import requests
+import asyncio
+import aiohttp
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Tuple
@@ -142,14 +143,18 @@ class FactChecker:
             self._add_field("case_info.source_media", source_media, SourceGrade.A,
                             notes="")
         if source_url:
-            # 验证 URL 可访问性
+            # 验证 URL 可访问性（异步）
             grade = SourceGrade.A
             notes = ""
             try:
-                resp = requests.head(source_url, timeout=10, allow_redirects=True)
-                if resp.status_code != 200:
+                async def _check():
+                    async with aiohttp.ClientSession() as session:
+                        async with session.head(source_url, timeout=aiohttp.ClientTimeout(total=10), allow_redirects=True) as resp:
+                            return resp.status
+                status_code = asyncio.run(_check())
+                if status_code != 200:
                     grade = SourceGrade.B
-                    notes = f"URL返回{resp.status_code}，但可能可访问"
+                    notes = f"URL返回{status_code}，但可能可访问"
             except Exception as e:
                 grade = SourceGrade.B
                 notes = f"URL验证失败: {e}"
@@ -316,11 +321,15 @@ class FactChecker:
             notes = ""
             if url:
                 try:
-                    resp = requests.head(url, timeout=10, allow_redirects=True)
-                    if resp.status_code != 200:
+                    async def _check_url():
+                        async with aiohttp.ClientSession() as session:
+                            async with session.head(url, timeout=aiohttp.ClientTimeout(total=10), allow_redirects=True) as resp:
+                                return resp.status
+                    status_code = asyncio.run(_check_url())
+                    if status_code != 200:
                         grade = SourceGrade.B
-                        notes = f"URL返回{resp.status_code}"
-                except:
+                        notes = f"URL返回{status_code}"
+                except Exception:
                     grade = SourceGrade.B
                     notes = "URL无法验证"
 
