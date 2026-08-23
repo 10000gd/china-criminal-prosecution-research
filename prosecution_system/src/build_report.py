@@ -24,6 +24,9 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape, TemplateNot
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
 from case_loader import CaseLoader
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Jinja2 模板环境
 TEMPLATE_DIR = Path(__file__).parent.parent / "templates" / "reports"
@@ -60,6 +63,119 @@ def fmt_date(date_str):
         return f"{d.year}年{d.month}月{d.day}日"
     except Exception:
         return date_str
+
+
+class LatexTable:
+    """LaTeX longtable 结构构建器
+
+    用法::
+
+        t = LatexTable([("罪名", "3cm"), ("法条", "3cm")])
+        t.header()
+        t.row("非法吸收公众存款罪", "刑法第176条")
+        t.row("集资诈骗罪",       "刑法第192条")
+        logger.debug(t.footer())
+    """
+
+    def __init__(self, columns, widths=None):
+        """初始化列定义。
+
+        Args:
+            columns: 列标题列表，或 ("标题", ...) 元组列表
+            widths:  每列宽度（p{} 格式），与 columns 等长
+                    例如 ["3cm", "4cm", "5cm"]
+                    缺省时默认等宽分布
+        """
+        self.columns = columns
+        self.widths = widths
+        self._rows = []
+
+    # ---- 公共 API ----
+
+    def header(self):
+        """生成 \\begin{longtable} 与表头行。返回 LaTeX 片段。"""
+        col_spec = self._col_spec()
+        col_def = "|" + "|".join(f"p{{{w}}}" for w in self._resolve_widths()) + "|"
+        header_cells = " & ".join(f"\\textbf{{{c}}}" for c in self.columns)
+        return (
+            rf"\begin{{longtable}}{{{col_def}}}"
+            rf"\toprule"
+            rf"{header_cells} \\"
+            rf"\midrule"
+            rf"\endfirsthead"
+            rf"{header_cells} \\"
+            rf"\midrule"
+            rf"\endhead"
+            rf"\bottomrule"
+            rf"\end{{longtable}}"
+        )
+
+    def row(self, *cells):
+        """追加一行数据，返回生成的 LaTeX 行片段。"""
+        # 自动转义 LaTeX 特殊字符
+        escaped = [self._escape(str(c)) for c in cells]
+        line = " & ".join(escaped) + " \\" + chr(10) + r"\midrule"
+        self._rows.append(line)
+        return line
+
+    def footer(self):
+        """生成表尾（\\bottomrule \\end{longtable}）。返回 LaTeX 片段。"""
+        return r"\bottomrule\end{longtable}"
+
+    def build(self):
+        """完整构建 longtable（不含 \\begin），返回 LaTeX 字符串。"""
+        parts = []
+        # 表头
+        col_spec = self._col_spec()
+        col_def = "|" + "|".join(f"p{{{w}}}" for w in self._resolve_widths()) + "|"
+        header_cells = " & ".join(f"\\textbf{{{c}}}" for c in self.columns)
+        parts.append(rf"\begin{{longtable}}{{{col_def}}}")
+        parts.append(r"\toprule")
+        parts.append(rf"{header_cells} \\")
+        parts.append(r"\midrule")
+        parts.append(r"\endfirsthead")
+        parts.append(rf"{header_cells} \\")
+        parts.append(r"\midrule")
+        parts.append(r"\endhead")
+        # 数据行
+        for row in self._rows:
+            parts.append(row)
+        # 表尾
+        parts.append(r"\bottomrule")
+        parts.append(r"\end{longtable}")
+        return "\n".join(parts)
+
+    # ---- 内部工具 ----
+
+    def _col_spec(self):
+        """返回列规格字符串（如 '|p{3cm}|p{4cm}|'）。"""
+        ws = self._resolve_widths()
+        return "|" + "|".join(f"p{{{w}}}" for w in ws) + "|"
+
+    def _resolve_widths(self):
+        """从 columns 推导列宽列表。"""
+        if self.widths:
+            return self.widths
+        # 等宽分配（每列 3cm，上限 7 列）
+        n = len(self.columns)
+        return ["3cm"] * min(n, 7)
+
+    @staticmethod
+    def _escape(text):
+        """对 LaTeX 特殊字符做基本转义。"""
+        for old, new in [
+            ("&",  r"\&"),
+            ("%",  r"\%"),
+            ("#",  r"\#"),
+            ("_",  r"\_"),
+            ("{",  r"\{"),
+            ("}",  r"\}"),
+            ("~",  r"\textasciitilde{}"),
+            ("^",  r"\textasciicircum{}"),
+            ("\\", r"\textbackslash{}"),
+        ]:
+            text = text.replace(old, new)
+        return text
 
 
 class ReportBuilder:
@@ -264,71 +380,43 @@ class ReportBuilder:
         charges_missed = self.charges.get("charges_missed", {})
 
         self.p(f"通过穷尽分析中国刑法全部相关罪名，本研究确认本案存在\textbf{{{len(charges_missed)}项罪名遗漏}}，按追诉紧迫性排序如下：")
-        self.p(r"""\begin{longtable}{|p{2.8cm}|p{3.5cm}|p{4.5cm}|p{2.2cm}|}
-\toprule
-\textbf{遗漏罪名} & \textbf{法条依据} & \textbf{遗漏理由} & \textbf{紧迫性} \\
-\midrule
-\endfirsthead
-\textbf{遗漏罪名} & \textbf{法条依据} & \textbf{遗漏理由} & \textbf{紧迫性} \\
-\midrule
-\endhead
-\bottomrule
-\end{longtable}
-""")
 
+        # ---- 遗漏罪名表 ----
         if charges_missed:
-            rows = []
+            missed_table = LatexTable(
+                ["遗漏罪名", "法条依据", "遗漏理由", "紧迫性"],
+                ["2.8cm", "3.5cm", "4.5cm", "2.2cm"],
+            )
             for cid, cdata in charges_missed.items():
-                name = cdata.get("name", "")
-                statute = cdata.get("statute", "")
-                reason = cdata.get("reason", "")
-                rows.append(f"{name} & {statute} & {reason} & 高\\\\")
-        self.p(r"""\begin{longtable}{|p{2.8cm}|p{3.5cm}|p{4.5cm}|p{2.2cm}|}
-\toprule
-\textbf{遗漏罪名} & \textbf{法条依据} & \textbf{遗漏理由} & \textbf{紧迫性} \\
-\midrule\endfirsthead
-\textbf{遗漏罪名} & \textbf{法条依据} & \textbf{遗漏理由} & \textbf{紧迫性} \\
-\midrule\endhead
-\bottomrule\end{longtable}""")
+                missed_table.row(
+                    cdata.get("name", ""),
+                    cdata.get("statute", ""),
+                    cdata.get("reason", ""),
+                    "高",
+                )
+            self.p(missed_table.build())
 
-        # 罪名全景表
-        self.p(r"""\subsection{全罪名追诉可行性评估矩阵}
-\begin{longtable}{|p{2.5cm}|p{2.5cm}|p{3cm}|p{3cm}|p{2cm}|}
-\toprule
-\textbf{罪名} & \textbf{法条} & \textbf{证据类型} & \textbf{追诉可行性} & \textbf{优先级} \\
-\midrule
-\endfirsthead
-\textbf{罪名} & \textbf{法条} & \textbf{证据类型} & \textbf{追诉可行性} & \textbf{优先级} \\
-\midrule
-\endhead
-\bottomrule
-\end{longtable}""")
-
-        all_charges = {}
-        for cid, cdata in {**charges_judged, **charges_missed}.items():
-            all_charges[cid] = cdata
-
+        # ---- 罪名全景评估矩阵 ----
+        self.p(r"""\subsection{全罪名追诉可行性评估矩阵}""")
+        all_charges = {**charges_judged, **charges_missed}
         if all_charges:
-            rows = []
+            matrix_table = LatexTable(
+                ["罪名", "法条", "证据类型", "追诉可行性", "优先级"],
+                ["2.5cm", "2.5cm", "3cm", "3cm", "2cm"],
+            )
             for cid, cdata in all_charges.items():
-                name = cdata.get("name", "")
-                statute = cdata.get("statute", "")
                 ev_type = cdata.get("evidence_type", [])
                 ev_str = "、".join(ev_type[:3]) if ev_type else "待补充"
                 feasible = "已追诉" if cid in charges_judged else "待追诉"
-                priority = "✅" if cid in charges_missed else "—"
-                rows.append(f"{name} & {statute} & {ev_str} & {feasible} & {priority}\\\\\n\\midrule")
-            self.p(r"""\begin{longtable}{|p{2.5cm}|p{2.5cm}|p{3cm}|p{3cm}|p{2cm}|}
-\toprule
-\textbf{罪名} & \textbf{法条} & \textbf{证据类型} & \textbf{追诉可行性} & \textbf{优先级} \\
-\midrule\endfirsthead
-\textbf{罪名} & \textbf{法条} & \textbf{证据类型} & \textbf{追诉可行性} & \textbf{优先级} \\
-\midrule\endhead
-""")
-            for row in rows:
-                self.p(row)
-            self.p(r"""\bottomrule
-\end{longtable}""")
+                priority = r"\checkmark" if cid in charges_missed else "—"
+                matrix_table.row(
+                    cdata.get("name", ""),
+                    cdata.get("statute", ""),
+                    ev_str,
+                    feasible,
+                    priority,
+                )
+            self.p(matrix_table.build())
 
     def build_part3_evidence_chains(self):
         """第三部分：证据链分析"""
@@ -337,94 +425,88 @@ class ReportBuilder:
 本研究对全案证据链进行标准化评估，确认以下证据断裂点：""")
 
         if self.evidence_gaps:
-            self.p(r"""\begin{longtable}{|p{2cm}|p{2.5cm}|p{4cm}|p{2cm}|p{3.5cm}|}
-\toprule
-\textbf{断裂点编号} & \textbf{涉及罪名} & \textbf{断裂描述} & \textbf{严重程度} & \textbf{补强建议} \\
-\midrule
-\endfirsthead
-\textbf{断裂点编号} & \textbf{涉及罪名} & \textbf{断裂描述} & \textbf{严重程度} & \textbf{补强建议} \\
-\midrule
-\endhead
-\bottomrule
-\end{longtable}""")
+            # 构建 all_charges 映射（供 gap 渲染使用）
+            charges_judged = self.charges.get("charges_judged", {})
+            charges_missed = self.charges.get("charges_missed", {})
+            all_charges = {**charges_judged, **charges_missed}
 
+            gap_table = LatexTable(
+                ["断裂点编号", "涉及罪名", "断裂描述", "严重程度", "补强建议"],
+                ["2cm", "2.5cm", "4cm", "2cm", "3.5cm"],
+            )
             for gap in self.evidence_gaps:
-                gap_id = gap.get("gap_id", "")
                 crime_cid = gap.get("crime", "")
-                crime_name = all_charges.get(crime_cid, {}).get("name", crime_cid) if 'all_charges' in dir() else crime_cid
-                desc = gap.get("description", "")
+                crime_name = all_charges.get(crime_cid, {}).get("name", crime_cid)
                 severity = gap.get("severity", "")
+                severity_color = {
+                    "critical": r"\color{crimson}严重",
+                    "high":     r"\color{gold}较高",
+                    "medium":   "中等",
+                }.get(severity, severity)
                 rec = gap.get("recommended_evidence", [])
                 rec_str = "；".join(rec[:4]) if rec else "待调查"
-                severity_color = {"critical": r"\color{crimson}严重", "high": r"\color{gold}较高", "medium": "中等"}.get(severity, severity)
-                self.p(f"{gap_id} & {crime_name} & {desc} & {severity_color} & {rec_str}\\\\\n\\midrule")
+                gap_table.row(
+                    gap.get("gap_id", ""),
+                    crime_name,
+                    gap.get("description", ""),
+                    severity_color,
+                    rec_str,
+                )
+            self.p(gap_table.build())
 
     def build_part4_comparative_study(self):
         """第四部分：类案研究"""
         self.p(r"""\part{第四卷：国内外类案穷尽研究}
-\section{国内类案数据库}
-\begin{longtable}{|p{2.5cm}|p{3cm}|p{4cm}|p{3cm}|p{2cm}|}
-\toprule
-\textbf{案件名称} & \textbf{审理法院} & \textbf{认定罪名} & \textbf{判决结果} & \textbf{关键发现} \\
-\midrule
-\endfirsthead
-\textbf{案件名称} & \textbf{审理法院} & \textbf{认定罪名} & \textbf{判决结果} & \textbf{关键发现} \\
-\midrule
-\endhead
-\bottomrule
-\end{longtable}""")
+\section{国内类案数据库}""")
 
         domestic = self.comparable.get("domestic", [])
         if domestic:
+            dom_table = LatexTable(
+                ["案件名称", "审理法院", "认定罪名", "判决结果", "关键发现"],
+                ["2.5cm", "3cm", "4cm", "3cm", "2cm"],
+            )
             for case in domestic:
-                name = case.get("case_name", "")
-                court = case.get("court", "")
-                charges_str = "、".join(case.get("charges", []))
-                verdict = case.get("verdict", "")
-                key = case.get("key_findings", "")
-                self.p(f"{name} & {court} & {charges_str} & {verdict} & {key}\\\\\n\\midrule")
+                dom_table.row(
+                    case.get("case_name", ""),
+                    case.get("court", ""),
+                    "、".join(case.get("charges", [])),
+                    case.get("verdict", ""),
+                    case.get("key_findings", ""),
+                )
+            self.p(dom_table.build())
 
         self.p(r"""
-\section{国际类案数据库}
-\begin{longtable}{|p{2.5cm}|p{2cm}|p{2.5cm}|p{4cm}|p{2.5cm}|}
-\toprule
-\textbf{案件名称} & \textbf{国家} & \textbf{关键罪名} & \textbf{判决/处置} & \textbf{借鉴价值} \\
-\midrule
-\endfirsthead
-\textbf{案件名称} & \textbf{国家} & \textbf{关键罪名} & \textbf{判决/处置} & \textbf{借鉴价值} \\
-\midrule
-\endhead
-\bottomrule
-\end{longtable}""")
+\section{国际类案数据库}""")
 
         international = self.comparable.get("international", [])
         if international:
+            intl_table = LatexTable(
+                ["案件名称", "国家", "关键罪名", "判决/处置", "借鉴价值"],
+                ["2.5cm", "2cm", "2.5cm", "4cm", "2.5cm"],
+            )
             for case in international:
-                name = case.get("case_name", "")
-                country = case.get("country", "")
-                charges_str = "、".join(case.get("charges", [])) if isinstance(case.get("charges"), list) else str(case.get("charges", ""))
-                verdict = case.get("verdict", "")
-                key = case.get("key_findings", "")
-                self.p(f"{name} & {country} & {charges_str} & {verdict} & {key}\\\\\n\\midrule")
+                charges_val = case.get("charges", [])
+                charges_str = "、".join(charges_val) if isinstance(charges_val, list) else str(charges_val)
+                intl_table.row(
+                    case.get("case_name", ""),
+                    case.get("country", ""),
+                    charges_str,
+                    case.get("verdict", ""),
+                    case.get("key_findings", ""),
+                )
+            self.p(intl_table.build())
 
     def build_part5_victims_assets(self):
         """第五部分：受害者与资产"""
         self.p(r"""\part{第五卷：受害者分类与资产追回}
-\section{受害者分类与清偿顺位}
-\begin{longtable}{|p{2.5cm}|p{2cm}|p{2.5cm}|p{2cm}|p{4.5cm}|}
-\toprule
-\textbf{受害者类型} & \textbf{人数（万人）} & \textbf{损失规模} & \textbf{清偿顺位} & \textbf{证据要求} \\
-\midrule
-\endfirsthead
-\textbf{受害者类型} & \textbf{人数（万人）} & \textbf{损失规模} & \textbf{清偿顺位} & \textbf{证据要求} \\
-\midrule
-\endhead
-\bottomrule
-\end{longtable}""")
+\section{受害者分类与清偿顺位}""")
 
         if self.victims:
+            vic_table = LatexTable(
+                ["受害者类型", "人数（万人）", "损失规模", "清偿顺位", "证据要求"],
+                ["2.5cm", "2cm", "2.5cm", "2cm", "4.5cm"],
+            )
             for v in self.victims:
-                cat = v.get("category", "")
                 count_val = v.get("count_approx", 0)
                 count = fmt_yuan(count_val, "万") if count_val else "未知"
                 if v.get("count_approx_note"):
@@ -433,9 +515,16 @@ class ReportBuilder:
                 loss = fmt_yuan(loss_val) if loss_val else "未知"
                 if v.get("loss_approx_note"):
                     loss += r"\textsuperscript{\textit{[估]}}"
-                priority = v.get("liquidation_priority", "")
                 ev = "、".join(v.get("evidence_needed", [])[:3])
-                self.p(f"{cat} & {count} & {loss} & 第{priority}顺位 & {ev}\\")
+                vic_table.row(
+                    v.get("category", ""),
+                    count,
+                    loss,
+                    f"第{v.get('liquidation_priority', '')}顺位",
+                    ev,
+                )
+            self.p(vic_table.build())
+
         # 资产处置
         self.p(r"""\section{资产追缴与处置}
 """)
@@ -518,6 +607,7 @@ class ReportBuilder:
 
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(tex)
+        logger.info(f"LaTeX 报告已保存: {output_path}")
         print(f"✅ LaTeX 报告已保存: {output_path}")
         return output_path
 
@@ -542,6 +632,7 @@ class ReportBuilder:
                 timeout=120,
             )
             if result.returncode != 0:
+                logger.warning(f"xelatex 第{i+1}次编译失败，日志：{result.stdout[-2000:]}")
                 print(f"⚠️ xelatex 第{i+1}次编译失败，查看日志：")
                 print(result.stdout[-2000:])
                 print(result.stderr[-1000:])
@@ -549,9 +640,11 @@ class ReportBuilder:
 
         pdf_path = tex_path.with_suffix(".pdf")
         if pdf_path.exists():
+            logger.info(f"PDF 编译成功: {pdf_path}")
             print(f"✅ PDF 编译成功: {pdf_path}")
             return pdf_path
         else:
+            logger.error("PDF 编译失败，请检查 LaTeX 错误")
             print("❌ PDF 编译失败，请检查 LaTeX 错误")
             return None
 
@@ -569,6 +662,7 @@ def main():
     loader = CaseLoader()
 
     if args.list:
+        logger.info("列出所有案件")
         print("=" * 60)
         print("追诉系统 · 案件数据库")
         print("=" * 60)
@@ -580,8 +674,10 @@ def main():
     # 加载并验证案件
     try:
         case_data = loader.load(args.case)
+        logger.info(f"加载案件: {case_data['meta']['case_name_full']}")
         print(f"✅ 加载案件: {case_data['meta']['case_name_full']}")
     except FileNotFoundError:
+        logger.error(f"案件未找到: {args.case}")
         print(f"❌ 案件未找到: {args.case}")
         print("可用案件：")
         for c in loader.list_cases():
@@ -591,6 +687,7 @@ def main():
     # 验证
     warnings = loader.validate(args.case)
     if warnings:
+        logger.warning(f"配置警告: {w}")
         print("⚠️ 配置警告：")
         for w in warnings:
             print(f"  • {w}")
@@ -601,6 +698,7 @@ def main():
     checker = FactChecker(args.case, loader)
     results = checker.check()
     if results["grade_e"] > 0:
+        logger.error("存在已验证错误数据（GRADE_E），必须修正后才能生成报告")
         print("❌ 存在已验证错误数据（GRADE_E），必须修正后才能生成报告：")
         for issue in results["issues"]:
             if "GRADE_E" in issue:
@@ -609,6 +707,7 @@ def main():
     grade_c = results["grade_c"]
     grade_d = results["grade_d"]
     if grade_c > 0 or grade_d > 0:
+        logger.warning(f"存在推测数据(GRADE_C:{grade_c})/未知数据(GRADE_D:{grade_d})")
         print(f"⚠️  警告：存在推测数据(GRADE_C:{grade_c})/未知数据(GRADE_D:{grade_d})")
         print(f"   详细报告：python src/fact_checker.py --case {args.case} --save")
         print(f"   推测数据已在报告中标注[估]，未知数据标注[待核实]")
@@ -621,6 +720,7 @@ def main():
     builder.save_tex(tex_path)
 
     if args.format == "pdf":
+        logger.info("正在编译 PDF（xelatex）...")
         print("🔄 正在编译 PDF（xelatex）...")
         builder.compile_pdf(tex_path)
 

@@ -23,8 +23,10 @@ import argparse
 from case_loader import CaseLoader
 from build_report import ReportBuilder
 from wenshu_updater import CaseTracker, ManualTracker
+from logging_config import setup_logging
 
 OUTPUT_DIR = Path(__file__).parent / "output"
+logger = setup_logging("main")
 
 
 def cmd_list() -> None:
@@ -38,6 +40,7 @@ def cmd_list() -> None:
         "appealed": "上诉中",
         "closed": "已结案",
     }
+    logger.info(f"查询案件列表，共 {len(cases)} 个案件")
     print(f"\n{'='*60}")
     print(f" 追诉系统 · 案件数据库 ({len(cases)} 个案件)")
     print(f"{'='*60}")
@@ -54,9 +57,9 @@ def cmd_report(case_id: str, fmt: str = "tex") -> None:
     try:
         data = loader.load(case_id)
         case_name = data["meta"]["case_name_full"]
-        print(f"正在生成报告: {case_name}")
+        logger.info(f"正在生成报告: {case_name}")
     except FileNotFoundError:
-        print(f"案件未找到: {case_id}")
+        logger.error(f"案件未找到: {case_id}")
         return
 
     builder = ReportBuilder(case_id, loader)
@@ -65,7 +68,7 @@ def cmd_report(case_id: str, fmt: str = "tex") -> None:
     builder.save_tex(tex_path)
 
     if fmt == "pdf":
-        print("正在编译 PDF…（xelatex，可能需要30-60秒）")
+        logger.info("正在编译 PDF…（xelatex，可能需要30-60秒）")
         pdf_path = builder.compile_pdf(tex_path)
         if pdf_path:
             print(f"\n✅ PDF已生成: {pdf_path}")
@@ -81,6 +84,7 @@ def cmd_search(query: str) -> None:
     name_matches = [c for c in all_cases
                     if query.lower() in (c.get("case_name", "") + c.get("case_name_full", "")).lower()]
 
+    logger.info(f"搜索「{query}」: 名称匹配 {len(name_matches)} 个，全文匹配 {len(results)} 个")
     print(f"\n搜索「{query}」:")
     if name_matches:
         print(f"  按名称匹配: {len(name_matches)} 个")
@@ -103,6 +107,7 @@ def cmd_tracker(args) -> None:
         # 交互模式
         cases = tracker.list_tracked()
         if not cases:
+            logger.info("暂无跟踪案件")
             print("暂无跟踪案件")
         else:
             for c in cases:
@@ -129,6 +134,7 @@ def cmd_serve() -> None:
     from web_app import app
     port = int(os.environ.get("PORT", 5000))
     debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
+    logger.info(f"🚀 追诉系统启动: http://localhost:{port}，调试模式: {debug}")
     print(f"🚀 追诉系统启动中… http://localhost:{port}")
     print(f"   调试模式: {debug}")
     app.run(host="0.0.0.0", port=port, debug=debug)
