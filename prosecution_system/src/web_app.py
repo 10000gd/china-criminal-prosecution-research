@@ -14,8 +14,10 @@ Flask Web 应用
 """
 
 import os
+import re
 import sys
 from pathlib import Path
+from typing import Optional
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -41,6 +43,27 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # ---- 首页/案件列表 ----
+
+# ---- 安全中间件 ----
+
+@app.before_request
+def security_headers() -> None:
+    """注入安全响应头（预处理）"""
+    pass  # 响应头在实际响应中通过 after_request 设置
+
+
+@app.after_request
+def add_security_headers(response):
+    """追加安全响应头"""
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    # 移除 Server 指纹
+    response.headers.pop("Server", None)
+    return response
+
 
 @app.route("/")
 def index():

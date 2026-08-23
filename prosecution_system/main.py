@@ -27,9 +27,9 @@ from wenshu_updater import CaseTracker, ManualTracker
 OUTPUT_DIR = Path(__file__).parent / "output"
 
 
-def cmd_list():
+def cmd_list() -> None:
     """列出所有案件"""
-    loader = CaseLoader()
+    loader: CaseLoader = CaseLoader()
     cases = loader.list_cases()
     status_labels = {
         "investigating": "调查中",
@@ -48,9 +48,9 @@ def cmd_list():
     print(f"\n{'='*60}\n")
 
 
-def cmd_report(case_id, fmt="tex"):
+def cmd_report(case_id: str, fmt: str = "tex") -> None:
     """生成报告"""
-    loader = CaseLoader()
+    loader: CaseLoader = CaseLoader()
     try:
         data = loader.load(case_id)
         case_name = data["meta"]["case_name_full"]
@@ -73,9 +73,9 @@ def cmd_report(case_id, fmt="tex"):
         print(f"\n✅ LaTeX已生成: {tex_path}")
 
 
-def cmd_search(query):
+def cmd_search(query: str) -> None:
     """搜索案件"""
-    loader = CaseLoader()
+    loader: CaseLoader = CaseLoader()
     results = loader.search_cases(query)
     all_cases = loader.list_cases()
     name_matches = [c for c in all_cases
@@ -94,9 +94,9 @@ def cmd_search(query):
         print("  未找到匹配结果")
 
 
-def cmd_tracker(args):
+def cmd_tracker(args) -> None:
     """跟踪管理"""
-    tracker = CaseTracker()
+    tracker: CaseTracker = CaseTracker()
     action = args.tracker_action
 
     if not action:
@@ -124,7 +124,7 @@ def cmd_tracker(args):
         tracker.remove_case(args.case_id)
 
 
-def cmd_serve():
+def cmd_serve() -> None:
     """启动Web服务"""
     from web_app import app
     port = int(os.environ.get("PORT", 5000))
@@ -134,9 +134,9 @@ def cmd_serve():
     app.run(host="0.0.0.0", port=port, debug=debug)
 
 
-def cmd_interactive():
+def cmd_interactive() -> None:
     """交互式菜单"""
-    loader = CaseLoader()
+    loader: CaseLoader = CaseLoader()
     print(f"""
 ╔══════════════════════════════════════╗
 ║   追诉系统 · 全链条刑事追诉研究平台    ║

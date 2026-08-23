@@ -17,10 +17,13 @@ import re
 import json
 import time
 import hashlib
+import asyncio
+import aiohttp
 import requests
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, Dict, List, Any
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 TRACKER_FILE = DATA_DIR / "case_tracker.json"
@@ -53,12 +56,28 @@ class WenshuAPI:
         if self.token:
             self.session.headers["Authorization"] = f"Bearer {self.token}"
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=2, min=3, max=15),
+        retry=retry_if_exception_type((aiohttp.ClientError, asyncio.TimeoutError)),
+        reraise=True,
+    )
+    async def _async_search(self, case_num: str, court: str, max_results: int) -> List[Dict]:
+        """异步搜索案件（带 tenacity 重试）"""
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{self.BASE_URL}/181224CPTG/PT1ServerProxy.aspx",
+                json={"cmenu": "case", "keyword": case_num, "court": court, "pageSize": max_results},
+                timeout=aiohttp.ClientTimeout(total=15),
+            ) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    return data.get("data", [])
+                raise aiohttp.ClientError(f"HTTP {resp.status}")
+
     def search_case(self, case_num: str, court: str = "", max_results: int = 10) -> List[Dict]:
         """
-        按案号搜索案件文书
-
-        case_num: 案号，如 "(2026)粤03刑初XXX号"
-        返回匹配的文书列表
+        按案号搜索案件文书（同步包装，自动重试 3 次）
         """
         if not self.token:
             print("⚠️ Wenshu API Token 未设置，请设置环境变量 WENSHU_TOKEN")
@@ -66,23 +85,10 @@ class WenshuAPI:
             return []
 
         try:
-            response = self.session.post(
-                f"{self.BASE_URL}/181224CPTG/PT1ServerProxy.aspx",
-                json={
-                    "cmenu": "case",
-                    "keyword": case_num,
-                    "court": court,
-                    "pageSize": max_results,
-                },
-                timeout=15,
-            )
-            if response.status_code == 200:
-                data = response.json()
-                return data.get("data", [])
+            return asyncio.run(self._async_search(case_num, court, max_results))
         except Exception as e:
-            print(f"Wenshu API 请求失败: {e}")
-
-        return []
+            print(f"Wenshu API 请求失败（已达最大重试次数）: {e}")
+            return []
 
     def get_case_detail(self, doc_id: str) -> Optional[Dict]:
         """获取指定文书详情"""
