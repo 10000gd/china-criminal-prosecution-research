@@ -203,7 +203,8 @@ class CaseTracker:
 
     def __init__(self, tracker_file: Path = TRACKER_FILE):
         _ensure_data_dir()
-        self.tracker_file = tracker_file
+        # 支持字符串参数
+        self.tracker_file = Path(tracker_file) if isinstance(tracker_file, str) else tracker_file
         self.tracker_file.parent.mkdir(parents=True, exist_ok=True)
         self.tracked: Dict[str, Dict] = self._load()
 
@@ -361,7 +362,8 @@ class ManualTracker:
 
     def __init__(self, tracker_file: Path = TRACKER_FILE):
         _ensure_data_dir()
-        self.tracker_file = tracker_file
+        # 支持字符串参数
+        self.tracker_file = Path(tracker_file) if isinstance(tracker_file, str) else tracker_file
         self.tracker_file.parent.mkdir(parents=True, exist_ok=True)
         self.tracked: Dict[str, Dict] = self._load()
 
