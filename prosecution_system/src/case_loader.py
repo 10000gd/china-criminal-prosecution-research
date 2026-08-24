@@ -199,20 +199,22 @@ class CaseLoader:
         if direct.exists():
             return direct
 
-        # 小写匹配（case_id不含横杠时，如 "hengda"）
+        # 扫描一次，构建小写case_id映射
+        lowercase_map: Dict[str, Path] = {}
         for f in self.cases_dir.glob("*.yaml"):
-            if f.stem.lower() == case_id.lower():
-                return f
-            # 匹配 case_id 字段
             try:
                 with open(f, "r", encoding="utf-8") as fh:
                     d = yaml.safe_load(fh)
-                    if d and d.get("meta", {}).get("case_id", "").lower() == case_id.lower():
-                        return f
+                    cid = d.get("meta", {}).get("case_id", "").lower() if d else ""
+                    stem_lower = f.stem.lower()
+                    if cid and cid not in lowercase_map:
+                        lowercase_map[cid] = f
+                    if stem_lower not in lowercase_map:
+                        lowercase_map[stem_lower] = f
             except Exception:
                 pass
 
-        return None
+        return lowercase_map.get(case_id.lower())
 
     # ---- 批量操作 ----
 

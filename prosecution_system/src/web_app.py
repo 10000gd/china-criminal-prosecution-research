@@ -14,7 +14,6 @@ Flask Web 应用
 """
 
 import os
-import re
 import sys
 from pathlib import Path
 
@@ -306,10 +305,30 @@ def api_charges(case_id):
 # ---- 运行 ----
 
 if __name__ == "__main__":
+    """
+    生产级启动入口（优先使用 gunicorn/waitress，不建议直接运行此文件）
+
+    推荐启动方式：
+      gunicorn (Linux):  gunicorn -w 4 -b 0.0.0.0:5000 --timeout 120 'src.web_app:app'
+      waitress (通用):   waitress-serve --port 5000 --threads 8 src.web_app:app
+      开发调试:          python src/web_app.py
+
+    ⚠️ 直接运行 python src/web_app.py 使用 Flask 内置服务器（不安全），仅适合开发调试。
+    """
     port = int(os.environ.get("PORT", 5000))
     debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
-    logger.info(f"🚀 追诉系统启动: http://localhost:{port}，调试模式: {debug}，案件数量: {len(loader.list_cases())}")
+    case_count = len(loader.list_cases())
+
+    if not debug:
+        print("=" * 60)
+        print("⚠️  警告：直接运行本文件使用 Flask 内置服务器（不安全）")
+        print("   生产环境请使用：")
+        print(f"   gunicorn -w 4 -b 0.0.0.0:{port} --timeout 120 'src.web_app:app'")
+        print(f"   或 waitress-serve --port {port} --threads 8 src.web_app:app")
+        print("=" * 60)
+
+    logger.info(f"🚀 追诉系统启动: http://localhost:{port}，调试模式: {debug}，案件数量: {case_count}")
     print(f"🚀 追诉系统启动: http://localhost:{port}")
     print(f"   调试模式: {debug}")
-    print(f"   案件数量: {len(loader.list_cases())}")
+    print(f"   案件数量: {case_count}")
     app.run(host="0.0.0.0", port=port, debug=debug)

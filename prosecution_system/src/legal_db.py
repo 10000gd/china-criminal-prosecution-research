@@ -23,11 +23,22 @@ LOCAL_REG_INDEX = LEGALDB_DIR / "local_regulations_index.json"
 
 
 class LocalRegulationDB:
-    """地方性法规数据库（补充层）"""
+    """地方性法规数据库（补充层）
+
+    ⚠️ 重要数据质量警告（2026-08-24）：
+    本数据集（775条）存在系统性数据损坏：
+    - content字段被源数据库(law_db)错误填充为最高人民法院司法解释文本（与标题完全无关）
+    - description字段为通用模板句，无实质内容
+    - 本数据集仅含元数据，无法用于实质性法律检索
+
+    搜索方法在每次调用时会输出警告。
+    如需完整地方性法规全文，需从 flk.npc.gov.cn 专项采集。
+    """
 
     def __init__(self, index_path: Path = LOCAL_REG_INDEX):
         self.index_path = index_path
         self._data: Optional[Dict] = None
+        self._warned: bool = False  # 只警告一次
 
     def _load(self):
         if self._data is None:
@@ -35,7 +46,7 @@ class LocalRegulationDB:
                 with open(self.index_path, 'r', encoding='utf-8') as f:
                     self._data = json.load(f)
             else:
-                self._data = {'total': 0, 'records': [], 'by_province': {}}
+                self._data = {'total': 0, 'records': [], 'by_province': {}, 'data_quality': {}}
 
     @property
     def records(self) -> List[Dict]:
@@ -52,32 +63,61 @@ class LocalRegulationDB:
         self._load()
         return self._data.get('by_province', {})
 
+    @property
+    def data_status(self) -> str:
+        """返回数据质量状态: USABLE | UNUSABLE | PARTIAL"""
+        self._load()
+        return self._data.get('data_quality', {}).get('data_status', 'UNKNOWN')
+
+    def _warn_once(self):
+        """仅输出一次警告，避免重复刷屏"""
+        if not self._warned:
+            print(
+                "\n⚠️  [LocalRegulationDB 数据质量警告] "
+                "本数据集中 content 字段被源数据库污染，description 为通用模板。"
+                "775条记录全部不可用于实质性法律检索。"
+                "详见: cases/legaldb/local_regulations_index.json → data_quality"
+            )
+            self._warned = True
+
     def search(self, keyword: str = '', province: str = '',
                top_k: int = 20) -> List[Dict]:
-        """搜索地方性法规
-        
+        """搜索地方性法规（⚠️ 会输出数据质量警告）
+
         Args:
-            keyword: 关键词（匹配标题和摘要）
+            keyword: 关键词（仅匹配标题，无实质内容可搜）
             province: 省份名称
             top_k: 返回数量
+
+        Returns:
+            匹配的法规列表（仅含元数据，无正文）
         """
+        self._warn_once()
         results = self.records
         if province:
-            results = [r for r in results if province in r.get('province', '') or province in r.get('issuing_authority', '')]
+            results = [r for r in results if province in r.get('province', '')
+                       or province in r.get('issuing_authority', '')]
         if keyword:
             kw = keyword.lower()
-            results = [r for r in results if kw in r.get('name', '').lower() or kw in r.get('summary', '').lower()]
+            results = [r for r in results if kw in r.get('name', '').lower()]
         return results[:top_k]
 
     def get_by_province(self, province: str) -> List[Dict]:
-        return [r for r in self.records if province in r.get('province', '') or province in r.get('issuing_authority', '')]
+        self._warn_once()
+        return [r for r in self.records
+                if province in r.get('province', '') or province in r.get('issuing_authority', '')]
 
     def get_stats(self) -> Dict[str, Any]:
         self._load()
+        dq = self._data.get('data_quality', {})
         return {
             'total': self.total,
             'by_province': self.by_province,
-            'note': '仅含摘要预览，全文需专项采集（flk.npc.gov.cn）'
+            'data_status': dq.get('data_status', 'UNKNOWN'),
+            'has_full_text': dq.get('has_full_text', False),
+            'has_meaningful_preview': dq.get('has_meaningful_preview', False),
+            'known_issues': dq.get('known_issues', []),
+            'recommendation': dq.get('recommendation', ''),
         }
 
 
@@ -244,7 +284,10 @@ class LegalDB:
             lr_stats = lr.get_stats()
             stats["local_regulations"] = lr_stats["total"]
             stats["local_reg_by_province"] = lr_stats["by_province"]
-            stats["local_reg_note"] = lr_stats["note"]
+            stats["local_reg_data_status"] = lr_stats.get("data_status", "UNKNOWN")
+            stats["local_reg_has_preview"] = lr_stats.get("has_meaningful_preview", False)
+            stats["local_reg_recommendation"] = lr_stats.get("recommendation", "")
+            stats["local_reg_known_issues"] = lr_stats.get("known_issues", [])
         except Exception:
             pass
         return stats
