@@ -15,8 +15,7 @@ import re
 import yaml
 from pathlib import Path
 from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, asdict
-from functools import lru_cache
+from dataclasses import dataclass
 
 # 路径配置
 LEGALDB_DIR = Path(__file__).parent.parent / "cases" / "legaldb"

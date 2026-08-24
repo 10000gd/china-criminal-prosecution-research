@@ -23,7 +23,7 @@ import requests
 from pathlib import Path
 from datetime import datetime
 from filelock import FileLock
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 import logging
 

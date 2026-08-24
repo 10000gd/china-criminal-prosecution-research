@@ -80,7 +80,7 @@ class LegalDB:
                             "article_no": row['article_no'],
                             "text": row['text'][:200] + "..." if len(str(row['text'])) > 200 else row['text']
                         })
-                except:
+                except Exception:
                     pass
         return results
 
@@ -149,7 +149,7 @@ class LegalDB:
         except Exception:
             pass
         try:
-            law_stats = db.get_stats()
+            law_stats = self.china_law_db.get_stats()
             stats["china_law_total"] = law_stats["total_laws"]
             stats["china_law_chars"] = law_stats["total_size_chars"]
             stats["china_law_by_category"] = law_stats["by_category"]

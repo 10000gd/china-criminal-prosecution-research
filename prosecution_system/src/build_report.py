@@ -19,7 +19,7 @@ import sys
 import argparse
 from pathlib import Path
 from datetime import datetime
-from jinja2 import Environment, FileSystemLoader, select_autoescape, TemplateNotFound
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))

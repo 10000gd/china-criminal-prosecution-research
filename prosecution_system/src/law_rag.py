@@ -11,7 +11,7 @@ import re
 import hashlib
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 jieba.setLogLevel(20)  # 关闭jieba日志
 LEGALDB_DIR = Path(__file__).parent.parent / "cases" / "legaldb"
