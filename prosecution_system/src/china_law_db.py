@@ -78,19 +78,21 @@ class ChinaLawDatabase:
                         if not name_set and '分类' not in stripped and '发布' not in stripped and '来源' not in stripped:
                             meta['name'] = stripped[1:].strip()
                             name_set = True
-                        elif '分类' in stripped:
-                            parts = stripped.split(':', 1)
+                        elif '\uff1a' in stripped or ':' in stripped:
+                            # 支持全角冒号 (\uff1a) 和 ASCII 冒号
+                            sep = '\uff1a' if '\uff1a' in stripped else ':'
+                            parts = stripped.split(sep, 1)
                             if len(parts) == 2:
-                                meta['category'] = parts[1].strip()
-                        elif '发布' in stripped:
-                            parts = stripped.split(':', 1)
-                            if len(parts) == 2:
-                                date_val = parts[1].strip().split('_')[0]
-                                meta['date'] = date_val
-                        elif '来源' in stripped:
-                            parts = stripped.split(':', 1)
-                            if len(parts) == 2:
-                                meta['path'] = stripped  # 来源行不需要解析
+                                raw = parts[1].strip()
+                                if '\u53d1\u5e03\u65e5\u671f' in parts[0]:  # 发布
+                                    if re.match(r'^\d{8}', raw):
+                                        meta['date'] = raw[:8]
+                                    else:
+                                        meta['date'] = ''
+                                elif '\u5206\u7c7b' in parts[0]:  # 分类
+                                    meta['category'] = raw
+                                elif '\u6765\u6e90' in parts[0]:  # 来源
+                                    meta['path'] = stripped
                     elif line.startswith('='):
                         continue
                     else:
