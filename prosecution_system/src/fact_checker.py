@@ -24,7 +24,7 @@ import asyncio
 import aiohttp
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, Any
 import logging
 
 logger = logging.getLogger(__name__)
@@ -353,6 +353,12 @@ class FactChecker:
         grade_d = r["grade_d"]
         grade_e = r["grade_e"]
 
+        # 格式化百分比（用 f-string 表达式而非 Python 表达式字符串）
+        pct_a = f"{grade_a/total*100:.0f}%" if total else "0%"
+        pct_b = f"{grade_b/total*100:.0f}%" if total else "0%"
+        pct_c = f"{grade_c/total*100:.0f}%" if total else "0%"
+        pct_d = f"{grade_d/total*100:.0f}%" if total else "0%"
+
         report = f"""
 {'='*60}
   数据真实性核查报告
@@ -362,10 +368,10 @@ class FactChecker:
 
 【总体评分】
   总字段数：{total}
-  ✅ GRADE_A（官方一手）：{grade_a} ({grade_a/total*100:.0f}% if total else 0)
-  🔶 GRADE_B（可推断）：  {grade_b} ({grade_b/total*100:.0f}% if total else 0)
-  ⚠️ GRADE_C（推测）：    {grade_c} ({grade_c/total*100:.0f}% if total else 0)
-  ❓ GRADE_D（未知）：    {grade_d} ({grade_d/total*100:.0f}% if total else 0)
+  ✅ GRADE_A（官方一手）：{grade_a} ({pct_a})
+  🔶 GRADE_B（可推断）：  {grade_b} ({pct_b})
+  ⚠️ GRADE_C（推测）：    {grade_c} ({pct_c})
+  ❓ GRADE_D（未知）：    {grade_d} ({pct_d})
   ❌ GRADE_E（错误）：    {grade_e}
 
 【数据可靠性】{'★' * (grade_a if total else 0) or '—'}
