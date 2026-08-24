@@ -1,0 +1,12 @@
+
+# === OpenClaw Agent Internal Files ===
+memory/
+HEARTBEAT.md
+AGENTS.md
+SOUL.md
+IDENTITY.md
+USER.md
+TOOLS.md
+
+# Project build/generated files
+prosecution_system/data/
