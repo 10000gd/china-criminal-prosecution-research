@@ -19,6 +19,66 @@ from pathlib import Path
 from typing import List, Dict, Optional, Any
 
 LEGALDB_DIR = Path(__file__).parent.parent / "cases" / "legaldb"
+LOCAL_REG_INDEX = LEGALDB_DIR / "local_regulations_index.json"
+
+
+class LocalRegulationDB:
+    """地方性法规数据库（补充层）"""
+
+    def __init__(self, index_path: Path = LOCAL_REG_INDEX):
+        self.index_path = index_path
+        self._data: Optional[Dict] = None
+
+    def _load(self):
+        if self._data is None:
+            if self.index_path.exists():
+                with open(self.index_path, 'r', encoding='utf-8') as f:
+                    self._data = json.load(f)
+            else:
+                self._data = {'total': 0, 'records': [], 'by_province': {}}
+
+    @property
+    def records(self) -> List[Dict]:
+        self._load()
+        return self._data.get('records', [])
+
+    @property
+    def total(self) -> int:
+        self._load()
+        return self._data.get('total', 0)
+
+    @property
+    def by_province(self) -> Dict[str, int]:
+        self._load()
+        return self._data.get('by_province', {})
+
+    def search(self, keyword: str = '', province: str = '',
+               top_k: int = 20) -> List[Dict]:
+        """搜索地方性法规
+        
+        Args:
+            keyword: 关键词（匹配标题和摘要）
+            province: 省份名称
+            top_k: 返回数量
+        """
+        results = self.records
+        if province:
+            results = [r for r in results if province in r.get('province', '') or province in r.get('issuing_authority', '')]
+        if keyword:
+            kw = keyword.lower()
+            results = [r for r in results if kw in r.get('name', '').lower() or kw in r.get('summary', '').lower()]
+        return results[:top_k]
+
+    def get_by_province(self, province: str) -> List[Dict]:
+        return [r for r in self.records if province in r.get('province', '') or province in r.get('issuing_authority', '')]
+
+    def get_stats(self) -> Dict[str, Any]:
+        self._load()
+        return {
+            'total': self.total,
+            'by_province': self.by_province,
+            'note': '仅含摘要预览，全文需专项采集（flk.npc.gov.cn）'
+        }
 
 
 class LegalDB:
@@ -31,6 +91,23 @@ class LegalDB:
         self._chapters: Optional[List[Dict]] = None
         self._china_law_db = None
         self._law_rag = None
+        self._local_reg = None
+
+    # ===== 地方性法规（补充层）=====
+
+    @property
+    def local_reg_db(self) -> LocalRegulationDB:
+        if self._local_reg is None:
+            self._local_reg = LocalRegulationDB()
+        return self._local_reg
+
+    def search_local_regulations(self, keyword: str = '', province: str = '',
+                                  top_k: int = 20) -> List[Dict]:
+        """搜索地方性法规（需专项采集全文）"""
+        return self.local_reg_db.search(keyword=keyword, province=province, top_k=top_k)
+
+    def list_local_regulations_by_province(self, province: str) -> List[Dict]:
+        return self.local_reg_db.get_by_province(province)
 
     # ===== 追诉系统专用（刑法） =====
 
@@ -162,6 +239,14 @@ class LegalDB:
             stats["rag_indexed_tokens"] = rs["total_indexed_tokens"]
         except Exception:
             pass
+        try:
+            lr = self.local_reg_db
+            lr_stats = lr.get_stats()
+            stats["local_regulations"] = lr_stats["total"]
+            stats["local_reg_by_province"] = lr_stats["by_province"]
+            stats["local_reg_note"] = lr_stats["note"]
+        except Exception:
+            pass
         return stats
 
 
@@ -187,6 +272,16 @@ def main():
     print("\nRAG检索'挪用公款罪构成要件':")
     for r in db.rag_search("挪用公款罪构成要件", top_k=3):
         print(f"  - [{r['law']}] 匹配度:{r['score']} | {r['preview'][:60]}...")
+
+    print("\n地方性法规搜索'交通安全'（省级）:")
+    for r in db.search_local_regulations(keyword='交通', top_k=5):
+        print(f"  - [{r['province']}] {r['name']} | {r['issue_date']} | {r['content_length']}字")
+
+    print("\n地方性法规 - 西藏:")
+    tibet = db.list_local_regulations_by_province('西藏')
+    print(f"  共 {len(tibet)} 部")
+    for r in tibet[:3]:
+        print(f"  - {r['name']} | {r['content_length']}字")
 
 
 if __name__ == "__main__":
