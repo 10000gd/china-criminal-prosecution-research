@@ -302,6 +302,73 @@ def api_charges(case_id):
         return jsonify({"error": f"案件未找到: {case_id}"}), 404
 
 
+# ===== P3: 统计页面路由 =====
+
+@app.route("/stats")
+def stats_page():
+    """统计总览页：幻觉率/置信度分布、各案件评分一览"""
+    from stats_aggregator import StatsAggregator
+    agg = StatsAggregator()
+    stats = agg.get_all_stats()
+    for c in stats.get("cases", []):
+        c["hallucination_pct"] = round(c["hallucination_rate"] * 100, 1)
+        c["confidence_label"] = _confidence_label(c["average_confidence"])
+    overall_hall = stats.get("average_hallucination_rate", 0)
+    overall_conf = stats.get("average_confidence", 0)
+    return render_template(
+        "stats.html",
+        stats=stats,
+        overall_hall=round(overall_hall * 100, 1),
+        overall_conf=round(overall_conf, 1),
+        confidence_label=_confidence_label(overall_conf),
+        hall_label=_hall_label(overall_hall),
+    )
+
+
+@app.route("/api/stats/hallucination")
+def api_hallucination():
+    """幻觉率统计 JSON API"""
+    from stats_aggregator import StatsAggregator
+    agg = StatsAggregator()
+    stats = agg.get_hallucination_stats()
+    n = len(stats)
+    return jsonify({
+        "cases": [agg._stat_to_dict(s) for s in stats],
+        "average_hallucination_rate": sum(s.hallucination_rate for s in stats) / n if n else 0,
+        "average_confidence": sum(s.average_confidence for s in stats) / n if n else 0,
+    })
+
+
+@app.route("/api/stats/provincial-diffs")
+def api_provincial_diffs():
+    """省级差异数据 JSON API"""
+    from stats_aggregator import StatsAggregator
+    return jsonify(StatsAggregator().get_provincial_diffs())
+
+
+@app.route("/api/stats/company-geo")
+def api_company_geo():
+    """涉案公司地域分布 JSON API"""
+    from stats_aggregator import StatsAggregator
+    return jsonify(StatsAggregator().get_company_geo_stats())
+
+
+# ===== 辅助函数 =====
+
+def _confidence_label(score: float) -> str:
+    if score >= 80: return "高置信度"
+    elif score >= 60: return "中等置信度"
+    elif score >= 40: return "低置信度"
+    else: return "不可靠"
+
+
+def _hall_label(rate: float) -> str:
+    if rate < 0.1: return "优秀"
+    elif rate < 0.25: return "良好"
+    elif rate < 0.5: return "需关注"
+    else: return "严重"
+
+
 # ---- 运行 ----
 
 if __name__ == "__main__":

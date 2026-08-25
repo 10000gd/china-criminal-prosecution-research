@@ -52,3 +52,4 @@ ENV/
 # 法律数据库原始文件（已转换为 YAML）
 cases/legaldb/*.csv
 cases/legaldb/*.jsonl
+.openclaw

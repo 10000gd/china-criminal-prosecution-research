@@ -3,21 +3,38 @@
 """
 法律检索增强生成(RAG)系统
 基于全量中国法律数据库的向量检索
+
+功能：
+- 文本分块（按条文/段落）
+- 倒排索引（关键词 -> 块）
+- BM25 排序（原有）
+- 向量检索（新增：sentence-transformers 轻量模型）
+- 混合检索：RRF 融合 BM25 + 向量（新增）
 """
 
 import json
 import jieba
 import re
 import hashlib
+import os
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
 
 jieba.setLogLevel(20)  # 关闭jieba日志
+
 LEGALDB_DIR = Path(__file__).parent.parent / "cases" / "legaldb"
 LAWS_DIR = LEGALDB_DIR / "laws"
 CACHE_DIR = LEGALDB_DIR / ".rag_cache"
+VECTOR_CACHE_DIR = CACHE_DIR / "vectors"
 CACHE_DIR.mkdir(exist_ok=True)
+VECTOR_CACHE_DIR.mkdir(exist_ok=True)
+
+# ===== 向量模型配置 =====
+# 使用多语言轻量模型，支持中文，无需微调
+# 模型会在首次使用时自动下载（约 500MB）
+DEFAULT_EMBED_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
+
 
 def tokenize(text: str) -> List[str]:
     """使用jieba分词,返回2-gram词组"""
@@ -55,24 +72,169 @@ class Chunk:
         }
 
 
+# ===== 向量嵌入器（懒加载） =====
+class LawEmbedder:
+    """法律文本向量化器，使用 sentence-transformers 懒加载模型"""
+
+    def __init__(self, model_name: str = None):
+        self.model_name = model_name or os.environ.get(
+            "LEGAL_EMBED_MODEL", DEFAULT_EMBED_MODEL)
+        self._model = None
+        self._vector_dim: Optional[int] = None
+
+    @property
+    def model(self):
+        """懒加载模型，首次访问时初始化"""
+        if self._model is None:
+            print(f"  [向量] 加载模型: {self.model_name} ...")
+            from sentence_transformers import SentenceTransformer
+            self._model = SentenceTransformer(self.model_name)
+            self._vector_dim = self._model.get_sentence_embedding_dimension()
+            print(f"  [向量] 模型加载完成，向量维度: {self._vector_dim}")
+        return self._model
+
+    @property
+    def vector_dim(self) -> int:
+        """获取向量维度（触发模型加载）"""
+        _ = self.model  # 触发加载
+        return self._vector_dim or 384
+
+    def encode(self, texts: List[str], batch_size: int = 64,
+               show_progress: bool = False) -> List[List[float]]:
+        """将文本列表编码为向量"""
+        embeddings = self.model.encode(
+            texts, batch_size=batch_size, show_progress_bar=show_progress,
+            convert_to_numpy=True, normalize_embeddings=True
+        )
+        return embeddings.tolist()
+
+    def encode_single(self, text: str) -> List[float]:
+        """编码单个文本"""
+        return self.encode([text])[0]
+
+
+# ===== 冲突检测（依赖循环导入保护：延迟导入） =====
+
+
+class LawConflictDetector:
+    """法律冲突检测器"""
+
+    def __init__(self):
+        self._rules_cache: Dict[str, List[Dict]] = {}
+
+    def detect_conflicts(self, chunks: List[Dict], law_name: str = "") -> List[Dict[str, Any]]:
+        """检测法律条文间的潜在冲突"""
+        conflicts = []
+        texts = [c.get("content", "") for c in chunks]
+
+        # 检测模式1：同一罪名，不同数额标准
+        conflict_pairs = [
+            ("数额较大", "数额巨大"),
+            ("三年以下", "三年以上十年以下"),
+            ("十年以下", "十年以上"),
+            ("拘役", "有期徒刑"),
+            ("并处", "或单处"),
+            ("从轻", "从重"),
+        ]
+
+        for i, t1 in enumerate(texts):
+            for j, t2 in enumerate(texts[i+1:], i+1):
+                # 检查是否同一法律内的条款矛盾
+                reason = self._check_contradiction(t1, t2, conflict_pairs)
+                if reason:
+                    conflicts.append({
+                        "type": "数值/量刑矛盾",
+                        "chunk_a": chunks[i].get("chunk_id", ""),
+                        "chunk_b": chunks[j].get("chunk_id", ""),
+                        "text_a": t1[:200],
+                        "text_b": t2[:200],
+                        "reason": reason,
+                        "severity": "WARN",
+                        "suggestion": "建议核查是否为特别法与一般法关系，或是否为时间效力问题",
+                    })
+
+        # 检测模式2：时间冲突（新法 vs 旧法）
+        date_pattern = re.compile(r"(\d{4})\s*年\s*(\d{1,2})\s*月")
+        for i, t1 in enumerate(texts):
+            for j, t2 in enumerate(texts[i+1:], i+1):
+                m1, m2 = date_pattern.search(t1), date_pattern.search(t2)
+                if m1 and m2:
+                    y1, m1_m = int(m1.group(1)), int(m1.group(2))
+                    y2, m2_m = int(m2.group(1)), int(m2.group(2))
+                    if (y1, m1_m) != (y2, m2_m):
+                        # 检查内容相似但日期不同
+                        sim = self._text_similarity(t1, t2)
+                        if sim > 0.85:
+                            newer = f"{y1}年{m1_m}月" if (y1, m1_m) > (y2, m2_m) else f"{y2}年{m2_m}月"
+                            conflicts.append({
+                                "type": "新法旧法并存",
+                                "chunk_a": chunks[i].get("chunk_id", ""),
+                                "chunk_b": chunks[j].get("chunk_id", ""),
+                                "text_a": t1[:150],
+                                "text_b": t2[:150],
+                                "reason": f"内容相似度{sim:.0%}，存在{newer}后新法是否废止旧法的问题",
+                                "severity": "INFO",
+                                "suggestion": "建议核查新法是否明确规定废止旧法相应条款",
+                            })
+
+        return conflicts
+
+    def _check_contradiction(self, t1: str, t2: str, patterns: List[Tuple]) -> Optional[str]:
+        """检测两条文是否矛盾"""
+        for pos, neg in patterns:
+            has_pos = pos in t1
+            has_neg = pos in t2
+            if has_pos and has_neg and pos in t1 and pos in t2:
+                # 同一词语在不同条文中出现，检测是否构成矛盾
+                ctx1 = t1[t1.find(pos)-20:t1.find(pos)+20] if pos in t1 else ""
+                ctx2 = t2[t2.find(pos)-20:t2.find(pos)+20] if pos in t2 else ""
+                if ctx1 != ctx2:
+                    return f"'{pos}' 在不同条文中出现，上下文不同：[{ctx1}] vs [{ctx2}]"
+        return None
+
+    def _text_similarity(self, t1: str, t2: str) -> float:
+        """简单词重叠相似度"""
+        words1 = set(tokenize(t1))
+        words2 = set(tokenize(t2))
+        if not words1 or not words2:
+            return 0.0
+        inter = len(words1 & words2)
+        return inter / min(len(words1), len(words2))
+
+
 class LawRAG:
     """
     法律检索增强生成系统
 
     功能:
-    - 文本分块(按条文/段落)
-    - 倒排索引(关键词 -> 块)
+    - 文本分块（按条文/段落）
+    - 倒排索引（关键词 -> 块）
     - BM25 排序
+    - 向量检索（sentence-transformers，新增）
+    - 混合检索：RRF 融合（新增）
     - 上下文窗口扩展
     """
 
-    def __init__(self):
+    def __init__(self, embed_model: str = None, enable_vector: bool = True):
         self.chunks: List[Chunk] = []
         self.inverted_index: Dict[str, List[int]] = {}  # token -> chunk_ids
         self.law_index: Dict[str, Dict] = {}  # law_name -> {category, date, chunks_count}
         self._indexed = False
         self._index_file = CACHE_DIR / "rag_index.json"
         self._meta_file = CACHE_DIR / "rag_meta.json"
+        self._vector_index_file = VECTOR_CACHE_DIR / "vectors.npy"
+        self._chunk_ids_file = VECTOR_CACHE_DIR / "chunk_ids.json"
+
+        # 向量检索相关
+        self.enable_vector = enable_vector
+        self.embedder: Optional[LawEmbedder] = None
+        self._vector_matrix: Optional[List[List[float]]] = None
+        self._chunk_id_list: List[str] = []  # 与向量矩阵一一对应
+        self._vector_loaded = False
+
+    @property
+    def vector_enabled(self) -> bool:
+        return self.enable_vector
 
     def index_laws(self, force_rebuild: bool = False):
         """建立法律索引"""
@@ -157,6 +319,7 @@ class LawRAG:
             paragraphs = [p.strip() for p in text.split('\n') if len(p.strip()) > 50]
             for j, para in enumerate(paragraphs):
                 chunk_id = hashlib.md5(f"{entry.name}_para_{j}".encode()).hexdigest()[:12]
+
                 chunk = Chunk(
                     law_name=entry.name,
                     category=entry.category,
@@ -169,9 +332,118 @@ class LawRAG:
 
         return chunks
 
+    def _ensure_vector(self):
+        """确保向量索引已加载（懒加载）"""
+        if not self.enable_vector:
+            return
+        if self._vector_loaded:
+            return
+
+        # 初始化嵌入器
+        if self.embedder is None:
+            self.embedder = LawEmbedder()
+
+        # 尝试加载向量缓存
+        if self._vector_index_file.exists() and self._chunk_ids_file.exists():
+            print("  [向量] 加载向量缓存...")
+            try:
+                import numpy as np
+                mat = np.load(self._vector_index_file)
+                self._vector_matrix = mat.tolist()
+                with open(self._chunk_ids_file, encoding="utf-8") as f:
+                    self._chunk_id_list = json.load(f)
+                print(f"  [向量] 已加载 {len(self._chunk_id_list)} 条向量")
+                self._vector_loaded = True
+                return
+            except Exception as e:
+                print(f"  [向量] 加载缓存失败，将重新生成: {e}")
+
+        # 构建向量索引
+        self._build_vector_index()
+
+    def _build_vector_index(self):
+        """构建向量索引并缓存"""
+        if not self.enable_vector:
+            return
+        import numpy as np
+
+        print("  [向量] 生成文本向量...")
+        self.embedder = LawEmbedder()
+
+        # 批量编码所有chunk内容
+        texts = [c.content for c in self.chunks]
+        self._chunk_id_list = [c.chunk_id for c in self.chunks]
+
+        # 分批编码，避免内存问题
+        batch_size = 128
+        all_vectors = []
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i:i+batch_size]
+            vecs = self.embedder.encode(batch, batch_size=batch_size, show_progress=False)
+            all_vectors.extend(vecs)
+            print(f"  [向量] {min(i+batch_size, len(texts))}/{len(texts)}")
+
+        self._vector_matrix = all_vectors
+        self._vector_loaded = True
+
+        # 保存缓存
+        try:
+            VECTOR_CACHE_DIR.mkdir(exist_ok=True)
+            mat = np.array(all_vectors, dtype=np.float32)
+            np.save(self._vector_index_file, mat)
+            with open(self._chunk_ids_file, 'w', encoding='utf-8') as f:
+                json.dump(self._chunk_id_list, f, ensure_ascii=False)
+            print(f"  [向量] 缓存已保存: {self._vector_index_file}")
+        except Exception as e:
+            print(f"  [向量] 保存缓存失败: {e}")
+
+    def _cosine_sim(self, a: List[float], b: List[float]) -> float:
+        """计算余弦相似度（向量已归一化时即点积）"""
+        return sum(x * y for x, y in zip(a, b))
+
+    def _search_vector(self, query: str, top_k: int = 10) -> List[Tuple[int, float]]:
+        """纯向量检索（top_k 结果，return [(chunk_idx, score)]）"""
+        self._ensure_vector()
+        if self._vector_matrix is None:
+            return []
+
+        q_vec = self.embedder.encode_single(query)
+
+        # 暴力计算余弦相似度（chunk数量通常几千到几万，可接受）
+        # 如需优化可换 FAISS，这里保持零依赖
+        scores = []
+        for i, vec in enumerate(self._vector_matrix):
+            sim = self._cosine_sim(q_vec, vec)
+            scores.append((i, sim))
+
+        scores.sort(key=lambda x: -x[1])
+        return scores[:top_k]
+
+    def _rrf_fusion(self, bm25_results: List[Tuple[int, float]],
+                    vector_results: List[Tuple[int, float]],
+                    k: int = 60) -> List[int]:
+        """
+        Reciprocal Rank Fusion (RRF) 混合排序
+
+        RRF score = Σ 1/(k+rank_i)
+        k=60 为常用默认值，融合效果稳定
+        """
+        rrf_scores: Dict[int, float] = {}
+
+        for rank, (chunk_idx, _) in enumerate(bm25_results):
+            rrf_scores[chunk_idx] = rrf_scores.get(chunk_idx, 0) + 1.0 / (k + rank + 1)
+
+        for rank, (chunk_idx, _) in enumerate(vector_results):
+            rrf_scores[chunk_idx] = rrf_scores.get(chunk_idx, 0) + 1.0 / (k + rank + 1)
+
+        ranked = sorted(rrf_scores.items(), key=lambda x: -x[1])
+        return [idx for idx, _ in ranked]
+
     def search(self, query: str, top_k: int = 10,
                category_filter: Optional[str] = None,
-               law_filter: Optional[str] = None) -> List[Dict[str, Any]]:
+               law_filter: Optional[str] = None,
+               hybrid: bool = True,
+               vector_weight: float = 0.5) -> List[Dict[str, Any]]:
         """
         检索相关法律条文
 
@@ -180,6 +452,8 @@ class LawRAG:
             top_k: 返回结果数
             category_filter: 限定分类(宪法/法律/行政法规/司法解释/监察法规)
             law_filter: 限定法律名称
+            hybrid: 是否使用混合检索（True=BM25+向量融合，False=纯BM25）
+            vector_weight: 向量权重（仅hybrid=True时参考，已由RRF替代）
 
         Returns:
             排序后的相关条文列表
@@ -187,20 +461,18 @@ class LawRAG:
         if not self._indexed:
             self.index_laws()
 
-        # 分词
+        # ===== BM25 检索 =====
         tokens = tokenize(query)
         query_ngrams = set(tokens)
 
-        # 额外:对查询文本也提取2-gram(跨词边界)
         for i in range(len(query) - 1):
             ng = query[i:i+2]
             if 'a' <= ng[0] <= 'z' or 'A' <= ng[0] <= 'Z' or '0' <= ng[0] <= '9':
-                continue  # 跳过英文数字混合
+                continue
             query_ngrams.add(ng)
 
-        # BM25评分
         scores: Dict[int, float] = {}
-        chunk_freq: Dict[int, int] = {}  # 每个chunk包含多少查询词
+        chunk_freq: Dict[int, int] = {}
 
         N = len(self.chunks)
         avg_len = sum(c.length for c in self.chunks) / max(N, 1)
@@ -214,13 +486,11 @@ class LawRAG:
 
             chunk_ids = self.inverted_index[token]
             n = len(chunk_ids)
-            # 改进的 BM25 IDF（Okapi 公式）
             idf = max(0.0, 1.0 + (N - n + 0.5) / (n + 0.5))
 
             for cid in chunk_ids:
                 chunk = self.chunks[cid]
 
-                # 分类过滤
                 if category_filter and chunk.category != category_filter:
                     continue
                 if law_filter and chunk.law_name != law_filter:
@@ -230,30 +500,52 @@ class LawRAG:
                     scores[cid] = 0.0
                     chunk_freq[cid] = 0
 
-                # BM25
                 freq = chunk.content.count(token)
                 score = idf * (freq * (k1 + 1)) / (freq + k1 * (1 - b + b * chunk.length / avg_len))
                 scores[cid] += score
                 chunk_freq[cid] += 1
 
-        # 排序
-        ranked = sorted(scores.items(), key=lambda x: (-x[1], -chunk_freq.get(x[0], 0)))
+        bm25_ranked = sorted(scores.items(), key=lambda x: (-x[1], -chunk_freq.get(x[0], 0)))
 
+        # ===== 向量检索 =====
+        if hybrid and self.enable_vector:
+            vector_ranked = self._search_vector(query, top_k=top_k * 2)
+            # RRF 融合
+            fused_order = self._rrf_fusion(bm25_ranked[:top_k*3], vector_ranked)
+            final_ids = fused_order[:top_k]
+        else:
+            final_ids = [idx for idx, _ in bm25_ranked[:top_k]]
+
+        # ===== 构建结果 =====
         results = []
-        for chunk_id, score in ranked[:top_k]:
-            chunk = self.chunks[chunk_id]
-            # 找关键词上下文
-            preview = self._get_preview(chunk.content, query, radius=100)
+        for chunk_idx in final_ids:
+            chunk = self.chunks[chunk_idx]
+            bm25_score = scores.get(chunk_idx, 0)
 
+            # 向量得分（如果可用）
+            vector_score = 0.0
+            if self.enable_vector and self._vector_matrix:
+                try:
+                    vec_idx = self._chunk_id_list.index(chunk.chunk_id)
+                    vector_score = self._cosine_sim(
+                        self.embedder.encode_single(query),
+                        self._vector_matrix[vec_idx]
+                    )
+                except (ValueError, IndexError):
+                    pass
+
+            preview = self._get_preview(chunk.content, query, radius=100)
             results.append({
                 'law': chunk.law_name,
                 'category': chunk.category,
                 'chunk_id': chunk.chunk_id,
-                'score': round(score, 3),
-                'match_count': chunk_freq.get(chunk_id, 0),
+                'bm25_score': round(bm25_score, 3),
+                'vector_score': round(vector_score, 4),
+                'match_count': chunk_freq.get(chunk_idx, 0),
                 'preview': preview,
                 'content': chunk.content[:500],
-                'length': chunk.length
+                'length': chunk.length,
+                'retrieval_method': 'hybrid' if (hybrid and self.enable_vector) else 'bm25',
             })
 
         return results
@@ -278,18 +570,22 @@ class LawRAG:
 
         return preview
 
-    def rag_retrieve(self, query: str, context_window: int = 2000) -> Tuple[str, List[Dict]]:
+    def rag_retrieve(self, query: str, context_window: int = 2000,
+                     hybrid: bool = True) -> Tuple[str, List[Dict]]:
         """
         RAG检索:获取检索结果用于增强生成
 
         Returns:
             (context_str, results_list)
         """
-        results = self.search(query, top_k=5)
+        results = self.search(query, top_k=5, hybrid=hybrid)
 
         context_parts = []
         for i, r in enumerate(results):
-            context_parts.append(f"【来源{i+1}】{r['law']}({r['category']})\n{r['preview']}")
+            method_tag = "🔍混合" if r.get('retrieval_method') == 'hybrid' else "📄BM25"
+            context_parts.append(
+                f"【来源{i+1}·{method_tag}】{r['law']}({r['category']})\n{r['preview']}"
+            )
 
         context = '\n\n'.join(context_parts)
 
@@ -297,6 +593,44 @@ class LawRAG:
             context = context[:context_window] + "\n\n(已截断)"
 
         return context, results
+
+    def detect_conflicts(self, law_name: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        检测法律冲突
+
+        Args:
+            law_name: 指定法律名称，不指定则检测所有法律
+
+        Returns:
+            冲突列表
+        """
+        if not self._indexed:
+            self.index_laws()
+
+        detector = LawConflictDetector()
+        all_conflicts = []
+
+        if law_name:
+            law_chunks = [
+                c for c in self.chunks if c.law_name == law_name
+            ]
+            conflicts = detector.detect_conflicts(
+                [c.to_dict() for c in law_chunks], law_name
+            )
+            all_conflicts.extend(conflicts)
+        else:
+            # 按法律分组检测
+            by_law: Dict[str, List[Chunk]] = {}
+            for c in self.chunks:
+                by_law.setdefault(c.law_name, []).append(c)
+
+            for name, chunks in by_law.items():
+                conflicts = detector.detect_conflicts(
+                    [c.to_dict() for c in chunks], name
+                )
+                all_conflicts.extend(conflicts)
+
+        return all_conflicts
 
     def _save_cache(self):
         """保存索引缓存"""
@@ -336,7 +670,7 @@ class LawRAG:
         if not self._indexed:
             self.index_laws()
 
-        return {
+        stats = {
             'total_chunks': len(self.chunks),
             'total_indexed_tokens': len(self.inverted_index),
             'total_laws': len(self.law_index),
@@ -346,8 +680,11 @@ class LawRAG:
                 for cat in ['法律', '行政法规', '司法解释', '宪法', '监察法规']
             },
             'cache_file': str(self._index_file),
-            'indexed': self._indexed
+            'indexed': self._indexed,
+            'vector_enabled': self.enable_vector,
+            'vector_loaded': self._vector_loaded,
         }
+        return stats
 
 
 # ===== CLI =====
@@ -357,11 +694,27 @@ def main():
     parser = argparse.ArgumentParser(description="法律RAG检索系统")
     parser.add_argument("--query", type=str, help="查询文本")
     parser.add_argument("--rebuild", action="store_true", help="重建索引")
+    parser.add_argument("--rebuild-vectors", action="store_true", help="重建向量索引")
     parser.add_argument("--stats", action="store_true", help="显示统计")
     parser.add_argument("--top", type=int, default=5, help="返回结果数")
+    parser.add_argument("--bm25-only", action="store_true", help="仅使用BM25（禁用向量检索）")
+    parser.add_argument("--detect-conflicts", type=str, metavar="LAW_NAME",
+                        help="检测指定法律条文冲突（不指定则检测全部）")
     args = parser.parse_args()
 
-    rag = LawRAG()
+    rag = LawRAG(enable_vector=not args.bm25_only)
+
+    if args.detect_conflicts is not None:
+        rag.index_laws(force_rebuild=args.rebuild)
+        law_name = args.detect_conflicts if args.detect_conflicts != "" else None
+        conflicts = rag.detect_conflicts(law_name=law_name)
+        print(f"\n检测到 {len(conflicts)} 条潜在冲突:\n")
+        for i, c in enumerate(conflicts):
+            print(f"--- 冲突{i+1} [{c['type']}] 严重度: {c['severity']} ---")
+            print(f"  原因: {c['reason']}")
+            print(f"  建议: {c['suggestion']}")
+            print()
+        return
 
     if args.stats:
         stats = rag.get_stats()
@@ -372,6 +725,8 @@ def main():
         print(f"  索引词: {stats['total_indexed_tokens']:,}")
         print(f"  法律数: {stats['total_laws']}")
         print(f"  平均块大小: {stats['avg_chunk_size']:.0f}字符")
+        print(f"  向量检索: {'已启用' if stats['vector_enabled'] else '已禁用'}")
+        print(f"  向量已加载: {'是' if stats['vector_loaded'] else '否'}")
         print(f"\n  分类分布:")
         for cat, cnt in sorted(stats['by_category'].items(), key=lambda x: -x[1]):
             if cnt > 0:
@@ -382,20 +737,27 @@ def main():
 
     if args.query:
         rag.index_laws(force_rebuild=args.rebuild)
-        context, results = rag.rag_retrieve(args.query)
+        if args.rebuild_vectors:
+            rag._vector_loaded = False
+            rag._build_vector_index()
+
+        context, results = rag.rag_retrieve(args.query, hybrid=not args.bm25_only)
 
         print(f"\n查询: {args.query}")
         print(f"检索到 {len(results)} 个相关条文:\n")
 
         for i, r in enumerate(results[:args.top]):
-            print(f"--- 结果{i+1} [{r['law']}] ---")
-            print(f"  分类: {r['category']} | 匹配度: {r['score']} | 匹配词数: {r['match_count']}")
+            method = r.get('retrieval_method', 'bm25')
+            tag = "🔍混合" if method == 'hybrid' else "📄BM25"
+            print(f"--- 结果{i+1} [{r['law']}] {tag} ---")
+            print(f"  分类: {r['category']} | BM25: {r['bm25_score']} | 向量: {r['vector_score']}")
             print(f"  预览: {r['preview']}")
             print()
     else:
         rag.index_laws(force_rebuild=args.rebuild)
         stats = rag.get_stats()
-        print(f"RAG索引就绪: {stats['total_chunks']} 块, {stats['total_laws']} 部法律")
+        print(f"RAG索引就绪: {stats['total_chunks']} 块, {stats['total_laws']} 部法律, "
+              f"向量检索: {'启用' if stats['vector_enabled'] else '禁用'}")
 
 
 if __name__ == "__main__":

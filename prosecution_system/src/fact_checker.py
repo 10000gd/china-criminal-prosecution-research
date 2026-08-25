@@ -26,6 +26,9 @@ from datetime import datetime
 from typing import Dict, Any
 import logging
 
+from confidence_scorer import ConfidenceScorer, ConfidenceLevel
+from threshold_db import ThresholdDB
+
 logger = logging.getLogger(__name__)
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -69,6 +72,8 @@ class FactChecker:
             "grade_e": 0,
             "issues": [],
             "fields": [],
+            "_scorer": ConfidenceScorer(),
+            "_threshold_db": ThresholdDB(),
         }
 
     def check(self) -> Dict[str, Any]:
@@ -217,16 +222,35 @@ class FactChecker:
                 source="新华社判决原文",
                 notes="如罪名与判决原文不符需修正"
             )
+            # 置信度评估
+            scorer = self.results["_scorer"]
+            cs = scorer.assess(
+                conclusion=f"构成{name}",
+                matched_statutes=[statute] if statute else [],
+                is_direct_quote=bool(statute),
+                crime_type=name,
+            )
+            self._add_field(
+                f"charges.charges_judged.{cid}.confidence_score", cs.score,
+                SourceGrade.B,
+                notes=f"置信度评估：{cs.label}，建议：{cs.recommended_action}"
+            )
 
-        # 遗漏罪名 - 属于分析性判断，标记为 B
+        # 遗漏罪名 - 属于分析性判断，标记为 B，置信度低
         for cid, cdata in missed.items():
             name = cdata.get("name", "")
             reason = cdata.get("reason", "")
+            scorer = self.results["_scorer"]
+            cs = scorer.assess(
+                conclusion=f"遗漏罪名：{name}，理由：{reason}",
+                matched_statutes=[],
+                crime_type=name,
+            )
             self._add_field(
                 f"charges.charges_missed.{cid}.name", name,
                 SourceGrade.B,
                 source="分析性判断（基于刑法条文）",
-                notes="遗漏罪名为分析结论，需专业法律人员确认"
+                notes=f"遗漏罪名为分析结论，需专业法律人员确认。置信度：{cs.label}，理由：{'；'.join(cs.uncertainty_reasons) if cs.uncertainty_reasons else '单一推断来源'}"
             )
 
     def _check_victims(self):
