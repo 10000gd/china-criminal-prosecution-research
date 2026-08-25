@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>统计总览 - 追诉系统</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f5f7fa;
+      color: #2c3e50;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ---- 顶部导航 ---- */
+    .topbar {
+      background: #2c3e50;
+      color: #fff;
+      padding: 0 24px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .topbar .brand {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      text-decoration: none;
+    }
+    .topbar .brand span { color: #e67e22; }
+    .nav-links { display: flex; gap: 16px; }
+    .nav-links a {
+      color: #bdc3c7;
+      text-decoration: none;
+      font-size: 14px;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .nav-links a:hover, .nav-links a.active { color: #fff; background: rgba(255,255,255,0.1); }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+    h1 { font-size: 20px; margin-bottom: 20px; color: #2c3e50; }
+    h2 { font-size: 16px; color: #34495e; margin-bottom: 12px; }
+
+    /* ---- 卡片 ---- */
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    /* ---- 总体指标 ---- */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .metric-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+    .metric-card .value {
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .metric-card .label {
+      font-size: 13px;
+      color: #7f8c8d;
+      margin-top: 4px;
+    }
+    .metric-card .sub { font-size: 12px; color: #95a5a6; margin-top: 4px; }
+
+    /* 颜色 */
+    .c-green { color: #27ae60; }
+    .c-yellow { color: #f39c12; }
+    .c-orange { color: #e67e22; }
+    .c-red { color: #e74c3c; }
+    .c-blue { color: #3498db; }
+    .c-gray { color: #7f8c8d; }
+
+    .bg-green { background: #27ae60; color: #fff; }
+    .bg-yellow { background: #f39c12; color: #fff; }
+    .bg-red { background: #e74c3c; color: #fff; }
+    .bg-blue { background: #3498db; color: #fff; }
+
+    /* ---- 标签页 ---- */
+    .tabs { display: flex; gap: 4px; border-bottom: 2px solid #ecf0f1; margin-bottom: 20px; }
+    .tab-btn {
+      padding: 10px 20px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      color: #7f8c8d;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+    }
+    .tab-btn:hover { color: #2c3e50; }
+    .tab-btn.active { color: #2980b9; border-bottom-color: #2980b9; font-weight: 600; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ---- 表格 ---- */
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      background: #f8f9fa;
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #7f8c8d;
+      border-bottom: 2px solid #ecf0f1;
+      font-weight: 600;
+    }
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #ecf0f1;
+      font-size: 13px;
+    }
+    tr:hover td { background: #f8f9fa; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* ---- 进度条 ---- */
+    .progress-bar {
+      height: 8px;
+      background: #ecf0f1;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+
+    /* ---- 省差异图表区 ---- */
+    .province-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .province-card {
+      background: #f8f9fa;
+      border-radius: 6px;
+      padding: 14px;
+      border-left: 3px solid #3498db;
+    }
+    .province-card h3 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: #2c3e50;
+    }
+    .province-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .province-bar .prov { width: 60px; font-size: 12px; color: #7f8c8d; flex-shrink: 0; }
+    .province-bar .bar-wrap { flex: 1; }
+    .province-bar .bar {
+      height: 6px;
+      background: #ecf0f1;
+      border-radius: 3px;
+    }
+    .province-bar .bar-fill { height: 100%; background: #3498db; border-radius: 3px; }
+    .province-bar .amount { font-size: 12px; width: 60px; text-align: right; color: #2c3e50; }
+
+    /* ---- 地图占位 ---- */
+    .china-map-placeholder {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      color: #bdc3c7;
+      border: 2px dashed #dde1e4;
+      margin: 16px 0;
+    }
+    .map-note { font-size: 12px; color: #95a5a6; margin-top: 8px; }
+
+    /* ---- 公司地域 ---- */
+    .geo-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .geo-bar .prov { width: 70px; font-size: 13px; }
+    .geo-bar .bar-wrap { flex: 1; }
+    .geo-bar .count { width: 30px; text-align: right; font-size: 13px; color: #7f8c8d; }
+
+    /* ---- 置信度仪表 ---- */
+    .conf-donut {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: conic-gradient(var(--conf-color) var(--conf-pct), #ecf0f1 0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+    }
+    .conf-donut-inner {
+      width: 72px;
+      height: 72px;
+      background: #fff;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .conf-donut-inner .num { font-size: 20px; font-weight: 700; }
+    .conf-donut-inner .txt { font-size: 10px; color: #7f8c8d; }
+
+    /* ---- 自动标注提示 ---- */
+    .auto-annotation {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+    .auto-annotation strong { color: #856404; }
+    .annotation-tag {
+      display: inline-block;
+      background: #f39c12;
+      color: #fff;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-left: 4px;
+    }
+
+    /* ---- 加载动画 ---- */
+    .loading { text-align: center; color: #bdc3c7; padding: 40px; }
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #bdc3c7;
+      border-top-color: #3498db;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .empty { text-align: center; color: #bdc3c7; padding: 40px; font-size: 14px; }
+
+    /* ---- 响应式 ---- */
+    @media (max-width: 768px) {
+      .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+      .province-grid { grid-template-columns: 1fr; }
+      .tabs { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<div class="topbar">
+  <a href="/" class="brand">追诉系统 <span>⚖</span></a>
+  <nav class="nav-links">
+    <a href="/">案件</a>
+    <a href="/stats" class="active">统计</a>
+    <a href="/tracker">跟踪</a>
+    <a href="/search">搜索</a>
+  </nav>
+</div>
+
+<div class="container">
+  <h1>📊 数据统计总览</h1>
+
+  <!-- 自动标注说明 -->
+  <div class="auto-annotation">
+    <strong>【自动标注说明】</strong> 系统对置信度低于 60/100 的结论自动标注
+    <span class="annotation-tag">待核实</span>
+    <span class="annotation-tag">中等置信度</span>
+    <span class="annotation-tag">低置信度</span>。
+    引用时需注明置信度等级，详见
+    <a href="#" onclick="showTab('hallucination')" style="color:#856404">幻觉率统计</a>。
+  </div>
+
+  <!-- 总体指标 -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="value" id="metric-total-cases">—</div>
+      <div class="label">案件总数</div>
+    </div>
+    <div class="metric-card">
+      <div class="value" id="metric-avg-conf">—</div>
+      <div class="label">平均置信度</div>
+      <div class="sub" id="metric-conf-label">—</div>
+    </div>
+    <div class="metric-card">
+      <div class="value" id="metric-avg-hall">—</div>
+      <div class="label">幻觉率（不可靠率）</div>
+      <div class="sub" id="metric-hall-label">—</div>
+    </div>
+    <div class="metric-card">
+      <div class="value" id="metric-total-fields">—</div>
+      <div class="label">罪名字段总数</div>
+    </div>
+  </div>
+
+  <!-- 标签页 -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('hallucination')">Q1 幻觉率统计</button>
+    <button class="tab-btn" onclick="showTab('provincial')">Q4 省级差异</button>
+    <button class="tab-btn" onclick="showTab('geo')">Q12 公司地域</button>
+    <button class="tab-btn" onclick="showTab('detail')">Q16 详细标注</button>
+  </div>
+
+  <!-- Q1: 幻觉率统计 -->
+  <div id="tab-hallucination" class="tab-content active">
+    <div class="card">
+      <h2>各案件幻觉率 / 置信度分布</h2>
+      <div id="hallucination-table"></div>
+    </div>
+
+    <div class="card">
+      <h2>置信度分布概览</h2>
+      <div id="confidence-distribution" style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;"></div>
+    </div>
+  </div>
+
+  <!-- Q4: 省级差异 -->
+  <div id="tab-provincial" class="tab-content">
+    <div class="card">
+      <h2>各省市入罪数额标准对比（单位：元）</h2>
+      <div style="margin-bottom:12px;font-size:12px;color:#7f8c8d;">
+        数据来源：最高法、最高检各罪名司法解释 | 点击罪名标签切换视图
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <button class="tab-btn active" onclick="showCrimeTab('theft')" id="btn-theft" style="border-bottom-color:#3498db;color:#3498db;">盗窃罪</button>
+        <button class="tab-btn" onclick="showCrimeTab('fraud')" id="btn-fraud" style="border-bottom-color:#e74c3c;color:#7f8c8d;">诈骗罪</button>
+        <button class="tab-btn" onclick="showCrimeTab('robbery')" id="btn-robbery" style="border-bottom-color:#27ae60;color:#7f8c8d;">抢夺罪</button>
+      </div>
+
+      <div id="provincial-theft" class="province-grid"></div>
+      <div id="provincial-fraud" class="province-grid" style="display:none;"></div>
+      <div id="provincial-robbery" class="province-grid" style="display:none;"></div>
+
+      <div class="china-map-placeholder">
+        🗺 地图可视化区域<br>
+        <div class="map-note">建议接入 ECharts 中国地图组件以渲染地理热力图<br>
+        示例：https://echarts.apache.org/option.html#geo</div>
+      </div>
+
+      <div style="margin-top:16px;padding:12px;background:#f8f9fa;border-radius:6px;font-size:13px;">
+        <strong>注意：</strong>同一省份内部可能存在地区分类（一类/二类/三类），三类地区数额标准最低。
+        如有异议请查阅各省高级法院具体规定。
+      </div>
+    </div>
+  </div>
+
+  <!-- Q12: 公司地域分布 -->
+  <div id="tab-geo" class="tab-content">
+    <div class="card">
+      <h2>涉案公司地域分布</h2>
+      <div id="geo-stats"></div>
+    </div>
+
+    <div class="card">
+      <h2>省份排名（按涉案公司数量）</h2>
+      <div id="geo-ranking"></div>
+    </div>
+  </div>
+
+  <!-- Q16: 自动标注详细 -->
+  <div id="tab-detail" class="tab-content">
+    <div class="card">
+      <h2>自动标注规则说明</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>置信度</th>
+            <th>标注</th>
+            <th>含义</th>
+            <th>建议</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge bg-green">80-100</span></td>
+            <td><span class="annotation-tag" style="background:#27ae60;">高置信度</span></td>
+            <td>直接引用，来源可溯至法条原文</td>
+            <td>可直接引用，标注【高置信度】</td>
+          </tr>
+          <tr>
+            <td><span class="badge bg-yellow">60-79</span></td>
+            <td><span class="annotation-tag" style="background:#f39c12;">中等置信度</span></td>
+            <td>可引用，但须注明推断依据</td>
+            <td>可引用，须标注【中等置信度】并注明推断依据</td>
+          </tr>
+          <tr>
+            <td><span class="badge bg-red">40-59</span></td>
+            <td><span class="annotation-tag">低置信度</span></td>
+            <td>基于类比推理，存在多种解释</td>
+            <td>引用时必须标注不确定性，建议核查原文</td>
+          </tr>
+          <tr>
+            <td><span class="badge bg-red">0-39</span></td>
+            <td><span class="annotation-tag" style="background:#e74c3c;">不可靠</span></td>
+            <td>无法溯源，引用风险高</td>
+            <td>不得直接引用，须在报告中标注【待核实】</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>各字段置信度明细（来自 FactChecker）</h2>
+      <div id="field-detail"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ===== 加载数据 =====
+  async function loadStats() {
+    const [hallRes, provRes, geoRes] = await Promise.all([
+      fetch('/api/stats/hallucination'),
+      fetch('/api/stats/provincial-diffs'),
+      fetch('/api/stats/company-geo'),
+    ]);
+    const hall = await hallRes.json();
+    const prov = await provRes.json();
+    const geo = await geoRes.json();
+    renderHallucination(hall);
+    renderProvincial(prov);
+    renderGeo(geo);
+    renderMetrics(hall);
+  }
+
+  // ===== 指标卡片 =====
+  function renderMetrics(hall) {
+    const cases = hall.cases || [];
+    document.getElementById('metric-total-cases').textContent = cases.length;
+    document.getElementById('metric-total-fields').textContent =
+      cases.reduce((s, c) => s + (c.total_fields || 0), 0);
+
+    const avgConf = hall.average_confidence || 0;
+    const avgHall = hall.average_hallucination_rate || 0;
+    document.getElementById('metric-avg-conf').textContent = Math.round(avgConf);
+    document.getElementById('metric-conf-label').textContent = confLabel(avgConf);
+    document.getElementById('metric-avg-conf').className = 'value ' + confColor(avgConf);
+
+    const hallPct = (avgHall * 100).toFixed(1) + '%';
+    document.getElementById('metric-avg-hall').textContent = hallPct;
+    document.getElementById('metric-hall-label').textContent = hallLabel(avgHall);
+    document.getElementById('metric-avg-hall').className = 'value ' + hallColor(avgHall);
+  }
+
+  // ===== 幻觉率表格 =====
+  function renderHallucination(hall) {
+    const cases = hall.cases || [];
+    const tbl = document.getElementById('hallucination-table');
+
+    if (cases.length === 0) {
+      tbl.innerHTML = '<div class="empty">暂无案件数据，请先添加案件</div>';
+      return;
+    }
+
+    let html = `<table>
+      <thead><tr>
+        <th>案件</th>
+        <th>字段数</th>
+        <th>平均置信度</th>
+        <th>幻觉率</th>
+        <th>高</th><th>中</th><th>低</th><th>不可靠</th>
+        <th>趋势</th>
+      </tr></thead><tbody>`;
+
+    for (const c of cases) {
+      const conf = c.average_confidence || 0;
+      const hall = c.hallucination_rate || 0;
+      const high = c.high || 0, med = c.medium || 0, low = c.low || 0, unre = c.unreliable || 0;
+      const total = c.total_fields || 1;
+
+      html += `<tr>
+        <td><a href="/case/${c.case_id}">${c.case_id}</a></td>
+        <td>${c.total_fields}</td>
+        <td>
+          <span class="badge" style="background:${confColor(conf)};color:#fff;">${conf.toFixed(1)}</span>
+          ${confLabel(conf)}
+        </td>
+        <td>
+          <span class="badge" style="background:${hallColor(hall)};color:#fff;">${(hall*100).toFixed(1)}%</span>
+          ${hallLabel(hall)}
+        </td>
+        <td class="c-green">${high}</td>
+        <td class="c-yellow">${med}</td>
+        <td class="c-orange">${low}</td>
+        <td class="c-red">${unre}</td>
+        <td>
+          <div class="progress-bar" style="width:80px;">
+            <div class="progress-fill" style="width:${(high/total*100).toFixed(0)}%;background:#27ae60;"></div>
+          </div>
+        </td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+    tbl.innerHTML = html;
+
+    // 置信度分布
+    const totalFields = cases.reduce((s, c) => s + (c.total_fields || 0), 0);
+    const totalHigh = cases.reduce((s, c) => s + (c.high || 0), 0);
+    const totalMed = cases.reduce((s, c) => s + (c.medium || 0), 0);
+    const totalLow = cases.reduce((s, c) => s + (c.low || 0), 0);
+    const totalUnre = cases.reduce((s, c) => s + (c.unreliable || 0), 0);
+
+    const dist = document.getElementById('confidence-distribution');
+    dist.innerHTML = [
+      { label: '高置信度', count: totalHigh, color: '#27ae60', conf: 90 },
+      { label: '中等置信度', count: totalMed, color: '#f39c12', conf: 70 },
+      { label: '低置信度', count: totalLow, color: '#e67e22', conf: 50 },
+      { label: '不可靠', count: totalUnre, color: '#e74c3c', conf: 20 },
+    ].map(d => `
+      <div style="text-align:center;min-width:100px;">
+        <div class="conf-donut" style="--conf-color:${d.color};--conf-pct:${totalFields>0?(d.count/totalFields*100).toFixed(0)+'%':'0%'}">
+          <div class="conf-donut-inner">
+            <span class="num" style="color:${d.color}">${d.count}</span>
+            <span class="txt">${totalFields>0?(d.count/totalFields*100).toFixed(0)+'%':'0%'}</span>
+          </div>
+        </div>
+        <div style="font-size:13px;font-weight:600;">${d.label}</div>
+        <div style="font-size:12px;color:#7f8c8d;">${d.count} 个字段</div>
+      </div>
+    `).join('');
+  }
+
+  // ===== 省级差异 =====
+  function renderProvincial(prov) {
+    const crimeMaps = {
+      theft: 'provincial-theft',
+      fraud: 'provincial-fraud',
+      robbery: 'provincial-robbery',
+    };
+    const crimeKeys = { theft: '盗窃罪', fraud: '诈骗罪', robbery: '抢夺罪' };
+    const colors = { theft: '#3498db', fraud: '#e74c3c', robbery: '#27ae60' };
+
+    for (const [key, crime] of Object.entries(crimeKeys)) {
+      const elId = crimeMaps[key];
+      const el = document.getElementById(elId);
+      const provinces = prov.data?.[crime] || {};
+      const maxAmt = prov.max_amount || 100000;
+
+      if (Object.keys(provinces).length === 0) {
+        el.innerHTML = '<div class="empty">暂无数据</div>';
+        continue;
+      }
+
+      let html = '';
+      const sorted = Object.entries(provinces).sort((a, b) => b[1].amount - a[1].amount);
+      for (const [provName, info] of sorted) {
+        const pct = Math.round(info.amount / maxAmt * 100);
+        html += `
+        <div class="province-card" style="border-left-color:${colors[key]}">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <strong style="font-size:13px;">${provName}</strong>
+            <span style="font-size:12px;color:#7f8c8d;">${info.category}</span>
+          </div>
+          <div class="province-bar">
+            <div class="prov">${provName}</div>
+            <div class="bar-wrap"><div class="bar"><div class="bar-fill" style="width:${pct}%;background:${colors[key]}"></div></div></div>
+            <div class="amount">${info.amount > 0 ? info.amount.toLocaleString() + '元' : info.standard}</div>
+          </div>
+          <div style="font-size:11px;color:#95a5a6;">${info.standard}</div>
+        </div>`;
+      }
+      el.innerHTML = html;
+    }
+  }
+
+  // ===== 公司地域 =====
+  function renderGeo(geo) {
+    const statsEl = document.getElementById('geo-stats');
+    const rankEl = document.getElementById('geo-ranking');
+
+    if (!geo.total_companies) {
+      statsEl.innerHTML = '<div class="empty">暂无公司数据，请在案件 YAML 中配置 defendants 字段</div>';
+      rankEl.innerHTML = '';
+      return;
+    }
+
+    statsEl.innerHTML = `<p style="margin-bottom:16px;">共 <strong>${geo.total_companies}</strong> 家涉案公司，涉及 <strong>${Object.keys(geo.by_province||{}).length}</strong> 个省份</p>
+      <table><thead><tr><th>公司名称</th><th>省份</th><th>涉案罪名</th><th>案件数</th><th>涉案金额</th></tr></thead><tbody>
+      ${(geo.companies||[]).slice(0,20).map(c => `
+        <tr>
+          <td>${c.name}</td>
+          <td>${c.province}</td>
+          <td>${c.primary_charge||'—'}</td>
+          <td>${c.case_count}</td>
+          <td>${c.amount > 0 ? (c.amount/1e4).toFixed(0)+'万元' : '—'}</td>
+        </tr>`).join('')}
+      </tbody></table>`;
+
+    const top = geo.top_provinces || [];
+    const maxCount = top.length ? top[0][1] : 1;
+    rankEl.innerHTML = top.map(([prov, cnt]) => {
+      const pct = Math.round(cnt / maxCount * 100);
+      const color = cnt >= 5 ? '#e74c3c' : cnt >= 3 ? '#e67e22' : '#3498db';
+      return `
+      <div class="geo-bar">
+        <div class="prov">${prov}</div>
+        <div class="bar-wrap">
+          <div class="bar" style="height:20px;border-radius:4px;">
+            <div class="bar-fill" style="width:${pct}%;background:${color};height:100%;border-radius:4px;"></div>
+          </div>
+        </div>
+        <div class="count">${cnt}家</div>
+      </div>`;
+    }).join('');
+  }
+
+  // ===== 工具函数 =====
+  function confLabel(s) {
+    if (s >= 80) return '高置信度';
+    if (s >= 60) return '中等置信度';
+    if (s >= 40) return '低置信度';
+    return '不可靠';
+  }
+  function confColor(s) {
+    if (s >= 80) return 'c-green';
+    if (s >= 60) return 'c-yellow';
+    if (s >= 40) return 'c-orange';
+    return 'c-red';
+  }
+  function hallLabel(r) {
+    if (r < 0.1) return '优秀';
+    if (r < 0.25) return '良好';
+    if (r < 0.5) return '需关注';
+    return '严重';
+  }
+  function hallColor(r) {
+    if (r < 0.1) return 'c-green';
+    if (r < 0.25) return 'c-yellow';
+    if (r < 0.5) return 'c-orange';
+    return 'c-red';
+  }
+
+  function showTab(name) {
+    document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  function showCrimeTab(crime) {
+    const maps = { theft: 'provincial-theft', fraud: 'provincial-fraud', robbery: 'provincial-robbery' };
+    const colors = { theft: '#3498db', fraud: '#e74c3c', robbery: '#27ae60' };
+    const names = { theft: '盗窃罪', fraud: '诈骗罪', robbery: '抢夺罪' };
+    Object.entries(maps).forEach(([k, elId]) => {
+      document.getElementById(elId).style.display = k === crime ? '' : 'none';
+    });
+    ['theft','fraud','robbery'].forEach(k => {
+      const btn = document.getElementById('btn-' + k);
+      if (k === crime) {
+        btn.classList.add('active');
+        btn.style.borderBottomColor = colors[k];
+        btn.style.color = colors[k];
+      } else {
+        btn.classList.remove('active');
+        btn.style.borderBottomColor = '';
+        btn.style.color = '';
+      }
+    });
+  }
+
+  // 启动
+  loadStats();
+</script>
+
+</body>
+</html>
