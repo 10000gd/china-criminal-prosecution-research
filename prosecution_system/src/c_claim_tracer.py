@@ -25,9 +25,20 @@ C-CLAIM 五要素：
 import json
 import hashlib
 from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from enum import IntEnum
 from pathlib import Path
+import hashlib
+import json
+import re
+
+# 预编译法条提取正则（避免在函数内重复编译）
+_ARTICLE_PATTERNS = [
+    re.compile(r"刑法\s*第\s*[\d零一二三四五六七八九十百千万]+条"),
+    re.compile(r"最高法[院检]?\s*[司发]\s*〔\d{4}〕\s*第\s*\d+号"),
+    re.compile(r"《[^》]+解释[^》]*》"),
+    re.compile(r"《[^》]+意见[^》]*》"),
+]
 
 
 # ===== 来源等级（与 fact_checker 对齐） =====
@@ -269,15 +280,7 @@ class CClaimTracer:
         if "court" in field_path:
             keywords.append("管辖法院")
 
-        # 从 value 提取法条编号
-        import re
-        article_patterns = [
-            r"刑法\s*第\s*[\d零一二三四五六七八九十百千万]+条",
-            r"最高法[院检]?\s*[司发]\s*〔\d{4}〕\s*第\s*\d+号",
-            r"《[^》]+解释[^》]*》",
-            r"《[^》]+意见[^》]*》",
-        ]
-        for pattern in article_patterns:
+        for pattern in _ARTICLE_PATTERNS:
             for m in re.finditer(pattern, value_str):
                 laws.append(m.group(0))
 
@@ -332,7 +335,6 @@ class CClaimTracer:
     def _infer_crime_type(self, field_path: str) -> str:
         """从字段路径推断罪名类型"""
         if "charges_judged" in field_path or "charges_missed" in field_path:
-            import re
             m = re.search(r"charges_[jm]udged\.([\w]+)\.", field_path)
             return m.group(1) if m else ""
         return ""
