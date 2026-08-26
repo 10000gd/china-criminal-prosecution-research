@@ -29,9 +29,8 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
-import logging
 
-logger = logging.getLogger(__name__)
+logger = __import__('logging').getLogger(__name__)
 
 LEGALDB_DIR = Path(__file__).parent.parent / "cases" / "legaldb"
 CASES_DATA_DIR = LEGALDB_DIR.parent.parent / "prosecution_system" / "data"
@@ -48,6 +47,12 @@ CASE_NUM_PATTERNS = [
     # (2021)京02刑终234号
     re.compile(r"\((\d{4})\)\s*([\u4e00-\u9fa5]{2})\s*(\d+)\s*刑\s*终\s*(\d+)\s*号"),
 ]
+
+_SENTENCE_RE_1 = re.compile(r"拘役\s*(\d+)\s*个?[月]?")
+_SENTENCE_RE_2 = re.compile(r"有期徒刑\s*(\d+)\s*年\s*(\d+)\s*个?[月]?")
+_SENTENCE_RE_3 = re.compile(r"有期徒刑\s*(\d+)\s*年")
+_SENTENCE_RE_4 = re.compile(r"有期徒刑\s*(\d+)\s*个?[月]?")
+_SENTENCE_RE_5 = re.compile(r"有期徒刑\s*(\d+)\s*年\s*缓刑\s*(\d+)")
 
 
 @dataclass
@@ -132,23 +137,22 @@ def _estimate_sentence_months(sentence_text: str) -> int:
     if "死刑" in text and "缓期" in text:
         return 240  # 死缓通常按无期处理
 
-    months = 0
     # 拘役：1-6个月
-    m = re.search(r"拘役\s*(\d+)\s*个?[月]?", text)
+    m = _SENTENCE_RE_1.search(text)
     if m:
         return int(m.group(1))
     # 有期徒刑：X年Y月
-    m = re.search(r"有期徒刑\s*(\d+)\s*年\s*(\d+)\s*个?[月]?", text)
+    m = _SENTENCE_RE_2.search(text)
     if m:
         return int(m.group(1)) * 12 + int(m.group(2))
-    m = re.search(r"有期徒刑\s*(\d+)\s*年", text)
+    m = _SENTENCE_RE_3.search(text)
     if m:
         return int(m.group(1)) * 12
-    m = re.search(r"有期徒刑\s*(\d+)\s*个?[月]?", text)
+    m = _SENTENCE_RE_4.search(text)
     if m:
         return int(m.group(1))
     # 有期徒刑缓刑
-    m = re.search(r"有期徒刑\s*(\d+)\s*年\s*缓刑\s*(\d+)", text)
+    m = _SENTENCE_RE_5.search(text)
     if m:
         return int(m.group(1)) * 12  # 缓刑不影响基准刑期
 

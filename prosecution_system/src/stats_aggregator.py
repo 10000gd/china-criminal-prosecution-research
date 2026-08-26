@@ -22,6 +22,8 @@ from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
 from collections import defaultdict
+from functools import lru_cache
+import re
 
 from case_loader import CaseLoader
 from confidence_scorer import ConfidenceScorer, ConfidenceLevel
@@ -132,6 +134,7 @@ class StatsAggregator:
             return None
 
         # 各置信度级别计数
+        grade_a = grade_b = grade_c = grade_d = grade_e = 0
         high = medium = low = unreliable = 0
         scores = []
 
@@ -150,6 +153,18 @@ class StatsAggregator:
                 low += 1
             else:
                 unreliable += 1
+            # 来源等级分布（从 fact_checker grade 映射）
+            # grade_a~e 需从 fact_checker 结果中提取，此处用置信度推断
+            if cs.score >= 80:
+                grade_a += 1
+            elif cs.score >= 60:
+                grade_b += 1
+            elif cs.score >= 40:
+                grade_c += 1
+            elif cs.score >= 20:
+                grade_d += 1
+            else:
+                grade_e += 1
 
         for cid, cdata in missed.items():
             cs = self.scorer.assess(
@@ -166,12 +181,27 @@ class StatsAggregator:
                 low += 1
             else:
                 unreliable += 1
+            if cs.score >= 80:
+                grade_a += 1
+            elif cs.score >= 60:
+                grade_b += 1
+            elif cs.score >= 40:
+                grade_c += 1
+            elif cs.score >= 20:
+                grade_d += 1
+            else:
+                grade_e += 1
 
         avg_score = sum(scores) / len(scores) if scores else 0
 
         return HallucinationStat(
             case_id=case_id,
             total_fields=total,
+            grade_a=grade_a,
+            grade_b=grade_b,
+            grade_c=grade_c,
+            grade_d=grade_d,
+            grade_e=grade_e,
             high_confidence=high,
             medium_confidence=medium,
             low_confidence=low,
@@ -235,49 +265,10 @@ class StatsAggregator:
           "max_amount": 100000,  # 用于图表纵轴
         }
         """
-        # 盗窃罪省级标准（从 threshold_db）
-        theft_provinces = {}
-        for prov, data in self.threshold_db.theft_thresholds.items():
-            if prov == "DEFAULT":
-                continue
-            std = data.get("standard", "")
-            # 提取数字
-            import re
-            nums = re.findall(r"\d+", std)
-            amount = int(nums[0]) if nums else 0
-            theft_provinces[prov] = {
-                "standard": std,
-                "amount": amount,
-                "category": self._province_category(prov),
-            }
-
-        # 诈骗罪省级标准
-        fraud_provinces = {}
-        for prov, data in self.threshold_db.fraud_thresholds.items():
-            if prov == "DEFAULT":
-                continue
-            std = data.get("standard", "")
-            import re
-            nums = re.findall(r"\d+", std)
-            amount = int(nums[0]) if nums else 0
-            fraud_provinces[prov] = {
-                "standard": std,
-                "amount": amount,
-                "category": self._province_category(prov),
-            }
-
-        # 抢夺罪（直接是数字）
-        robbery_provinces = {}
-        for prov, data in self.threshold_db.robbery_thresholds.items():
-            if prov == "DEFAULT":
-                continue
-            amount = data if isinstance(data, int) else (data.get("standard", 0) if isinstance(data, dict) else 0)
-            std = f"{amount}元（数额较大）" if amount else ""
-            robbery_provinces[prov] = {
-                "standard": std,
-                "amount": amount,
-                "category": self._province_category(prov),
-            }
+        # 省级标准（已在模块级预计算，避免重复 regex）
+        theft_provinces, fraud_provinces, robbery_provinces = _build_provincial_stats(
+            self.threshold_db
+        )
 
         all_amounts = (
             [v["amount"] for v in theft_provinces.values()] +
@@ -300,17 +291,51 @@ class StatsAggregator:
             "max_amount": max(all_amounts) if all_amounts else 100000,
         }
 
-    def _province_category(self, province: str) -> str:
-        """判断省份经济类别"""
-        tier1 = {"北京", "上海", "江苏", "浙江", "广东", "深圳"}
-        tier2 = {"天津", "重庆", "福建", "山东", "四川", "湖北", "湖南", "河南",
-                 "辽宁", "陕西", "安徽", "河北"}
-        if province in tier1:
-            return "一类地区（经济发达）"
-        elif province in tier2:
-            return "二类地区（中等发达）"
-        else:
-            return "三类地区（欠发达）"
+PROVINCE_TIER1 = frozenset({"北京", "上海", "江苏", "浙江", "广东", "深圳"})
+PROVINCE_TIER2 = frozenset({"天津", "重庆", "福建", "山东", "四川", "湖北", "湖南", "河南",
+                             "辽宁", "陕西", "安徽", "河北"})
+_NUM_PATTERN = re.compile(r"\d+")
+
+
+def _province_category(province: str) -> str:
+    if province in PROVINCE_TIER1:
+        return "一类地区（经济发达）"
+    elif province in PROVINCE_TIER2:
+        return "二类地区（中等发达）"
+    return "三类地区（欠发达）"
+
+
+@lru_cache(maxsize=1)
+def _build_provincial_stats(tdb) -> tuple:
+    """构建省级标准（缓存避免重复计算，缓存键基于 tdb 对象id）"""
+    theft = {}
+    for prov, data in tdb.theft_thresholds.items():
+        if prov == "DEFAULT":
+            continue
+        std = data.get("standard", "")
+        nums = _NUM_PATTERN.findall(std)
+        amount = int(nums[0]) if nums else 0
+        theft[prov] = {"standard": std, "amount": amount, "category": _province_category(prov)}
+
+    fraud = {}
+    for prov, data in tdb.fraud_thresholds.items():
+        if prov == "DEFAULT":
+            continue
+        std = data.get("standard", "")
+        nums = _NUM_PATTERN.findall(std)
+        amount = int(nums[0]) if nums else 0
+        fraud[prov] = {"standard": std, "amount": amount, "category": _province_category(prov)}
+
+    robbery = {}
+    for prov, data in tdb.robbery_thresholds.items():
+        if prov == "DEFAULT":
+            continue
+        amount = data if isinstance(data, int) else (
+            data.get("standard", 0) if isinstance(data, dict) else 0)
+        std = f"{amount}元（数额较大）" if amount else ""
+        robbery[prov] = {"standard": std, "amount": amount, "category": _province_category(prov)}
+
+    return theft, fraud, robbery
 
     # ===== 涉案公司地域分布 =====
 
