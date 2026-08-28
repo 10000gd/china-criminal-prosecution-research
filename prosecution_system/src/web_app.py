@@ -29,6 +29,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 # 导入认证模块
 from auth import create_auth_blueprint, login_required, get_current_user
 from security import CSRFProtection, csrf_protect, generate_csrf_token
+from admin import create_admin_blueprint
 import yaml
 
 from case_loader import CaseLoader
@@ -45,6 +46,11 @@ app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB max
 # 注册认证蓝图
 auth_bp = create_auth_blueprint(app)
 app.register_blueprint(auth_bp)
+
+# 注册管理后台蓝图
+admin_bp = create_admin_blueprint(app)
+app.register_blueprint(admin_bp)
+
 loader = CaseLoader()
 OUTPUT_DIR = Path(__file__).parent.parent / "output"
 DATA_DIR = Path(__file__).parent.parent / "data"
