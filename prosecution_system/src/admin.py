@@ -94,6 +94,18 @@ def create_admin_blueprint(app):
             popular_favorites = [dict(row) for row in cursor.fetchall()]
         return render_template("admin/stats.html", role_stats=role_stats, daily_active=daily_active, popular_searches=popular_searches, popular_favorites=popular_favorites)
     
+    @bp.route("/dashboard")
+    @admin_required
+    def dashboard():
+        stats = db.get_stats()
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT DATE(created_at) as date, COUNT(DISTINCT user_id) as count FROM operation_logs WHERE created_at >= datetime('now', '-30 days') GROUP BY DATE(created_at) ORDER BY date")
+            daily_active = [dict(row) for row in cursor.fetchall()]
+            cursor.execute("SELECT query, COUNT(*) as count FROM search_history GROUP BY query ORDER BY count DESC LIMIT 10")
+            popular_searches = [dict(row) for row in cursor.fetchall()]
+        return render_template("admin/dashboard.html", stats=stats, daily_active=daily_active, popular_searches=popular_searches)
+    
     @bp.route("/backup", methods=["GET", "POST"])
     @admin_required
     def backup():
