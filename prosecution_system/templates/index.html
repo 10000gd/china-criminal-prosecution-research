@@ -26,6 +26,9 @@
     .nav-links { display: flex; gap: 4px; }
     .nav-links a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px; padding: 6px 14px; border-radius: 6px; }
     .nav-links a:hover, .nav-links a.active { color: #fff; background: rgba(255,255,255,0.12); }
+    .user-menu { margin-left: auto; display: flex; gap: 8px; }
+    .user-link { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 13px; padding: 4px 10px; border-radius: 4px; }
+    .user-link:hover { color: #fff; background: rgba(255,255,255,0.1); }
     .container { max-width: 1100px; margin: 0 auto; padding: 28px 20px; }
     h1 { font-size: 22px; font-weight: 800; margin-bottom: 6px; color: #111827; }
     .subtitle { color: #6b7280; font-size: 13px; margin-bottom: 24px; }
@@ -121,6 +124,15 @@
     <a href="/tracker">跟踪</a>
     <a href="/search">搜索</a>
   </nav>
+  <div class="user-menu">
+    {% if user_logged_in %}
+      <a href="/auth/profile" class="user-link">👤 {{ session.username }}</a>
+      <a href="/auth/logout" class="user-link">退出</a>
+    {% else %}
+      <a href="/auth/login" class="user-link">登录</a>
+      <a href="/auth/register" class="user-link">注册</a>
+    {% endif %}
+  </div>
 </div>
 
 <div class="container">
