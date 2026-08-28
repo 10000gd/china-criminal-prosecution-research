@@ -237,6 +237,131 @@ class DefenseCaseDatabase:
             "year": 2020,
             "key_facts": "民事纠纷中推搡致对方倒地死亡",
         },
+        
+        # 立功案例
+        {
+            "case_id": "DEF-090",
+            "case_name": "贩毒立功案",
+            "crime": "贩卖毒品罪",
+            "outcome": "认定立功，从轻处罚",
+            "outcome_type": "mitigated",
+            "reasoning": "被告人归案后协助公安机关抓获其他犯罪嫌疑人，查证属实，构成立功，可以从轻或减轻处罚。",
+            "key_defense": "立功",
+            "supporting_defenses": ["自首", "坦白"],
+            "sentence": "有期徒刑七年",
+            "year": 2021,
+            "province": "广东",
+            "key_facts": "贩卖海洛因50克，归案后协助抓获同案犯",
+        },
+        
+        # 未成年人从轻案例
+        {
+            "case_id": "DEF-100",
+            "case_name": "未成年人盗窃案",
+            "crime": "盗窃罪",
+            "outcome": "附条件不起诉",
+            "outcome_type": "innocent",
+            "reasoning": "犯罪嫌疑人系已满十四周岁未满十八周岁的未成年人，犯罪情节较轻，有悔罪表现，家长具备监护条件。",
+            "key_defense": "未成年人",
+            "supporting_defenses": ["初犯", "认罪认罚", "赔偿"],
+            "year": 2022,
+            "province": "浙江",
+            "key_facts": "16岁学生盗窃自行车两辆，价值2000元",
+        },
+        
+        # 坦白案例
+        {
+            "case_id": "DEF-110",
+            "case_name": "坦白从宽案",
+            "crime": "诈骗罪",
+            "outcome": "认定坦白，从轻处罚",
+            "outcome_type": "mitigated",
+            "reasoning": "被告人虽不构成自首，但到案后如实供述犯罪事实，认罪态度好，可以从轻处罚。",
+            "key_defense": "坦白/认罪认罚",
+            "supporting_defenses": ["初犯", "退赃"],
+            "sentence": "有期徒刑三年",
+            "year": 2021,
+            "province": "江苏",
+            "key_facts": "电信诈骗30万元，被抓获后如实供述",
+        },
+        
+        # 老人从轻案例
+        {
+            "case_id": "DEF-120",
+            "case_name": "老年人故意伤害案",
+            "crime": "故意伤害罪",
+            "outcome": "年满75周岁，从轻处罚",
+            "outcome_type": "mitigated",
+            "reasoning": "被告人已满七十五周岁，故意犯罪，可以从轻或减轻处罚。",
+            "key_defense": "老年人",
+            "supporting_defenses": ["自首", "赔偿", "谅解"],
+            "sentence": "有期徒刑一年，缓刑一年",
+            "year": 2022,
+            "province": "北京",
+            "key_facts": "77岁老人因邻里纠纷致人轻伤",
+        },
+        
+        # 聋哑人案例
+        {
+            "case_id": "DEF-130",
+            "case_name": "聋哑人盗窃案",
+            "crime": "盗窃罪",
+            "outcome": "又聋又哑，从轻处罚",
+            "outcome_type": "mitigated",
+            "reasoning": "被告人系又聋又哑的人，可以从轻、减轻或者免除处罚。",
+            "key_defense": "聋哑人/盲人",
+            "supporting_defenses": ["初犯", "自首"],
+            "sentence": "拘役三个月",
+            "year": 2020,
+            "province": "四川",
+            "key_facts": "聋哑人扒窃手机一部",
+        },
+        
+        # 追诉时效案例
+        {
+            "case_id": "DEF-140",
+            "case_name": "超过追诉时效案",
+            "crime": "故意伤害罪",
+            "outcome": "已过追诉时效，不追究刑事责任",
+            "outcome_type": "innocent",
+            "reasoning": "法定最高刑为三年以下有期徒刑的，经过五年不再追诉。本案已过追诉时效。",
+            "key_defense": "超过追诉时效",
+            "supporting_defenses": [],
+            "year": 2019,
+            "province": "上海",
+            "key_facts": "故意伤害致人轻伤，案发后潜逃10年",
+        },
+        
+        # 紧急避险案例
+        {
+            "case_id": "DEF-150",
+            "case_name": "紧急避险无罪案",
+            "crime": "故意毁坏财物罪",
+            "outcome": "认定紧急避险，不负刑事责任",
+            "outcome_type": "innocent",
+            "reasoning": "被告人为了使本人的人身权利免受正在发生的危险，迫不得已采取损害另一较小合法权益的行为，属于紧急避险。",
+            "key_defense": "紧急避险",
+            "supporting_defenses": [],
+            "year": 2021,
+            "province": "浙江",
+            "key_facts": "为逃避追砍砸坏他人汽车逃逸",
+        },
+        
+        # 被害人过错案例
+        {
+            "case_id": "DEF-160",
+            "case_name": "被害人过错从轻案",
+            "crime": "故意伤害罪",
+            "outcome": "认定被害人过错，从轻处罚",
+            "outcome_type": "mitigated",
+            "reasoning": "被害人对于矛盾激化负有直接责任，对被告人从轻处罚。",
+            "key_defense": "被害人过错",
+            "supporting_defenses": ["自首", "赔偿", "谅解"],
+            "sentence": "有期徒刑六个月，缓刑一年",
+            "year": 2021,
+            "province": "福建",
+            "key_facts": "因债务纠纷发生冲突，被害人先动手打人",
+        },
     ]
     
     # 辩护类型到罪名的映射
