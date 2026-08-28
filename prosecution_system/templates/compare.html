@@ -254,6 +254,17 @@
       </table>
     </div>
     {% endif %}
+    
+    <!-- 导出选项 -->
+    <div class="card" style="text-align: center;">
+      <h3 style="margin-bottom: 16px;">📥 导出报告</h3>
+      <a href="/export/comparison?case_id={{ case_ids|join('&case_id=') }}" class="btn btn-primary" style="font-size: 16px; padding: 12px 24px;">
+        🖨️ 导出为HTML/PDF
+      </a>
+      <p style="color: #666; font-size: 12px; margin-top: 10px;">
+        点击后在浏览器中按 Ctrl+P 可打印为PDF
+      </p>
+    </div>
   </div>
 </body>
 </html>

@@ -353,6 +353,66 @@ def api_compare():
     })
 
 
+# ---- PDF导出 ----
+
+from pdf_exporter import PDFExporter
+
+@app.route("/export/case/<case_id>")
+@login_required
+def export_case_pdf(case_id):
+    """导出案件为PDF（HTML格式）"""
+    try:
+        case_data = loader.load(case_id)
+    except FileNotFoundError:
+        return f"案件不存在: {case_id}", 404
+    
+    exporter = PDFExporter()
+    output_path = exporter.export_case_to_html(case_data)
+    
+    return send_file(output_path, as_attachment=True, download_name=f"{case_id}_report.html")
+
+
+@app.route("/export/comparison")
+@login_required
+def export_comparison_pdf():
+    """导出对比报告为PDF"""
+    case_ids = request.args.getlist("case_id")
+    if len(case_ids) < 2:
+        return jsonify({"error": "至少需要2个案件"}), 400
+    
+    cases_data = []
+    for case_id in case_ids:
+        try:
+            data = loader.load(case_id)
+            cases_data.append(data)
+        except FileNotFoundError:
+            return jsonify({"error": f"案件不存在: {case_id}"}), 404
+    
+    comparator = CaseComparator()
+    result = comparator.compare_cases(case_ids, cases_data)
+    
+    comparison_data = {
+        "case_ids": result.case_ids,
+        "summary": result.summary,
+        "insights": result.insights,
+        "comparison_items": [
+            {
+                "field": item.field,
+                "label": item.label,
+                "values": item.values,
+                "highlight": item.highlight,
+                "is_better": item.is_better,
+            }
+            for item in result.comparison_items
+        ],
+    }
+    
+    exporter = PDFExporter()
+    output_path = exporter.export_comparison_to_html(comparison_data)
+    
+    return send_file(output_path, as_attachment=True, download_name="comparison_report.html")
+
+
 # ---- API 接口 ----
 
 @app.route("/api/cases")
