@@ -153,7 +153,32 @@ class SentencingConsistencyAnalyzer:
         self._records_by_crime: Dict[str, List[SentencingRecord]] = defaultdict(list)
         self._records_by_province: Dict[str, List[SentencingRecord]] = defaultdict(list)
         
-        self._load_builtin_records()
+        # 尝试从数据库加载缓存
+        self._load_from_cache()
+        
+        if not self._records:
+            self._load_builtin_records()
+    
+    def _load_from_cache(self):
+        """从数据库加载缓存的记录"""
+        try:
+            from database import db
+            # 缓存逻辑将在 generate_report 中使用
+        except ImportError:
+            pass
+    
+    def _save_to_cache(self):
+        """保存记录到数据库缓存"""
+        try:
+            from database import db
+            cache_key = f"sentencing_records_v1"
+            cache_data = {
+                "records": [r.__dict__ for r in self._records],
+                "timestamp": datetime.now().isoformat(),
+            }
+            db.set_cache(cache_key, cache_data, ttl_seconds=86400)  # 24小时
+        except ImportError:
+            pass
     
     def _load_builtin_records(self):
         """加载内置案例"""
@@ -405,7 +430,17 @@ class SentencingConsistencyAnalyzer:
         }
     
     def generate_report(self, crime: str = None) -> Dict:
-        """生成量刑一致性报告"""
+        """生成量刑一致性报告（带缓存）"""
+        # 尝试从缓存获取
+        try:
+            from database import db
+            cache_key = f"sentencing_report_{crime or 'all'}"
+            cached = db.get_cached(cache_key)
+            if cached:
+                return cached
+        except ImportError:
+            pass
+        
         if crime:
             crimes = [crime]
         else:
@@ -426,7 +461,7 @@ class SentencingConsistencyAnalyzer:
         
         provincial_comparison = self.get_provincial_comparison(crime)
         
-        return {
+        result = {
             "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
             "crime": crime or "全部",
             "total_records": len(self._records),
@@ -434,6 +469,16 @@ class SentencingConsistencyAnalyzer:
             "provincial_comparison": provincial_comparison,
             "summary": self._generate_summary(crime_stats, provincial_comparison),
         }
+        
+        # 保存到缓存
+        try:
+            from database import db
+            cache_key = f"sentencing_report_{crime or 'all'}"
+            db.set_cache(cache_key, result, ttl_seconds=3600)  # 1小时
+        except ImportError:
+            pass
+        
+        return result
     
     def _generate_summary(self, crime_stats: Dict, provincial_comparison: Dict) -> str:
         """生成报告摘要"""
