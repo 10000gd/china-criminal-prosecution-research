@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>辩护分析 - {{ case_id }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .card h2 {
+            color: #444;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+        .strength-meter {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 32px;
+            overflow: hidden;
+            margin: 16px 0;
+        }
+        .strength-bar {
+            height: 100%;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            transition: width 0.5s ease;
+        }
+        .strength-high { background: linear-gradient(90deg, #28a745, #20c997); }
+        .strength-medium { background: linear-gradient(90deg, #ffc107, #fd7e14); }
+        .strength-low { background: linear-gradient(90deg, #dc3545, #c82333); }
+        .defense-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        .defense-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 4px solid #667eea;
+            padding: 16px;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+        .defense-card:hover {
+            transform: translateX(4px);
+        }
+        .defense-card.primary {
+            border-left-color: #28a745;
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        }
+        .defense-card h3 {
+            color: #495057;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        .defense-card.primary h3 {
+            color: #155724;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-info { background: #d1ecf1; color: #0c5460; }
+        .case-list {
+            list-style: none;
+        }
+        .case-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 3px solid #dee2e6;
+        }
+        .case-item.innocent { border-left-color: #28a745; }
+        .case-item.mitigated { border-left-color: #ffc107; }
+        .case-item h4 {
+            color: #495057;
+            margin-bottom: 8px;
+        }
+        .case-outcome {
+            color: #28a745;
+            font-weight: 600;
+            margin: 8px 0;
+        }
+        .evidence-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        .evidence-list li {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .info-item {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+        }
+        .info-item label {
+            color: #6c757d;
+            font-size: 13px;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .info-item span {
+            font-size: 16px;
+            font-weight: 600;
+            color: #495057;
+        }
+        .section {
+            margin-bottom: 24px;
+        }
+        .section h3 {
+            color: #495057;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+        .nav {
+            background: white;
+            padding: 16px 24px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            gap: 24px;
+        }
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="/">📁 案件列表</a>
+            <a href="/case/{{ case_id }}">📋 案件详情</a>
+            <a href="/search">🔍 搜索</a>
+            <a href="/stats">📊 统计</a>
+            <a href="/defense/{{ case_id }}">🛡️ 辩护分析</a>
+        </div>
+
+        {% if error %}
+        <div class="card error">
+            <h2>❌ 错误</h2>
+            <p>{{ error }}</p>
+        </div>
+        {% else %}
+        
+        <div class="header">
+            <h1>🛡️ 辩护分析报告</h1>
+            <p>案号: {{ case_id }}</p>
+        </div>
+
+        <!-- 案件信息 -->
+        <div class="card">
+            <h2>📋 案件基本信息</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>被告人</label>
+                    <span>{{ analysis.primary_defense.type if analysis.primary_defense else '未知' }}</span>
+                </div>
+                <div class="info-item">
+                    <label>主要辩护方向</label>
+                    <span>{{ analysis.primary_defense.type if analysis.primary_defense else '待分析' }}</span>
+                </div>
+                <div class="info-item">
+                    <label>置信度</label>
+                    <span>{{ analysis.primary_defense.confidence|int if analysis.primary_defense else 0 }}%</span>
+                </div>
+                <div class="info-item">
+                    <label>整体强度</label>
+                    <span>{{ analysis.overall_strength|int }}/100</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 辩护强度评估 -->
+        <div class="card">
+            <h2>📊 整体辩护强度评估</h2>
+            <div class="strength-meter">
+                {% set strength = analysis.overall_strength|int %}
+                <div class="strength-bar {% if strength >= 70 %}strength-high{% elif strength >= 50 %}strength-medium{% else %}strength-low{% endif %}" 
+                     style="width: {{ strength }}%">
+                    {{ strength }}/100
+                </div>
+            </div>
+            <p style="color: #6c757d; margin-top: 8px;">
+                {{ analysis.recommended_strategy }}
+            </p>
+            <div class="btn-group">
+                <button class="btn" onclick="generateOpinion()">📝 生成辩护词</button>
+                <button class="btn" onclick="downloadReport()">📄 下载报告</button>
+            </div>
+        </div>
+
+        <!-- 主要辩护方向 -->
+        {% if analysis.primary_defense %}
+        <div class="card">
+            <h2>🎯 主要辩护方向</h2>
+            <div class="defense-card primary">
+                <h3>🛡️ {{ analysis.primary_defense.type }}</h3>
+                <p><strong>法律依据:</strong> {{ analysis.primary_defense.legal_basis }}</p>
+                <p><strong>置信度:</strong> <span class="badge badge-success">{{ analysis.primary_defense.confidence|int }}%</span></p>
+                <p><strong>风险缓解:</strong> {{ analysis.primary_defense.risk_mitigation }}</p>
+                
+                {% if analysis.primary_defense.evidence_points %}
+                <div class="section" style="margin-top: 16px;">
+                    <h3>📌 支持证据点</h3>
+                    <ul class="evidence-list">
+                        {% for point in analysis.primary_defense.evidence_points[:5] %}
+                        <li>{{ point }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                {% if analysis.primary_defense.counter_arguments %}
+                <div class="section">
+                    <h3>⚠️ 可能被反驳的点</h3>
+                    <ul>
+                        {% for arg in analysis.primary_defense.counter_arguments %}
+                        <li>{{ arg }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <p><strong>建议:</strong> {{ analysis.primary_defense.recommendation }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 辅助辩护方向 -->
+        {% if analysis.secondary_defenses %}
+        <div class="card">
+            <h2>🔗 辅助辩护方向</h2>
+            <div class="defense-grid">
+                {% for defense in analysis.secondary_defenses %}
+                <div class="defense-card">
+                    <h3>{{ loop.index }}. {{ defense.type }}</h3>
+                    <p><strong>法律依据:</strong> {{ defense.legal_basis }}</p>
+                    <p><strong>置信度:</strong> <span class="badge badge-info">{{ defense.confidence|int }}%</span></p>
+                    <p><strong>风险缓解:</strong> {{ defense.risk_mitigation }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 预估结果 -->
+        <div class="card">
+            <h2>🔮 预估结果</h2>
+            <p style="font-size: 18px; color: #28a745; font-weight: 600;">
+                {{ analysis.estimated_outcome }}
+            </p>
+            
+            {% if analysis.key_evidence_needed %}
+            <div class="section">
+                <h3>📋 还需要的关键证据</h3>
+                <ul class="evidence-list">
+                    {% for evidence in analysis.key_evidence_needed %}
+                    <li>{{ evidence }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- 类案参考 -->
+        {% if similar_cases %}
+        <div class="card">
+            <h2>📚 类案参考</h2>
+            <p style="color: #6c757d; margin-bottom: 16px;">{{ similar_summary }}</p>
+            <ul class="case-list">
+                {% for case in similar_cases %}
+                <li class="case-item {{ case.outcome_type }}">
+                    <h4>{{ loop.index }}. {{ case.case_name }}</h4>
+                    <p><strong>罪名:</strong> {{ case.crime }}</p>
+                    <p class="case-outcome">{{ case.outcome }}</p>
+                    <p><strong>辩护理由:</strong> <span class="badge badge-success">{{ case.key_defense }}</span></p>
+                    {% if case.reasoning %}
+                    <p style="color: #6c757d; font-size: 13px; margin-top: 8px;">
+                        {{ case.reasoning[:150] }}...
+                    </p>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- 辩护词预览 -->
+        <div class="card" id="opinion-card" style="display: none;">
+            <h2>📝 辩护词预览</h2>
+            <div id="opinion-content" style="background: #f8f9fa; padding: 20px; border-radius: 8px; white-space: pre-wrap; font-family: 'SimSun', serif;"></div>
+            <div class="btn-group">
+                <button class="btn" onclick="copyOpinion()">📋 复制辩护词</button>
+                <button class="btn" onclick="downloadOpinion()">💾 下载为Markdown</button>
+            </div>
+        </div>
+
+        {% endif %}
+    </div>
+
+    <script>
+        let currentOpinion = '';
+        
+        async function generateOpinion() {
+            const card = document.getElementById('opinion-card');
+            const content = document.getElementById('opinion-content');
+            
+            card.style.display = 'block';
+            content.innerHTML = '⏳ 正在生成辩护词...';
+            
+            try {
+                const response = await fetch('/api/defense/opinion', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        case_id: '{{ case_id }}',
+                        case_name: '{{ case_id }}',
+                        facts: '{{ case_data.case_summary if case_data else "" }}',
+                        defendant_name: '{{ analysis.primary_defense.type if analysis.primary_defense else "被告" }}',
+                        crime: '{{ analysis.primary_defense.type if analysis.primary_defense else "" }}',
+                        analysis: {{ analysis|tojson }},
+                        similar_cases: {{ similar_cases|tojson }}
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.markdown) {
+                    currentOpinion = data.markdown;
+                    content.innerHTML = '<pre style="white-space: pre-wrap; font-family: inherit;">' + data.markdown + '</pre>';
+                }
+            } catch (error) {
+                content.innerHTML = '❌ 生成失败: ' + error.message;
+            }
+        }
+        
+        async function downloadReport() {
+            try {
+                const response = await fetch('/api/defense/report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        case_id: '{{ case_id }}',
+                        case_data: {{ case_data|tojson }},
+                        analysis: {{ analysis|tojson }},
+                        similar_cases: {{ similar_cases|tojson }},
+                        opinion: currentOpinion || '辩护词生成中...',
+                        format: 'html'
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.download_url) {
+                    window.location.href = data.download_url;
+                }
+            } catch (error) {
+                alert('下载失败: ' + error.message);
+            }
+        }
+        
+        function copyOpinion() {
+            navigator.clipboard.writeText(currentOpinion).then(() => {
+                alert('✅ 辩护词已复制到剪贴板');
+            });
+        }
+        
+        function downloadOpinion() {
+            if (!currentOpinion) {
+                alert('请先生成辩护词');
+                return;
+            }
+            const blob = new Blob([currentOpinion], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '辩护词_{{ case_id }}.md';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

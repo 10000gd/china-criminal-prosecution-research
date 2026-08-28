@@ -362,6 +362,165 @@ def _hall_label(rate: float) -> str:
     else: return "严重"
 
 
+# ===== P4: 辩护增强模块路由 =====
+
+@app.route("/defense/<case_id>")
+def defense_page(case_id):
+    """辩护分析页面"""
+    case_data = loader.load(case_id)
+    if not case_data:
+        return render_template("defense.html", error=f"案件不存在: {case_id}", case_id=case_id)
+    
+    # 执行辩护分析
+    from defense_enhancer import DefenseEnhancer
+    enhancer = DefenseEnhancer()
+    analysis = enhancer.analyze_case(case_data)
+    
+    # 检索类似案例
+    from defense_case_db import DefenseCaseDatabase
+    db = DefenseCaseDatabase()
+    
+    # 获取主要辩护类型和罪名
+    primary_defense = analysis.primary_defense.type.value if analysis.primary_defense else None
+    charges = loader.get_charges(case_id)
+    crime = charges[0].get("name", "") if charges else ""
+    
+    # 检索类似案例
+    if primary_defense:
+        similar = db.search_by_defense(primary_defense, crime, limit=5)
+    else:
+        similar = db.search_by_crime(crime, "innocent", limit=5)
+    
+    return render_template(
+        "defense.html",
+        case_id=case_id,
+        case_data=case_data,
+        analysis=analysis.to_dict(),
+        similar_cases=[c.to_dict() for c in similar.cases],
+        similar_summary=similar.summary,
+    )
+
+
+@app.route("/api/defense/analyze", methods=["POST"])
+def api_defense_analyze():
+    """辩护分析 API - 分析提交的新案件"""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "请提供案件数据"}), 400
+    
+    # 提取案件信息
+    case_data = {
+        "case_id": data.get("case_id", f"CASE-{datetime.now().strftime('%Y%m%d%H%M')}"),
+        "case_summary": data.get("facts", ""),
+        "defendants": [{"name": data.get("defendant_name", "被告")}],
+        "charges": [{"name": data.get("crime", "未知罪名")}],
+    }
+    
+    # 执行分析
+    from defense_enhancer import DefenseEnhancer
+    enhancer = DefenseEnhancer()
+    analysis = enhancer.analyze_case(case_data)
+    
+    # 检索类似案例
+    from defense_case_db import DefenseCaseDatabase
+    db = DefenseCaseDatabase()
+    crime = data.get("crime", "")
+    similar = db.search_by_defense(analysis.primary_defense.type.value if analysis.primary_defense else "", crime, limit=5)
+    
+    return jsonify({
+        "analysis": analysis.to_dict(),
+        "similar_cases": [c.to_dict() for c in similar.cases],
+    })
+
+
+@app.route("/api/defense/opinion", methods=["POST"])
+def api_defense_opinion():
+    """辩护意见生成 API"""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "请提供案件数据"}), 400
+    
+    case_data = {
+        "case_id": data.get("case_id", "unknown"),
+        "case_name": data.get("case_name", "未知案件"),
+        "case_summary": data.get("facts", ""),
+        "defendants": [{"name": data.get("defendant_name", "被告")}],
+        "charges": [{"name": data.get("crime", "未知罪名")}],
+    }
+    
+    # 生成辩护意见
+    from defense_opinion_generator import DefenseOpinionGenerator
+    generator = DefenseOpinionGenerator(data.get("analysis", {}), data.get("similar_cases", []))
+    opinion = generator.generate_full_opinion(case_data)
+    
+    return jsonify({
+        "opinion": opinion.to_dict(),
+        "markdown": opinion.to_markdown(),
+    })
+
+
+@app.route("/api/defense/report", methods=["POST"])
+def api_defense_report():
+    """辩护报告生成 API"""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "请提供数据"}), 400
+    
+    from defense_report_builder import DefenseReportBuilder
+    builder = DefenseReportBuilder()
+    
+    report = builder.build(
+        case_data=data.get("case_data", {}),
+        defense_analysis=data.get("analysis", {}),
+        similar_cases=data.get("similar_cases", []),
+        opinion=data.get("opinion", ""),
+    )
+    
+    # 保存报告
+    format_type = data.get("format", "html")
+    if format_type == "html":
+        filepath = builder.save_html(report)
+    elif format_type == "json":
+        filepath = builder.save_json(report)
+    else:
+        filepath = builder.save_markdown(report)
+    
+    return jsonify({
+        "success": True,
+        "report_path": str(filepath),
+        "download_url": f"/download/{Path(filepath).name}",
+    })
+
+
+@app.route("/api/defense/search", methods=["GET"])
+def api_defense_search():
+    """辩护案例检索 API"""
+    crime = request.args.get("crime", "")
+    defense_type = request.args.get("defense_type", "")
+    limit = int(request.args.get("limit", 10))
+    
+    from defense_case_db import DefenseCaseDatabase
+    db = DefenseCaseDatabase()
+    
+    if defense_type:
+        result = db.search_by_defense(defense_type, crime, limit)
+    elif crime:
+        result = db.search_by_crime(crime, "innocent", limit)
+    else:
+        return jsonify({"error": "请提供罪名或辩护类型"}), 400
+    
+    return jsonify({
+        "cases": [c.to_dict() for c in result.cases],
+        "total": result.total,
+        "summary": result.summary,
+    })
+
+
+from datetime import datetime
+
 # ---- 运行 ----
 
 if __name__ == "__main__":
