@@ -156,9 +156,22 @@ def case_detail(case_id):
 def search():
     """全局搜索"""
     query = request.args.get("q", "").strip()
+    user = get_current_user()
+    
+    # 如果没有查询，显示搜索历史
     if not query:
-        return redirect(url_for("index"))
+        return render_template(
+            "search.html",
+            query="",
+            results=[],
+            name_matches=[],
+            search_history=user.search_history[:10] if user else [],
+        )
 
+    # 保存搜索历史（如果已登录）
+    if user and query:
+        user_db.add_search_history(user.username, query)
+    
     # 搜索案件配置
     results = loader.search_cases(query)
 
@@ -173,6 +186,7 @@ def search():
         query=query,
         results=results,
         name_matches=name_matches,
+        search_history=user.search_history[:10] if user else [],
     )
 
 
