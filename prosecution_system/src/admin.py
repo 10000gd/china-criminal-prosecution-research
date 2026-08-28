@@ -268,4 +268,136 @@ def create_admin_blueprint(app):
             cursor.execute("SELECT COUNT(*) as count FROM users")
             return jsonify({"count": cursor.fetchone()["count"]})
     
+
+    # ---- 数据导出 ----
+
+    @bp.route("/export/users")
+    @admin_required
+    def export_users():
+        """导出用户数据"""
+        format = request.args.get("format", "csv")
+        
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT user_id, username, email, role, created_at, last_login FROM users")
+            users = [dict(row) for row in cursor.fetchall()]
+        
+        if format == "json":
+            from data_export import DataExporter
+            return DataExporter.export_to_json(users), 200, {
+                "Content-Type": "application/json",
+                "Content-Disposition": f"attachment; filename=users_{datetime.now().strftime('%Y%m%d')}.json"
+            }
+        else:
+            from data_export import DataExporter
+            columns = ['user_id', 'username', 'email', 'role', 'created_at', 'last_login']
+            return DataExporter.export_to_csv(users, columns), 200, {
+                "Content-Type": "text/csv",
+                "Content-Disposition": f"attachment; filename=users_{datetime.now().strftime('%Y%m%d')}.csv"
+            }
+    
+    @bp.route("/export/activity")
+    @admin_required
+    def export_activity():
+        """导出活动日志"""
+        from data_export import ReportGenerator
+        report = ReportGenerator(db).generate_activity_report()
+        
+        from data_export import DataExporter
+        return DataExporter.export_to_json(report), 200, {
+            "Content-Type": "application/json",
+            "Content-Disposition": f"attachment; filename=activity_{datetime.now().strftime('%Y%m%d')}.json"
+        }
+    
+    @bp.route("/export/full-report")
+    @admin_required
+    def export_full_report():
+        """导出完整报告"""
+        from data_export import ReportGenerator
+        report = ReportGenerator(db).generate_full_report()
+        
+        from data_export import DataExporter
+        return DataExporter.export_to_json(report, pretty=True), 200, {
+            "Content-Type": "application/json",
+            "Content-Disposition": f"attachment; filename=full_report_{datetime.now().strftime('%Y%m%d')}.json"
+        }
+    
+    @bp.route("/export/audit-logs")
+    @admin_required
+    def export_audit_logs():
+        """导出审计日志"""
+        logs = db.get_operation_logs(limit=5000)
+        
+        from data_export import DataExporter
+        return DataExporter.export_to_csv(logs), 200, {
+            "Content-Type": "text/csv",
+            "Content-Disposition": f"attachment; filename=audit_logs_{datetime.now().strftime('%Y%m%d')}.csv"
+        }
+
     return bp
+
+
+# ---- 数据导出 ----
+
+    @bp.route("/export/users")
+    @admin_required
+    def export_users():
+        """导出用户数据"""
+        format = request.args.get("format", "csv")
+        
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT user_id, username, email, role, created_at, last_login FROM users")
+            users = [dict(row) for row in cursor.fetchall()]
+        
+        if format == "json":
+            from data_export import DataExporter
+            return DataExporter.export_to_json(users), 200, {
+                "Content-Type": "application/json",
+                "Content-Disposition": f"attachment; filename=users_{datetime.now().strftime('%Y%m%d')}.json"
+            }
+        else:
+            from data_export import DataExporter
+            columns = ['user_id', 'username', 'email', 'role', 'created_at', 'last_login']
+            return DataExporter.export_to_csv(users, columns), 200, {
+                "Content-Type": "text/csv",
+                "Content-Disposition": f"attachment; filename=users_{datetime.now().strftime('%Y%m%d')}.csv"
+            }
+    
+    @bp.route("/export/activity")
+    @admin_required
+    def export_activity():
+        """导出活动日志"""
+        from data_export import ReportGenerator
+        report = ReportGenerator(db).generate_activity_report()
+        
+        from data_export import DataExporter
+        return DataExporter.export_to_json(report), 200, {
+            "Content-Type": "application/json",
+            "Content-Disposition": f"attachment; filename=activity_{datetime.now().strftime('%Y%m%d')}.json"
+        }
+    
+    @bp.route("/export/full-report")
+    @admin_required
+    def export_full_report():
+        """导出完整报告"""
+        from data_export import ReportGenerator
+        report = ReportGenerator(db).generate_full_report()
+        
+        from data_export import DataExporter
+        return DataExporter.export_to_json(report, pretty=True), 200, {
+            "Content-Type": "application/json",
+            "Content-Disposition": f"attachment; filename=full_report_{datetime.now().strftime('%Y%m%d')}.json"
+        }
+    
+    @bp.route("/export/audit-logs")
+    @admin_required
+    def export_audit_logs():
+        """导出审计日志"""
+        logs = db.get_operation_logs(limit=5000)
+        
+        from data_export import DataExporter
+        return DataExporter.export_to_csv(logs), 200, {
+            "Content-Type": "text/csv",
+            "Content-Disposition": f"attachment; filename=audit_logs_{datetime.now().strftime('%Y%m%d')}.csv"
+        }
