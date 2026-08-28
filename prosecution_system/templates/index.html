@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>追诉系统 — 案件管理</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f0f2f5;
+      color: #1f2937;
+      font-size: 14px;
+    }
+    .topbar {
+      background: #1e3a5f;
+      color: #fff;
+      padding: 0 24px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+    .topbar .brand { font-size: 16px; font-weight: 700; color: #fff; text-decoration: none; }
+    .topbar .brand span { color: #fbbf24; }
+    .nav-links { display: flex; gap: 4px; }
+    .nav-links a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px; padding: 6px 14px; border-radius: 6px; }
+    .nav-links a:hover, .nav-links a.active { color: #fff; background: rgba(255,255,255,0.12); }
+    .container { max-width: 1100px; margin: 0 auto; padding: 28px 20px; }
+    h1 { font-size: 22px; font-weight: 800; margin-bottom: 6px; color: #111827; }
+    .subtitle { color: #6b7280; font-size: 13px; margin-bottom: 24px; }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
+    .filters select, .filters input {
+      padding: 8px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 13px;
+      background: #fff;
+      color: #1f2937;
+    }
+    .filters input[type="text"] { width: 240px; }
+    .btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary { background: #1e3a5f; color: #fff; }
+    .btn-primary:hover { background: #2d4f7a; }
+    .btn-outline { background: #fff; color: #1e3a5f; border: 1px solid #1e3a5f; }
+    .btn-outline:hover { background: #f0f4f8; }
+    .case-list { display: flex; flex-direction: column; gap: 10px; }
+    .case-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      background: #fafbfc;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      transition: all 0.15s;
+    }
+    .case-item:hover { border-color: #1e3a5f; background: #f0f4f8; box-shadow: 0 2px 8px rgba(30,58,95,0.08); }
+    .case-icon { font-size: 1.8rem; flex-shrink: 0; }
+    .case-info { flex: 1; min-width: 0; }
+    .case-name { font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .case-meta { font-size: 12px; color: #6b7280; display: flex; gap: 16px; flex-wrap: wrap; }
+    .case-badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .badge-draft    { background: #f3f4f6; color: #6b7280; }
+    .badge-review   { background: #dbeafe; color: #1d4ed8; }
+    .badge-prosec   { background: #fef3c7; color: #92400e; }
+    .badge-judged   { background: #d1fae5; color: #065f46; }
+    .badge-appealed { background: #ede9fe; color: #5b21b6; }
+    .badge-closed   { background: #f3f4f6; color: #374151; }
+    .case-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .case-actions .btn { font-size: 12px; padding: 5px 12px; }
+    .empty { text-align: center; padding: 60px 20px; color: #9ca3af; }
+    .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    .stat-box {
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    }
+    .stat-box .num { font-size: 1.8rem; font-weight: 900; color: #1e3a5f; line-height: 1.2; }
+    .stat-box .lbl { font-size: 12px; color: #6b7280; margin-top: 4px; }
+    @media (max-width: 640px) {
+      .case-item { flex-wrap: wrap; }
+      .case-actions { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="/" class="brand">追诉系统 <span>⚖</span></a>
+  <nav class="nav-links">
+    <a href="/" class="active">案件</a>
+    <a href="/stats">统计</a>
+    <a href="/tracker">跟踪</a>
+    <a href="/search">搜索</a>
+  </nav>
+</div>
+
+<div class="container">
+  <h1>📁 案件管理</h1>
+  <p class="subtitle">全部案件列表 · 状态：{{ active_status|default('全部') }}</p>
+
+  <!-- 统计卡片 -->
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="num">{{ cases|length }}</div>
+      <div class="lbl">案件总数</div>
+    </div>
+    {% for s in statuses %}
+    <div class="stat-box">
+      <div class="num">{{ cases|selectattr('status','equalto',s)|list|length }}</div>
+      <div class="lbl">{{ status_labels[s] }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- 筛选器 -->
+  <div class="filters">
+    <select onchange="window.location.href='/?status='+this.value">
+      <option value="">全部状态</option>
+      {% for s, label in status_labels.items() %}
+      <option value="{{ s }}" {% if active_status == s %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <a href="/" class="btn btn-outline">全部</a>
+    <a href="/" class="btn btn-primary" style="margin-left:auto;">+ 新建案件</a>
+  </div>
+
+  <!-- 案件列表 -->
+  <div class="card">
+    {% if cases %}
+    <div class="case-list">
+      {% for case in cases %}
+      <div class="case-item">
+        <div class="case-icon">📋</div>
+        <div class="case-info">
+          <div class="case-name">{{ case.case_name }}</div>
+          <div class="case-meta">
+            <span>ID: {{ case.case_id }}</span>
+            <span>类型: {{ case.case_type }}</span>
+            <span>判决: {{ case.judgment_date }}</span>
+          </div>
+        </div>
+        <span class="case-badge badge-{{ case.status }}">{{ status_labels.get(case.status, case.status) }}</span>
+        <div class="case-actions">
+          <a href="/case/{{ case.case_id }}" class="btn btn-outline">详情</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty">
+      <div class="empty-icon">📂</div>
+      <p>暂无案件</p>
+      <p style="font-size:12px;margin-top:8px;">将案件 YAML 文件放入 cases/ 目录即可自动加载</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+</body>
+</html>

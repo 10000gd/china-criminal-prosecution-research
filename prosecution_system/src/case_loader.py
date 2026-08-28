@@ -27,7 +27,7 @@ CASES_DIR = Path(__file__).parent.parent / "cases"
 _case_cache: TTLCache = TTLCache(maxsize=200, ttl=3600)
 
 
-def _get_cache(case_id: str, loader: "CaseLoader" = None):
+def _get_cache(case_id: str):
     """从模块级 TTL 缓存读取"""
     if case_id in _case_cache:
         return _case_cache[case_id]

@@ -234,7 +234,7 @@ class LegalDB:
         return self.china_law_db.list_by_category(category)
 
     def fulltext_search(self, keyword: str, top_k: int = 10) -> List[Dict]:
-        return self.china_law_db.search_fulltext(keyword, top_k=top_k)
+        return self.china_law_db.search_fulltext(keyword, limit=top_k)
 
     # ===== RAG 检索 =====
 

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>搜索 — 追诉系统</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f0f2f5; color: #1f2937; font-size: 14px; }
+    .topbar { background: #1e3a5f; color: #fff; padding: 0 24px; height: 52px; display: flex; align-items: center; gap: 28px; }
+    .topbar .brand { font-size: 16px; font-weight: 700; color: #fff; text-decoration: none; }
+    .topbar .brand span { color: #fbbf24; }
+    .nav-links { display: flex; gap: 4px; }
+    .nav-links a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px; padding: 6px 14px; border-radius: 6px; }
+    .nav-links a:hover, .nav-links a.active { color: #fff; background: rgba(255,255,255,0.12); }
+    .container { max-width: 860px; margin: 0 auto; padding: 28px 20px; }
+    h1 { font-size: 20px; font-weight: 800; margin-bottom: 16px; color: #111827; }
+    .search-box { display: flex; gap: 10px; margin-bottom: 24px; }
+    .search-box input { flex: 1; padding: 11px 16px; border: 2px solid #d1d5db; border-radius: 10px; font-size: 15px; }
+    .search-box input:focus { outline: none; border-color: #1e3a5f; }
+    .btn { padding: 9px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; }
+    .btn-primary { background: #1e3a5f; color: #fff; }
+    .btn-primary:hover { background: #2d4f7a; }
+    .results-meta { font-size: 13px; color: #6b7280; margin-bottom: 16px; }
+    .results-meta strong { color: #111827; }
+    .result-item {
+      background: #fff; border-radius: 10px; padding: 18px 20px; margin-bottom: 12px;
+      border: 1px solid #e5e7eb; transition: all 0.15s;
+    }
+    .result-item:hover { border-color: #1e3a5f; box-shadow: 0 2px 10px rgba(30,58,95,0.1); }
+    .result-title { font-size: 14px; font-weight: 700; color: #1e3a5f; margin-bottom: 6px; }
+    .result-snippet { font-size: 13px; color: #4b5563; line-height: 1.6; margin-bottom: 8px; }
+    .result-snippet mark { background: #fef9c3; color: #854d0e; padding: 0 2px; border-radius: 2px; }
+    .result-meta { display: flex; gap: 14px; font-size: 12px; color: #9ca3af; flex-wrap: wrap; }
+    .result-badge { padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .badge-law    { background: #dbeafe; color: #1d4ed8; }
+    .badge-interp { background: #fef3c7; color: #92400e; }
+    .badge-case   { background: #f3e8ff; color: #7c3aed; }
+    .empty-search { text-align: center; padding: 50px 20px; color: #9ca3af; }
+    .empty-search-icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .tabs { display: flex; gap: 4px; border-bottom: 2px solid #e5e7eb; margin-bottom: 18px; }
+    .tab { padding: 8px 16px; background: none; border: none; cursor: pointer; font-size: 13px; color: #6b7280; border-bottom: 2px solid transparent; margin-bottom: -2px; font-weight: 600; }
+    .tab.active { color: #1e3a5f; border-bottom-color: #1e3a5f; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .case-match { padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
+    .case-match:last-child { border-bottom: none; }
+    .case-match-name { font-weight: 700; font-size: 14px; color: #1e3a5f; margin-bottom: 3px; }
+    .case-match-meta { font-size: 12px; color: #6b7280; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="/" class="brand">追诉系统 <span>⚖</span></a>
+  <nav class="nav-links">
+    <a href="/">案件</a>
+    <a href="/stats">统计</a>
+    <a href="/tracker">跟踪</a>
+    <a href="/search" class="active">搜索</a>
+  </nav>
+</div>
+
+<div class="container">
+  <h1>🔍 全局搜索</h1>
+
+  <form action="/search" method="get">
+    <div class="search-box">
+      <input type="text" name="q" value="{{ query }}" placeholder="搜索法律条文、罪名、司法解释…">
+      <button type="submit" class="btn btn-primary">搜索</button>
+    </div>
+  </form>
+
+  {% if query %}
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('laws', event)">法律条文</button>
+    <button class="tab" onclick="showTab('cases', event)">案件</button>
+  </div>
+
+  <!-- 法律结果 -->
+  <div id="tab-laws" class="tab-content active">
+    {% if results %}
+    <p class="results-meta">找到 <strong>{{ results|length }}</strong> 条相关法律条文</p>
+    {% for r in results %}
+    <div class="result-item">
+      <div class="result-title">{{ r.name }}</div>
+      <div class="result-snippet">…{{ r.snippet }}…</div>
+      <div class="result-meta">
+        <span class="result-badge badge-law">{{ r.category }}</span>
+        <span>📄 命中 {{ r.size }} 字</span>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-search">
+      <div class="empty-search-icon">📭</div>
+      <p>未找到与「{{ query }}」相关的法律条文</p>
+      <p style="font-size:12px;margin-top:6px;">试试其他关键词，或浏览案件列表</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- 案件结果 -->
+  <div id="tab-cases" class="tab-content">
+    {% if name_matches %}
+    <p class="results-meta">找到 <strong>{{ name_matches|length }}</strong> 个相关案件</p>
+    {% for c in name_matches %}
+    <div class="case-match">
+      <a href="/case/{{ c.case_id }}" class="case-match-name">{{ c.case_name }}</a>
+      <div class="case-match-meta">{{ c.case_type }} · {{ c.judgment_date }} · {{ c.status }}</div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-search">
+      <div class="empty-search-icon">📂</div>
+      <p>未找到相关案件</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <div class="empty-search">
+    <div class="empty-search-icon">🔎</div>
+    <p>输入关键词开始搜索</p>
+    <p style="font-size:12px;margin-top:6px;">可搜索法律条文、司法解释、案件名称等</p>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  function showTab(name, e) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    e.target.classList.add('active');
+  }
+</script>
+
+</body>
+</html>

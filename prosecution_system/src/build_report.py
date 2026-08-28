@@ -97,8 +97,7 @@ class LatexTable:
 
     def header(self):
         """生成 \\begin{longtable} 与表头行。返回 LaTeX 片段。"""
-        col_spec = self._col_spec()
-        col_def = "|" + "|".join(f"p{{{w}}}" for w in self._resolve_widths()) + "|"
+        col_def = self._col_spec()
         header_cells = " & ".join(f"\\textbf{{{c}}}" for c in self.columns)
         return (
             rf"\begin{{longtable}}{{{col_def}}}"
@@ -129,9 +128,8 @@ class LatexTable:
         """完整构建 longtable（不含 \\begin），返回 LaTeX 字符串。"""
         parts = []
         # 表头
-        col_spec = self._col_spec()
-        col_def = "|" + "|".join(f"p{{{w}}}" for w in self._resolve_widths()) + "|"
-        header_cells = " & ".join(f"\\textbf{{{c}}}" for c in self.columns)
+        col_def = self._col_spec()
+        header_cells = " & ".join(f"\textbf{{{c}}}" for c in self.columns)
         parts.append(rf"\begin{{longtable}}{{{col_def}}}")
         parts.append(r"\toprule")
         parts.append(rf"{header_cells} \\")
@@ -141,8 +139,7 @@ class LatexTable:
         parts.append(r"\midrule")
         parts.append(r"\endhead")
         # 数据行
-        for row in self._rows:
-            parts.append(row)
+        parts.extend(self._rows)
         # 表尾
         parts.append(r"\bottomrule")
         parts.append(r"\end{longtable}")

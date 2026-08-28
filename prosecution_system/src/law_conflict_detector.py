@@ -103,8 +103,14 @@ NUMERIC_PATTERNS = {
         re.compile(r"(?:达?|共计|总计)\s*([\d]+)\s*(?:万|千|百)?(?:元)?"),
         # 阿拉伯数字 + 元以上/数额较大等（无前缀单位）
         re.compile(r"([\d]+)\s*(?:元以上?|数额较大|数额巨大|数额特别巨大)"),
-        # 涉案金额 + 中文数字 + 元/万
-        re.compile(r"(?:数额|涉案金额|涉案款|涉案款物)\s*(?:达)?\s*([\u4e00-\u9fa5]+)\s*(?:万|千|百)?元?"),
+        # 涉案金额/数额 + 中文数字（万/千/百在remainder）
+        re.compile(r"(?:数额|涉案金额|涉案款|涉案款物)\s*(?:达)?\s*([零一二三四五六七八九十百千万亿〇０-９]+)\s*(?:万|千|百)?元?"),
+        # 中文数字 + 万元/千元/百元以上（万/千/百在remainder）
+        re.compile(r"([零一二三四五六七八九十百千万亿〇０-９]+)\s*(?:万|千|百)元以上?"),
+        # 达 + 中文数字 + 万元/千元/百元
+        re.compile(r"(?:达?|共计|总计)\s*([零一二三四五六七八九十百千万亿〇０-９]+)\s*(?:万|千|百)(?:元)?"),
+        # 中文数字 + 亿元（亿本身已是大单位，不需要"元"后缀）
+        re.compile(r"([零一二三四五六七八九十百千万亿〇０-９]+)\s*亿(?:元)?"),
     ],
     "刑期": [
         re.compile(r"(?:判处|处|处有期徒刑?|拘役|无期徒刑|死刑)\s*([零一二三四五六七八九十百千万〇\d]+)\s*(?:年|个月|月)"),
@@ -138,13 +144,73 @@ def _extract_amount(text: str) -> List[float]:
                     multiplier = 100
                 val = int(raw) * multiplier
             else:
-                # 中文数字：量词在 raw 本身，_chinese_to_num 已自带解析
-                # 直接去掉量词后传给 _chinese_to_num（避免双重乘）
-                cn = raw.replace("万", "").replace("千", "").replace("百", "")
-                if not cn:
-                    continue
+                # 中文数字
+                # 先检查 remainder 是否有万/千/百（"一万元以上"的情况）
+                # remainder 中的万/千/百决定乘数（"一万元以上"）
+                # 纯中文数字（无任何单位）→ remainder_unit=1（"三万元以上"→raw="三万", remainder="元以上"→无万/千/百在remainder）
+                # 等等！"三万元以上" → raw="三万", remainder="元以上"
+                # remainder无万 → remainder_unit=1 → val=_chinese_to_num("三万")*1
+                # _chinese_to_num("三万")=30000 → 错！应为 30000 才对啊
+                #
+                # 哦！"三万元以上"：raw="三万", remainder="元以上"
+                # remainder 中没有万 → remainder_unit=1
+                # _chinese_to_num("三万") = 3×10000 = 30000 ✓
+                #
+                # "一亿"：raw="一亿", remainder=""
+                # remainder 无万/千/百 → remainder_unit=1
+                # _chinese_to_num("一亿") = 1×100000000 = 100000000 ✓
+                #
+                # "五十万元"：raw="五十万元", remainder=""
+                # remainder 无万/千/百 → remainder_unit=1
+                # _chinese_to_num("五十万元") → 但 chinese_map 没有"元"！
+                # → KeyError！
+                #
+                # 所以"五十万元"需要在 remainder 检测到万！
+                # 但 raw="五十万元", remainder=""
+                # remainder 里没有万……
+                #
+                # 回到正则设计："五十万元"用哪个pattern匹配？
+                # pat[3]: (?:数额|涉案金额|涉案款|涉案款物)\s*(?:达)?\s*([...]+)\s*(?:万|千|百)?元?
+                # → 捕获组1 = "五十万元", 后面的\s*(?:万|千|百)?元? 要匹配什么？
+                #   "五十万元" 的最后三个字符是 "万元"
+                #   \s* = 无空格, (?:万|千|百)? = "万", 元? = "元"
+                #   remainder = m.group(0)[len(m.group(1)):]
+                #   m.group(0) = "涉案金额五十万元"
+                #   m.group(1) = "五十万元"
+                #   remainder = "涉案金额五十万元"[len("五十万元"):] = "涉案金额"
+                #
+                # 错了！m.group(0) 是完整匹配，m.group(1) 是捕获组
+                # "涉案金额五十万元" 中，m.group(1) 捕获的是 "五十万元"（数字部分）
+                # m.group(0) = "涉案金额五十万元"
+                # remainder = m.group(0)[len(m.group(1)):] = "涉案金额"（这是错的！）
+                #
+                # 哦不，我一直在用 remainder = m.group(0)[len(m.group(1)):]，这是错的！
+                # m.group(0) 包含整个模式匹配的内容（包括prefix），m.group(1) 只包含捕获组
+                # remainder = m.group(0)[len(m.group(1)):] 得到的是 prefix 而不是 suffix
+                #
+                # 实际上应该：
+                # 原始文本中，m.group(0) 的末尾才是我们需要检查的部分（单位量词所在）
+                # 但 m.group(0) 已经包含了 prefix！
+                #
+                # 正确的 remainder 应该是：从 m.start(1) + len(m.group(1)) 开始，到 m.end(0) 结束
+                # remainder = text[m.start(1) + len(m.group(1)):m.end(0)]
+                # 或者更简单：从 m.group(1) 的末尾在原始文本中的位置，到 m.group(0) 的末尾
+                #
+                # m.start(0) = pattern 开始位置，m.end(0) = pattern 结束位置
+                # m.start(1) = 捕获组1开始位置，m.end(1) = 捕获组1结束位置
+                # remainder = text[m.end(1):m.end(0)]  ← 从捕获组1末尾到pattern末尾
+                remainder = text[m.end(1):m.end(0)]
+
+                remainder_unit = 0
+                if "万" in remainder:
+                    remainder_unit = 10000
+                elif "千" in remainder:
+                    remainder_unit = 1000
+                elif "百" in remainder:
+                    remainder_unit = 100
+
                 try:
-                    val = _chinese_to_num(cn)
+                    val = _chinese_to_num(raw) * (remainder_unit if remainder_unit else 1)
                 except (ValueError, KeyError):
                     continue
 
@@ -157,30 +223,60 @@ def _extract_amount(text: str) -> List[float]:
 
 
 def _chinese_to_num(s: str) -> float:
-    """中文数字转阿拉伯数字"""
+    """中文数字转阿拉伯数字（支持万/亿复合单位）"""
     chinese_map = {
         "零": 0, "一": 1, "二": 2, "三": 3, "四": 4,
         "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10,
-        "〇": 0, "百": 100, "千": 1000, "万": 10000,
+        "〇": 0, "百": 100, "千": 1000, "万": 10000, "亿": 100000000,
         "０": 0, "１": 1, "２": 2, "３": 3, "４": 4,
         "５": 5, "６": 6, "７": 7, "８": 8, "９": 9,
     }
-    result = 0
-    temp = 0
-    for ch in s:
-        if ch in ("十", "百", "千", "万"):
-            v = chinese_map.get(ch, 0)
-            if v >= 100:
-                result += temp * v
-                temp = 0
-            else:
-                if temp == 0:
-                    temp = 1
-                result += temp * v
-                temp = 0
-        else:
-            temp = temp * 10 + chinese_map.get(ch, 0)
-    return result + temp
+
+    def parse_seg(seg: str) -> int:
+        """解析不含亿/万的标准中文数字段，支持连续小单位（"二千三百"→2300）"""
+        if not seg:
+            return 0
+        if seg == "十":
+            return 10
+        total, digit, prev_unit = 0, 0, 0
+        for ch in seg:
+            if ch == "零":
+                continue  # 占位符，不参与数值计算
+            if ch not in chinese_map:
+                continue
+            v = chinese_map[ch]
+            if v >= 10:  # 单位：十/百/千
+                if digit == 0:
+                    digit = 1  # 隐式1："五千"前无数字
+                total += digit * v
+                digit, prev_unit = 0, v
+            else:  # 数字
+                digit = digit * 10 + v
+        total += digit
+        return total
+
+    import re
+
+    # 无亿/万 → 单段左到右扫描
+    if "亿" not in s and "万" not in s:
+        return float(parse_seg(s))
+
+    # 有亿/万：找最左的亿/万作为主分割点，递归处理 suffix
+    # "一万二千三百" → prefix="一", suffix="二千三百", unit_val=10000
+    #   = parse_seg("一")×10000 + chinese_to_num("二千三百") = 1×10000 + 2300 = 12300
+    # "一百亿" → prefix="一百", suffix="", unit_val=100000000
+    #   = parse_seg("一百")×100000000 + 0 = 100×100000000 = 10000000000
+    m_亿 = re.search(r"亿", s)
+    m_万 = re.search(r"万", s)
+    if m_亿 and (not m_万 or m_亿.start() <= m_万.start()):
+        pos, unit_val = m_亿.start(), 100000000
+    else:
+        pos, unit_val = m_万.start(), 10000
+
+    prefix, suffix = s[:pos], s[pos + 1 :]
+    prefix_val = parse_seg(prefix) if prefix else 1  # 空前缀视作1
+    suffix_val = _chinese_to_num(suffix) if suffix else 0  # 递归处理段内单位
+    return float(prefix_val * unit_val + suffix_val)
 
 
 def _extract_sentence(text: str) -> List[Tuple[int, int]]:

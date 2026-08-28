@@ -32,8 +32,9 @@ from build_report import ReportBuilder
 from wenshu_updater import CaseTracker, ManualTracker
 
 # ---- Flask App ----
-
-app = Flask(__name__)
+# template_folder 指向项目根目录 (src/ 的上一层)，而不是 src/templates/
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+app = Flask(__name__, template_folder=str(PROJECT_ROOT / "templates"))
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "prosecution-system-secret-key")
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB max
 
@@ -45,14 +46,6 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # ---- 首页/案件列表 ----
-
-# ---- 安全中间件 ----
-
-@app.before_request
-def security_headers() -> None:
-    """注入安全响应头（预处理）"""
-    pass  # 响应头在实际响应中通过 after_request 设置
-
 
 @app.after_request
 def add_security_headers(response):
