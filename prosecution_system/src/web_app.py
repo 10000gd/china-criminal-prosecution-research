@@ -50,6 +50,9 @@ app.register_blueprint(auth_bp)
 # 注册管理后台蓝图
 admin_bp = create_admin_blueprint(app)
 app.register_blueprint(admin_bp)
+from api_docs import create_api_docs_blueprint
+api_docs_bp = create_api_docs_blueprint(app)
+app.register_blueprint(api_docs_bp)
 
 loader = CaseLoader()
 OUTPUT_DIR = Path(__file__).parent.parent / "output"
