@@ -833,3 +833,51 @@ if __name__ == "__main__":
     print(f"   调试模式: {debug}")
     print(f"   案件数量: {case_count}")
     app.run(host="0.0.0.0", port=port, debug=debug)
+
+# ---- 健康检查与监控 ----
+
+@app.route("/health")
+def health_check():
+    """健康检查端点"""
+    from health import HealthChecker, MetricsCollector
+    health = HealthChecker.check()
+    metrics = MetricsCollector.get_metrics()
+    return jsonify({
+        "health": health,
+        "metrics": metrics,
+    })
+
+@app.route("/health/live")
+def health_live():
+    """存活探针"""
+    return jsonify({"status": "alive"})
+
+@app.route("/health/ready")
+def health_ready():
+    """就绪探针"""
+    from health import HealthChecker
+    health = HealthChecker.check()
+    if health['checks']['database']['status'] == 'ok':
+        return jsonify({"status": "ready"})
+    return jsonify({"status": "not ready", "reason": "database unavailable"}), 503
+
+@app.route("/metrics")
+def metrics():
+    """Prometheus格式指标"""
+    from health import MetricsCollector
+    m = MetricsCollector.get_metrics()
+    lines = [
+        "# HELP prosecution_requests_total Total requests",
+        "# TYPE prosecution_requests_total counter",
+        f"prosecution_requests_total {m['total_requests']}",
+        "# HELP prosecution_errors_total Total errors",
+        "# TYPE prosecution_errors_total counter",
+        f"prosecution_errors_total {m['total_errors']}",
+        "# HELP prosecution_response_time_seconds Average response time",
+        "# TYPE prosecution_response_time_seconds gauge",
+        f"prosecution_response_time_seconds {m['avg_response_time']:.3f}",
+        "# HELP prosecution_uptime_seconds Uptime in seconds",
+        "# TYPE prosecution_uptime_seconds counter",
+        f"prosecution_uptime_seconds {m['uptime_seconds']}",
+    ]
+    return '\n'.join(lines), 200, {"Content-Type": "text/plain"}
