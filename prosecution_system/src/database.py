@@ -233,6 +233,25 @@ class Database:
                 )
         return None
     
+    def get_user_by_username(self, username: str) -> Optional[User]:
+        """通过用户名获取用户"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+            row = cursor.fetchone()
+            
+            if row:
+                return User(
+                    user_id=row["user_id"],
+                    username=row["username"],
+                    email=row["email"],
+                    password_hash=row["password_hash"],
+                    role=row["role"],
+                    created_at=row["created_at"],
+                    last_login=row["last_login"],
+                )
+        return None
+    
     def get_user_favorites(self, user_id: str) -> List[str]:
         """获取用户收藏"""
         with self.get_connection() as conn:
