@@ -24,7 +24,10 @@ from logging_config import setup_logging
 
 logger = setup_logging("web_app")
 
-from flask import Flask, render_template, request, jsonify, redirect, url_for, send_file
+from flask import Flask, render_template, request, jsonify, redirect, url_for, send_file, session
+
+# 导入认证模块
+from auth import create_auth_blueprint, login_required, get_current_user, user_db
 import yaml
 
 from case_loader import CaseLoader
@@ -38,6 +41,9 @@ app = Flask(__name__, template_folder=str(PROJECT_ROOT / "templates"))
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "prosecution-system-secret-key")
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB max
 
+# 注册认证蓝图
+auth_bp = create_auth_blueprint(app)
+app.register_blueprint(auth_bp)
 loader = CaseLoader()
 OUTPUT_DIR = Path(__file__).parent.parent / "output"
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -58,6 +64,23 @@ def add_security_headers(response):
     # 移除 Server 指纹
     response.headers.pop("Server", None)
     return response
+
+@app.before_request
+def inject_user():
+    """注入当前用户信息到所有模板"""
+    from flask import g
+    g.current_user = get_current_user()
+    g.user_logged_in = 'user_id' in session
+
+
+@app.context_processor
+def inject_template_globals():
+    """注入全局模板变量"""
+    from flask import session
+    return {
+        'current_user': get_current_user(),
+        'user_logged_in': 'user_id' in session,
+    }
 
 
 @app.route("/")
