@@ -1,0 +1,55 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<h1>💾 数据备份</h1>
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<div class="card" style="background: #d1fae5; border-color: #10b981;">
+  <p style="color: #065f46;">{{ messages[0] }}</p>
+</div>
+{% endif %}
+{% endwith %}
+
+<div class="card">
+  <h2 style="font-size: 16px; margin-bottom: 16px;">创建备份</h2>
+  <p style="color: #6b7280; margin-bottom: 16px;">点击下方按钮将创建数据库的完整备份。备份文件将保存在 <code>backups/</code> 目录。</p>
+  <form method="post">
+    <button type="submit" class="btn btn-primary">📦 创建新备份</button>
+  </form>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+  <h2 style="font-size: 16px; margin-bottom: 16px;">备份历史 ({{ backups|length }})</h2>
+  
+  {% if backups %}
+  <table>
+    <thead>
+      <tr><th>文件名</th><th>大小</th><th>创建时间</th><th>操作</th></tr>
+    </thead>
+    <tbody>
+      {% for backup in backups %}
+      <tr>
+        <td><code>{{ backup.name }}</code></td>
+        <td>{{ "%.2f"|format(backup.size / 1024) }} KB</td>
+        <td>{{ backup.created }}</td>
+        <td>
+          <button onclick="restoreBackup('{{ backup.name }}')" class="btn btn-primary btn-sm">恢复</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color: #9ca3af;">暂无备份记录</p>
+  {% endif %}
+</div>
+
+<script>
+function restoreBackup(name) {
+  if (confirm('确定要恢复此备份吗？当前数据将被覆盖！')) {
+    alert('恢复功能开发中...');
+  }
+}
+</script>
+{% endblock %}

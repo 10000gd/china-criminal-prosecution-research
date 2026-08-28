@@ -1,0 +1,103 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<h1>👤 用户详情: {{ user.username }}</h1>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+  <div class="card">
+    <h2 style="font-size: 16px; margin-bottom: 16px;">基本信息</h2>
+    <table>
+      <tr><td style="width: 120px; color: #6b7280;">用户ID</td><td>{{ user.user_id }}</td></tr>
+      <tr><td style="color: #6b7280;">用户名</td><td>{{ user.username }}</td></tr>
+      <tr><td style="color: #6b7280;">邮箱</td><td>{{ user.email }}</td></tr>
+      <tr><td style="color: #6b7280;">角色</td><td><span class="badge badge-{{ user.role }}">{{ user.role }}</span></td></tr>
+      <tr><td style="color: #6b7280;">注册时间</td><td>{{ user.created_at }}</td></tr>
+      <tr><td style="color: #6b7280;">最后登录</td><td>{{ user.last_login if user.last_login else '-' }}</td></tr>
+    </table>
+    
+    <div style="margin-top: 16px;">
+      <select id="roleSelect" style="padding: 6px; border-radius: 6px; border: 1px solid #d1d5db;">
+        <option value="user" {% if user.role == 'user' %}selected{% endif %}>普通用户</option>
+        <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>管理员</option>
+        <option value="prosecutor" {% if user.role == 'prosecutor' %}selected{% endif %}>检察官</option>
+        <option value="lawyer" {% if user.role == 'lawyer' %}selected{% endif %}>律师</option>
+      </select>
+      <button onclick="updateRole('{{ user.user_id }}')" class="btn btn-primary">修改角色</button>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h2 style="font-size: 16px; margin-bottom: 16px;">📌 收藏 ({{ favorites|length }})</h2>
+    {% if favorites %}
+    <ul style="list-style: none; padding: 0;">
+      {% for case_id in favorites %}
+      <li style="padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
+        <a href="/defense/{{ case_id }}">{{ case_id }}</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p style="color: #9ca3af;">暂无收藏</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+  <h2 style="font-size: 16px; margin-bottom: 16px;">🔍 搜索历史 ({{ history|length }})</h2>
+  {% if history %}
+  <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+    {% for query in history %}
+    <a href="/search?q={{ query|urlencode }}" style="padding: 6px 12px; background: #f3f4f6; border-radius: 20px; color: #374151; text-decoration: none; font-size: 13px;">{{ query }}</a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p style="color: #9ca3af;">暂无搜索记录</p>
+  {% endif %}
+</div>
+
+<div class="card" style="margin-top: 20px;">
+  <h2 style="font-size: 16px; margin-bottom: 16px;">📝 操作日志</h2>
+  {% if logs %}
+  <table>
+    <thead>
+      <tr>
+        <th>时间</th>
+        <th>操作</th>
+        <th>目标</th>
+        <th>IP地址</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td>{{ log.created_at[:19] }}</td>
+        <td><span class="badge badge-user">{{ log.action }}</span></td>
+        <td>{{ log.target or '-' }}</td>
+        <td>{{ log.ip_address or '-' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color: #9ca3af;">暂无日志</p>
+  {% endif %}
+</div>
+
+<script>
+function updateRole(userId) {
+  const role = document.getElementById('roleSelect').value;
+  fetch(`/admin/users/${userId}/role`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({role: role})
+  }).then(r => r.json()).then(data => {
+    if (data.success) {
+      alert('角色已更新');
+      location.reload();
+    } else {
+      alert('更新失败');
+    }
+  });
+}
+</script>
+{% endblock %}

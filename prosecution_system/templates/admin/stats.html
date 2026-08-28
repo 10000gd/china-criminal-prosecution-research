@@ -1,0 +1,95 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<h1>📈 统计分析</h1>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+  <div class="card">
+    <h2 style="font-size: 16px; margin-bottom: 16px;">👥 用户角色分布</h2>
+    {% if role_stats %}
+    <table>
+      <thead>
+        <tr><th>角色</th><th>数量</th><th>占比</th></tr>
+      </thead>
+      <tbody>
+        {% set total = role_stats|sum(attribute='count') %}
+        {% for stat in role_stats %}
+        <tr>
+          <td><span class="badge badge-{{ stat.role }}">{{ stat.role }}</span></td>
+          <td>{{ stat.count }}</td>
+          <td>{{ "%.1f"|format(stat.count / total * 100) }}%</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color: #9ca3af;">暂无数据</p>
+    {% endif %}
+  </div>
+  
+  <div class="card">
+    <h2 style="font-size: 16px; margin-bottom: 16px;">🔥 热门搜索 TOP10</h2>
+    {% if popular_searches %}
+    <table>
+      <thead>
+        <tr><th>排名</th><th>关键词</th><th>次数</th></tr>
+      </thead>
+      <tbody>
+        {% for search in popular_searches %}
+        <tr>
+          <td>#{{ loop.index }}</td>
+          <td><a href="/search?q={{ search.query|urlencode }}">{{ search.query }}</a></td>
+          <td>{{ search.count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color: #9ca3af;">暂无数据</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+  <h2 style="font-size: 16px; margin-bottom: 16px;">⭐ 热门收藏 TOP10</h2>
+  {% if popular_favorites %}
+  <table>
+    <thead>
+      <tr><th>排名</th><th>案件ID</th><th>收藏次数</th></tr>
+    </thead>
+    <tbody>
+      {% for fav in popular_favorites %}
+      <tr>
+        <td>#{{ loop.index }}</td>
+        <td><a href="/defense/{{ fav.case_id }}">{{ fav.case_id }}</a></td>
+        <td>{{ fav.count }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color: #9ca3af;">暂无数据</p>
+  {% endif %}
+</div>
+
+<div class="card" style="margin-top: 20px;">
+  <h2 style="font-size: 16px; margin-bottom: 16px;">📅 最近7天活跃用户</h2>
+  {% if daily_active %}
+  <table>
+    <thead>
+      <tr><th>日期</th><th>活跃用户数</th></tr>
+    </thead>
+    <tbody>
+      {% for day in daily_active %}
+      <tr>
+        <td>{{ day.date }}</td>
+        <td>{{ day.count }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color: #9ca3af;">暂无数据</p>
+  {% endif %}
+</div>
+{% endblock %}

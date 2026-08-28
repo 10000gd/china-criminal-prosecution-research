@@ -1,0 +1,60 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<h1>📊 系统概览</h1>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-value">{{ system_info.total_users }}</div>
+    <div class="stat-label">总用户数</div>
+  </div>
+  <div class="stat-card blue">
+    <div class="stat-value">{{ system_info.today_active }}</div>
+    <div class="stat-label">今日活跃</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-value">{{ system_info.total_favorites }}</div>
+    <div class="stat-label">总收藏数</div>
+  </div>
+  <div class="stat-card orange">
+    <div class="stat-value">{{ system_info.total_cases }}</div>
+    <div class="stat-label">缓存案件</div>
+  </div>
+  <div class="stat-card red">
+    <div class="stat-value">{{ system_info.total_searches }}</div>
+    <div class="stat-label">搜索记录</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2 style="font-size: 16px; margin-bottom: 16px;">🎯 快捷操作</h2>
+  <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+    <a href="/admin/users" class="btn btn-primary">管理用户</a>
+    <a href="/admin/logs" class="btn btn-primary">查看日志</a>
+    <a href="/admin/stats" class="btn btn-primary">统计分析</a>
+    <a href="/admin/backup" class="btn btn-primary">数据备份</a>
+  </div>
+</div>
+
+<div class="card">
+  <h2 style="font-size: 16px; margin-bottom: 16px;">💡 系统信息</h2>
+  <table>
+    <tr>
+      <td style="width: 200px; color: #6b7280;">系统版本</td>
+      <td>v2.0.0</td>
+    </tr>
+    <tr>
+      <td style="color: #6b7280;">数据库</td>
+      <td>SQLite</td>
+    </tr>
+    <tr>
+      <td style="color: #6b7280;">Python</td>
+      <td>3.10+</td>
+    </tr>
+    <tr>
+      <td style="color: #6b7280;">Flask</td>
+      <td>最新稳定版</td>
+    </tr>
+  </table>
+</div>
+{% endblock %}
