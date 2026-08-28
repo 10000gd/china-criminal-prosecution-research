@@ -521,6 +521,112 @@ def api_defense_search():
 
 from datetime import datetime
 
+
+# ===== P5: 量刑一致性分析路由 =====
+
+@app.route("/sentencing")
+def sentencing_page():
+    """量刑一致性分析页面"""
+    from sentencing_consistency import SentencingConsistencyAnalyzer
+    analyzer = SentencingConsistencyAnalyzer()
+    report = analyzer.generate_report()
+    
+    # 准备图表数据
+    crime_stats = []
+    for crime, stats in report.get("crime_stats", {}).items():
+        if stats.get("avg_sentence"):
+            crime_stats.append({
+                "crime": crime,
+                "avg": stats["avg"],
+                "median": stats.get("median"),
+                "count": stats["sample_count"],
+                "probation_rate": stats.get("probation_rate", 0),
+                "distribution": stats.get("distribution", {}),
+            })
+    
+    return render_template(
+        "sentencing.html",
+        report=report,
+        crime_stats=crime_stats,
+    )
+
+
+@app.route("/sentencing/<crime>")
+def sentencing_crime_page(crime):
+    """特定罪名量刑分析页面"""
+    from sentencing_consistency import SentencingConsistencyAnalyzer
+    analyzer = SentencingConsistencyAnalyzer()
+    
+    stats = analyzer.get_stats_by_crime(crime)
+    comparison = analyzer.get_provincial_comparison(crime)
+    legal_comp = analyzer.get_legal_comparison(crime)
+    
+    # 排序省份数据
+    sorted_provinces = sorted(
+        comparison.items(),
+        key=lambda x: x[1]["avg_sentence"]
+    ) if comparison else []
+    
+    return render_template(
+        "sentencing_crime.html",
+        crime=crime,
+        stats=stats,
+        comparison=comparison,
+        sorted_provinces=sorted_provinces,
+        legal_comp=legal_comp,
+    )
+
+
+@app.route("/api/sentencing/report")
+def api_sentencing_report():
+    """量刑一致性报告 API"""
+    crime = request.args.get("crime", None)
+    
+    from sentencing_consistency import SentencingConsistencyAnalyzer
+    analyzer = SentencingConsistencyAnalyzer()
+    report = analyzer.generate_report(crime)
+    
+    return jsonify(report)
+
+
+@app.route("/api/sentencing/deviation", methods=["POST"])
+def api_sentencing_deviation():
+    """个案偏离度分析 API"""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "请提供案件数据"}), 400
+    
+    from sentencing_consistency import SentencingConsistencyAnalyzer
+    analyzer = SentencingConsistencyAnalyzer()
+    result = analyzer.analyze_deviation(data)
+    
+    return jsonify({
+        "case_id": result.case_id,
+        "crime": result.crime,
+        "deviation_score": result.deviation_score,
+        "deviation_type": result.deviation_type,
+        "expected_sentence": result.expected_sentence,
+        "actual_sentence": result.actual_sentence,
+        "factors": result.factors,
+        "deviation_reasons": result.deviation_reasons,
+        "similar_cases": result.similar_cases,
+        "recommendation": result.recommendation,
+    })
+
+
+@app.route("/api/sentencing/provincial")
+def api_sentencing_provincial():
+    """省份量刑对比 API"""
+    crime = request.args.get("crime", None)
+    
+    from sentencing_consistency import SentencingConsistencyAnalyzer
+    analyzer = SentencingConsistencyAnalyzer()
+    comparison = analyzer.get_provincial_comparison(crime)
+    
+    return jsonify(comparison)
+
+
 # ---- 运行 ----
 
 if __name__ == "__main__":

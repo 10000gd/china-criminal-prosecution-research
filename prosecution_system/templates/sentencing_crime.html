@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ crime }} 量刑分析</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+        .header h1 { font-size: 28px; margin-bottom: 8px; }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .card h2 {
+            color: #444;
+            border-bottom: 2px solid #11998e;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+        .nav {
+            background: white;
+            padding: 16px 24px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            display: flex;
+            gap: 24px;
+        }
+        .nav a { color: #11998e; text-decoration: none; font-weight: 500; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-card h3 { color: #666; font-size: 13px; margin-bottom: 8px; }
+        .stat-card .value { font-size: 28px; font-weight: 700; color: #11998e; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-weight: 600; color: #555; }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        
+        .province-bar {
+            display: flex;
+            align-items: center;
+            margin: 12px 0;
+        }
+        .province-label { width: 80px; font-weight: 500; }
+        .province-track {
+            flex: 1;
+            background: #e9ecef;
+            height: 28px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 0 12px;
+        }
+        .province-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #11998e, #38ef7d);
+            display: flex;
+            align-items: center;
+            padding-left: 8px;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        .province-value { width: 120px; text-align: right; }
+        
+        .distribution { display: flex; gap: 8px; margin: 16px 0; }
+        .dist-item { flex: 1; text-align: center; }
+        .dist-bar {
+            background: linear-gradient(180deg, #11998e, #38ef7d);
+            border-radius: 8px 8px 0 0;
+            margin-bottom: 8px;
+            min-height: 4px;
+        }
+        .dist-label { font-size: 12px; color: #666; }
+        .dist-value { font-size: 18px; font-weight: 600; color: #333; }
+        
+        .legal-range {
+            background: #f0f7ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 16px 0;
+        }
+        .legal-range h4 { color: #333; margin-bottom: 12px; }
+        .legal-range p { color: #666; font-size: 14px; }
+        
+        .comparison-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            height: 200px;
+            padding: 20px 0;
+        }
+        .chart-bar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .chart-bar-fill {
+            width: 100%;
+            background: linear-gradient(180deg, #38ef7d, #11998e);
+            border-radius: 8px 8px 0 0;
+            min-height: 4px;
+        }
+        .chart-bar-label {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="/">📁 案件列表</a>
+            <a href="/stats">📊 统计</a>
+            <a href="/sentencing">⚖️ 量刑一致性</a>
+            <a href="/sentencing/{{ crime }}">📋 {{ crime }}</a>
+        </div>
+
+        <div class="header">
+            <h1>⚖️ {{ crime }} 量刑分析</h1>
+            <p>样本数: {{ stats.sample_count }} | 平均刑期: {{ stats.avg_sentence|default('N/A') }}年 | 缓刑率: {{ stats.probation_rate|default(0)|round(1) }}%</p>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>样本数</h3>
+                <div class="value">{{ stats.sample_count }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>平均刑期</h3>
+                <div class="value">{{ stats.avg_sentence|default('N/A')|round(2) }}{% if stats.avg_sentence %}年{% endif %}</div>
+            </div>
+            <div class="stat-card">
+                <h3>中位数</h3>
+                <div class="value">{{ stats.median_sentence|default('N/A')|round(2) }}{% if stats.median_sentence %}年{% endif %}</div>
+            </div>
+            <div class="stat-card">
+                <h3>最短刑期</h3>
+                <div class="value">{{ stats.min_sentence|default('N/A')|round(2) }}{% if stats.min_sentence %}年{% endif %}</div>
+            </div>
+            <div class="stat-card">
+                <h3>最长刑期</h3>
+                <div class="value">{{ stats.max_sentence|default('N/A')|round(2) }}{% if stats.max_sentence %}年{% endif %}</div>
+            </div>
+            <div class="stat-card">
+                <h3>标准差</h3>
+                <div class="value">{{ stats.std_dev|default(0)|round(2) }}</div>
+            </div>
+        </div>
+
+        <!-- 法定量刑区间 -->
+        {% if legal_comp and legal_comp.legal_range %}
+        <div class="card">
+            <h2>📜 法定量刑区间</h2>
+            <div class="legal-range">
+                <h4>《刑法》规定</h4>
+                <p>{{ legal_comp.legal_range.基准 }}</p>
+                <p style="margin-top: 8px;">
+                    <strong>法定刑期:</strong> {{ legal_comp.legal_range.min }} - {{ legal_comp.legal_range.max }} {{ legal_comp.legal_range.unit }}
+                </p>
+                <p style="margin-top: 8px;">
+                    <strong>实际量刑:</strong> 
+                    {% if legal_comp.actual_stats %}
+                        范围 {{ legal_comp.actual_stats.min }} - {{ legal_comp.actual_stats.max }} 年
+                        (均值 {{ legal_comp.actual_stats.avg }} 年)
+                    {% else %}
+                        数据不足
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 刑期分布 -->
+        <div class="card">
+            <h2>📊 刑期区间分布</h2>
+            <div class="distribution">
+                {% for label, count in stats.sentence_distribution.items() %}
+                <div class="dist-item">
+                    <div class="dist-bar" style="height: {{ (count / stats.sample_count * 150)|round + 4 }}px;"></div>
+                    <div class="dist-value">{{ count }}</div>
+                    <div class="dist-label">{{ label }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 省份对比 -->
+        <div class="card">
+            <h2>🗺️ 各省量刑对比</h2>
+            
+            <div class="province-bar" style="font-weight: 600; color: #666; font-size: 13px;">
+                <div class="province-label">省份</div>
+                <div class="province-track" style="background: transparent;"></div>
+                <div class="province-value">均值 | 范围 | 偏离</div>
+            </div>
+            
+            {% for province, data in sorted_provinces %}
+            <div class="province-bar">
+                <div class="province-label">{{ province }}</div>
+                <div class="province-track">
+                    {% set bar_width = (data.avg_sentence / 5 * 100)|round|int %}
+                    <div class="province-fill" style="width: {{ bar_width }}%;">
+                        {{ data.count }}件
+                    </div>
+                </div>
+                <div class="province-value">
+                    {{ data.avg_sentence }}年
+                    <span style="font-size: 11px; color: #999;">
+                        ({{ data.min }}~{{ data.max }})
+                    </span>
+                    <span class="badge badge-{{ 'warning' if data.deviation_type == '偏重' else 'success' }}">
+                        {{ data.deviation_type }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- 影响因素统计 -->
+        <div class="card">
+            <h2>⚖️ 量刑影响因素分布</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                <div>
+                    <h3 style="color: #28a745; margin-bottom: 12px;">从轻情节</h3>
+                    {% for factor, count in stats.mitigating_factors.items() %}
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
+                        <span>{{ factor }}</span>
+                        <span class="badge badge-success">{{ count }}件</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div>
+                    <h3 style="color: #dc3545; margin-bottom: 12px;">从重情节</h3>
+                    {% for factor, count in stats.aggravating_factors.items() %}
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
+                        <span>{{ factor }}</span>
+                        <span class="badge badge-danger">{{ count }}件</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
