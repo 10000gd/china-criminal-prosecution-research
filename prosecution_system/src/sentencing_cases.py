@@ -407,6 +407,40 @@ SENTENCING_CASES: List[Dict] = [
         "province": "山东", "sentence_years": 3.2,
         "is_初犯": True,
     },
+    # ==================== 故意毁坏财物罪 ====================
+    {"case_id": "DDM-101", "case_name": "毁财案（北京）", "crime": "故意毁坏财物罪", "province": "北京", "sentence_years": 1.0, "amount": 50000, "is_初犯": True, "is_自首": True, "is_赔偿": True},
+    {"case_id": "DDM-102", "case_name": "毁财案（广东）", "crime": "故意毁坏财物罪", "province": "广东", "sentence_years": 1.5, "amount": 80000, "is_初犯": True, "is_赔偿": True},
+    # ==================== 寻衅滋事罪 ====================
+    {"case_id": "EDS-101", "case_name": "寻衅案（北京）", "crime": "寻衅滋事罪", "province": "北京", "sentence_years": 2.0, "is_初犯": True},
+    {"case_id": "EDS-102", "case_name": "寻衅案（上海）", "crime": "寻衅滋事罪", "province": "上海", "sentence_years": 1.5, "is_初犯": True, "is_自首": True, "is_谅解": True},
+    {"case_id": "EDS-103", "case_name": "寻衅案（广东）", "crime": "寻衅滋事罪", "province": "广东", "sentence_years": 3.0, "is_初犯": False, "is_累犯": True},
+    # ==================== 聚众斗殴罪 ====================
+    {"case_id": "GFA-101", "case_name": "斗殴案（江苏）", "crime": "聚众斗殴罪", "province": "江苏", "sentence_years": 2.5, "is_初犯": True},
+    {"case_id": "GFA-102", "case_name": "斗殴案（浙江）", "crime": "聚众斗殴罪", "province": "浙江", "sentence_years": 1.8, "is_初犯": True, "is_自首": True},
+    # ==================== 掩饰隐瞒犯罪所得罪 ====================
+    {"case_id": "MOC-101", "case_name": "掩饰案（北京）", "crime": "掩饰隐瞒犯罪所得罪", "province": "北京", "sentence_years": 2.0, "amount": 100000, "is_初犯": True},
+    {"case_id": "MOC-102", "case_name": "掩饰案（广东）", "crime": "掩饰隐瞒犯罪所得罪", "province": "广东", "sentence_years": 3.0, "amount": 200000, "is_初犯": False},
+    {"case_id": "MOC-103", "case_name": "掩饰案（上海）", "crime": "掩饰隐瞒犯罪所得罪", "province": "上海", "sentence_years": 1.5, "amount": 80000, "is_初犯": True, "is_自首": True, "is_退赃": True},
+    # ==================== 合同诈骗罪 ====================
+    {"case_id": "SCP-101", "case_name": "合同诈骗案（北京）", "crime": "合同诈骗罪", "province": "北京", "sentence_years": 5.0, "amount": 500000, "is_初犯": True},
+    {"case_id": "SCP-102", "case_name": "合同诈骗案（上海）", "crime": "合同诈骗罪", "province": "上海", "sentence_years": 4.5, "amount": 400000, "is_初犯": True, "is_自首": True, "is_退赃": True},
+    {"case_id": "SCP-103", "case_name": "合同诈骗案（广东）", "crime": "合同诈骗罪", "province": "广东", "sentence_years": 6.0, "amount": 800000, "is_初犯": False, "is_累犯": True},
+    # ==================== 组织卖淫罪 ====================
+    {"case_id": "OSL-101", "case_name": "组织卖淫案（广东）", "crime": "组织卖淫罪", "province": "广东", "sentence_years": 5.5, "is_初犯": False},
+    {"case_id": "OSL-102", "case_name": "组织卖淫案（北京）", "crime": "组织卖淫罪", "province": "北京", "sentence_years": 5.0, "is_初犯": True},
+    # ==================== 非法经营罪 ====================
+    {"case_id": "EOB-101", "case_name": "非法经营案（北京）", "crime": "非法经营罪", "province": "北京", "sentence_years": 3.0, "amount": 1000000, "is_初犯": True},
+    {"case_id": "EOB-102", "case_name": "非法经营案（上海）", "crime": "非法经营罪", "province": "上海", "sentence_years": 2.5, "amount": 800000, "is_初犯": True, "is_自首": True},
+    # ==================== 挪用资金罪 ====================
+    {"case_id": "EMB-101", "case_name": "挪用资金案（北京）", "crime": "挪用资金罪", "province": "北京", "sentence_years": 3.5, "amount": 2000000, "is_初犯": True},
+    {"case_id": "EMB-102", "case_name": "挪用资金案（浙江）", "crime": "挪用资金罪", "province": "浙江", "sentence_years": 2.0, "amount": 500000, "is_初犯": True, "is_自首": True, "is_退赃": True},
+    {"case_id": "EMB-103", "case_name": "挪用资金案（广东）", "crime": "挪用资金罪", "province": "广东", "sentence_years": 4.0, "amount": 3000000, "is_初犯": False},
+    # ==================== 受贿罪 ====================
+    {"case_id": "BRB-101", "case_name": "受贿案（北京）", "crime": "受贿罪", "province": "北京", "sentence_years": 10.0, "amount": 5000000, "is_初犯": True},
+    {"case_id": "BRB-102", "case_name": "受贿案（浙江）", "crime": "受贿罪", "province": "浙江", "sentence_years": 8.0, "amount": 3000000, "is_初犯": True, "is_自首": True, "is_退赃": True},
+    # ==================== 行贿罪 ====================
+    {"case_id": "BRG-101", "case_name": "行贿案（广东）", "crime": "行贿罪", "province": "广东", "sentence_years": 3.0, "amount": 2000000, "is_初犯": True, "is_自首": True},
+    {"case_id": "BRG-102", "case_name": "行贿案（北京）", "crime": "行贿罪", "province": "北京", "sentence_years": 4.0, "amount": 3000000, "is_初犯": False},
 ]
 
 
