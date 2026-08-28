@@ -105,6 +105,12 @@ def index():
     )
 
 
+@app.route("/docs")
+def docs_page():
+    """API文档页面"""
+    return render_template("docs.html")
+
+
 # ---- 案件详情 ----
 
 @app.route("/case/<case_id>")
