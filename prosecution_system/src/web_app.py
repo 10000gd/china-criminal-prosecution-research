@@ -27,7 +27,7 @@ logger = setup_logging("web_app")
 from flask import Flask, render_template, request, jsonify, redirect, url_for, send_file, session
 
 # 导入认证模块
-from auth import create_auth_blueprint, login_required, get_current_user, user_db
+from auth import create_auth_blueprint, login_required, get_current_user
 import yaml
 
 from case_loader import CaseLoader
