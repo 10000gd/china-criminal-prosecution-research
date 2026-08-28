@@ -9,7 +9,8 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from sentencing_cases import CASES
+from sentencing_cases import get_sentencing_cases
+CASES = get_sentencing_cases()
 from advanced_analysis import SimilarityAnalyzer, StatisticsEngine, AnomalyDetector
 
 def cmd_stats():
