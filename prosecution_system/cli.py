@@ -308,6 +308,81 @@ def cmd_legal_lookup(args):
             print(f"未找到该分类: {args.category}")
 
 
+def cmd_import(args):
+    """案件导入命令"""
+    from case_importer import CaseImporter
+    
+    importer = CaseImporter(Path(args.output) if args.output else None)
+    
+    # 导出模板
+    if args.template:
+        importer.export_to_template(args.template)
+        return
+    
+    # 导入文件
+    result = importer.import_file(args.file)
+    
+    print(f"\n📥 导入结果:")
+    print(result.summary())
+    
+    if result.errors:
+        print(f"\n❌ 错误:")
+        for err in result.errors:
+            print(f"  - {err}")
+    
+    if result.warnings:
+        print(f"\n⚠️ 警告:")
+        for warn in result.warnings:
+            print(f"  - {warn}")
+    
+    if result.imported_ids:
+        print(f"\n✅ 已导入案件:")
+        for case_id in result.imported_ids[:10]:
+            print(f"  - {case_id}")
+        if len(result.imported_ids) > 10:
+            print(f"  ... 共 {len(result.imported_ids)} 个")
+
+
+def cmd_stats(args):
+    """数据集统计命令"""
+    from sentencing_cases import get_statistics
+    from defense_case_db import DefenseCaseDatabase
+    
+    print("\n📊 数据集统计\n")
+    
+    # 量刑案例统计
+    print("【量刑案例库】")
+    sentencing_stats = get_statistics()
+    print(f"  总计: {sentencing_stats['total_count']} 个案例")
+    print(f"  罪名: {len(sentencing_stats['crimes'])} 种")
+    print(f"  省份: {len(sentencing_stats['provinces'])} 个")
+    
+    # 辩护案例统计
+    print("\n【辩护案例库】")
+    db = DefenseCaseDatabase()
+    print(f"  总计: {len(db._cases)} 个案例")
+    
+    # 罪名统计
+    crime_counts = {}
+    for case in db._cases:
+        crime = case.crime
+        crime_counts[crime] = crime_counts.get(crime, 0) + 1
+    
+    print("  罪名分布:")
+    for crime, count in sorted(crime_counts.items(), key=lambda x: -x[1])[:5]:
+        print(f"    - {crime}: {count}个")
+    
+    # 辩护类型统计
+    defense_counts = {}
+    for case in db._cases:
+        defense = case.key_defense
+        defense_counts[defense] = defense_counts.get(defense, 0) + 1
+    
+    print("  辩护类型分布:")
+    for defense, count in sorted(defense_counts.items(), key=lambda x: -x[1]):
+        print(f"    - {defense}: {count}个")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="中国刑事追诉智能辅助系统 CLI",
@@ -404,6 +479,15 @@ def main():
     p_lookup.add_argument("--crime", help="罪名")
     p_lookup.add_argument("--category", help="法律分类")
     
+    # import 命令
+    p_import = subparsers.add_parser("import", help="导入案件数据")
+    p_import.add_argument("file", help="文件或目录路径")
+    p_import.add_argument("--output", "-o", help="输出目录")
+    p_import.add_argument("--template", "-t", help="导出模板文件路径")
+    
+    # stats 命令
+    p_stats = subparsers.add_parser("stats", help="数据集统计")
+    
     args = parser.parse_args()
     
     if not args.command:
@@ -421,6 +505,8 @@ def main():
         "sentencing": cmd_sentencing_stats,
         "sentencing-deviation": cmd_sentencing_deviation,
         "lookup": cmd_legal_lookup,
+        "import": cmd_import,
+        "stats": cmd_stats,
     }
     
     if args.command in commands:

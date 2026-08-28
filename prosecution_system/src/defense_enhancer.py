@@ -48,6 +48,7 @@ class DefenseType(Enum):
     RECIDIVISM_NOT = "非累犯"
     HARM_MINIMAL = "危害较轻"
     INITIATIVE = "主观恶性小"
+    VICTIM_FAULT = "被害人过错"
     
     # 罪名辩护
     CRIME_WRONG_CHARACTERIZATION = "定性错误"
