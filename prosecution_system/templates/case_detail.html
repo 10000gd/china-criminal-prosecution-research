@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ case_id }} — 案件详情</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f0f2f5; color: #1f2937; font-size: 14px; }
+    .topbar { background: #1e3a5f; color: #fff; padding: 0 24px; height: 52px; display: flex; align-items: center; gap: 28px; }
+    .topbar .brand { font-size: 16px; font-weight: 700; color: #fff; text-decoration: none; }
+    .topbar .brand span { color: #fbbf24; }
+    .nav-links { display: flex; gap: 4px; }
+    .nav-links a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px; padding: 6px 14px; border-radius: 6px; }
+    .nav-links a:hover, .nav-links a.active { color: #fff; background: rgba(255,255,255,0.12); }
+    .container { max-width: 1000px; margin: 0 auto; padding: 24px 20px 48px; }
+
+    /* Header */
+    .case-header { background: #fff; border-radius: 14px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+    .case-header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
+    .case-title { font-size: 20px; font-weight: 900; color: #111827; margin-bottom: 4px; }
+    .case-id-tag { font-size: 12px; background: #f3f4f6; color: #6b7280; padding: 3px 10px; border-radius: 20px; font-family: monospace; }
+    .case-meta-row { display: flex; gap: 20px; font-size: 13px; color: #6b7280; flex-wrap: wrap; }
+    .case-meta-row span { display: flex; align-items: center; gap: 5px; }
+    .warn-badge { display: inline-flex; align-items: center; gap: 5px; background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+    .warn-badge.red { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+    .warn-badge.green { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+
+    /* Actions */
+    .action-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid #f3f4f6; }
+    .btn { padding: 8px 16px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-primary { background: #1e3a5f; color: #fff; }
+    .btn-success { background: #059669; color: #fff; }
+    .btn-warning { background: #d97706; color: #fff; }
+    .btn-danger { background: #dc2626; color: #fff; }
+    .btn-outline { background: #fff; color: #374151; border: 1px solid #d1d5db; }
+    .btn-outline:hover { background: #f9fafb; }
+    .btn.on { background: #dc2626; color: #fff; }
+
+    /* Sections */
+    .section { background: #fff; border-radius: 14px; padding: 22px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+    .section-title { font-size: 15px; font-weight: 800; color: #111827; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid #f3f4f6; display: flex; align-items: center; gap: 8px; }
+    .section-title .icon { font-size: 1.1rem; }
+
+    /* Charges */
+    .charge-tag { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 8px; font-size: 13px; font-weight: 700; margin: 4px 4px 4px 0; }
+    .charge-ok  { background: #d1fae5; color: #065f46; }
+    .charge-miss{ background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    .charge-art { font-size: 11px; color: #6b7280; font-weight: 400; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f8f9fa; text-align: left; padding: 9px 12px; font-size: 12px; color: #6b7280; border-bottom: 2px solid #e5e7eb; font-weight: 700; }
+    td { padding: 10px 12px; border-bottom: 1px solid #f3f4f6; font-size: 13px; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafbfc; }
+
+    /* Confidence badges */
+    .conf-high   { background: #d1fae5; color: #065f46; }
+    .conf-medium { background: #fef3c7; color: #92400e; }
+    .conf-low    { background: #fed7aa; color: #9a3412; }
+    .conf-unreli { background: #fee2e2; color: #991b1b; }
+
+    /* Evidence gaps */
+    .gap-item { padding: 12px 14px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; margin-bottom: 8px; }
+    .gap-item:last-child { margin-bottom: 0; }
+    .gap-severity { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; display: inline-block; margin-bottom: 4px; }
+    .sev-high   { background: #dc2626; color: #fff; }
+    .sev-medium { background: #d97706; color: #fff; }
+    .sev-low    { background: #6b7280; color: #fff; }
+
+    /* Persons */
+    .person-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+    .person-card { background: #fafbfc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; }
+    .person-role { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+    .person-name { font-size: 14px; font-weight: 700; color: #111827; }
+
+    /* Two column layout */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+    @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* Warning box */
+    .warn-box { background: #fff; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 0 8px 8px 0; margin-bottom: 16px; font-size: 13px; color: #92400e; }
+    .warn-box.error { border-left-color: #ef4444; background: #fef2f2; color: #991b1b; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="/" class="brand">追诉系统 <span>⚖</span></a>
+  <nav class="nav-links">
+    <a href="/">案件</a>
+    <a href="/stats">统计</a>
+    <a href="/tracker">跟踪</a>
+    <a href="/search">搜索</a>
+  </nav>
+</div>
+
+<div class="container">
+
+  <!-- 案件头部 -->
+  <div class="case-header">
+    <div class="case-header-top">
+      <div>
+        <div class="case-title">{{ meta.case_name or case_id }}</div>
+        <div style="margin-top:4px;">
+          <span class="case-id-tag">{{ case_id }}</span>
+          {% if is_tracked %}
+          <span class="warn-badge green">✓ 已跟踪</span>
+          {% endif %}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="track-btn" class="btn {% if is_tracked %}btn-danger{% else %}btn-outline{% endif %}" onclick="toggleTrack()">
+          {% if is_tracked %}取消跟踪{% else %}+ 跟踪{% endif %}
+        </button>
+        <a href="/case/{{ case_id }}/generate" class="btn btn-primary">📄 生成报告</a>
+        <a href="/case/{{ case_id }}/charges" class="btn btn-outline">⚖ 罪名分析</a>
+      </div>
+    </div>
+    <div class="case-meta-row">
+      <span>📅 判决：{{ meta.judgment_date or '—' }}</span>
+      <span>🏛 法院：{{ meta.court or '—' }}</span>
+      <span>📰 来源：{{ meta.source or meta.source_media or '—' }}</span>
+      {% if meta.case_type %}<span>📂 类型：{{ meta.case_type }}</span>{% endif %}
+    </div>
+    {% if warnings %}
+    <div class="warn-box error" style="margin-top:14px;">
+      <strong>⚠ 验证警告 ({{ warnings|length }}项)：</strong>
+      {{ warnings|join('；') }}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="two-col">
+    <!-- 左侧：罪名分析 -->
+    <div>
+      <div class="section">
+        <div class="section-title"><span class="icon">⚖</span> 已认定罪名</div>
+        {% if charges.charges_judged %}
+        <div style="margin-bottom:14px;">
+          {% for cid, c in charges.charges_judged.items() %}
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+            <div style="font-weight:700;font-size:14px;margin-bottom:4px;">{{ c.name }}</div>
+            {% if c.article %}<div style="font-size:12px;color:#065f46;">{{ c.article }}</div>{% endif %}
+            {% if c.statute %}<div style="font-size:12px;color:#6b7280;margin-top:4px;line-height:1.5;">{{ c.statute[:120] }}…</div>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div style="color:#9ca3af;font-size:13px;">暂无数据</div>
+        {% endif %}
+      </div>
+
+      <div class="section">
+        <div class="section-title"><span class="icon">❌</span> 遗漏罪名</div>
+        {% if charges.charges_missed %}
+        {% for cid, c in charges.charges_missed.items() %}
+        <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+          <div style="font-weight:700;font-size:14px;margin-bottom:4px;">{{ c.name }}</div>
+          {% if c.reason %}<div style="font-size:12px;color:#991b1b;margin-bottom:3px;">原因：{{ c.reason }}</div>{% endif %}
+          {% if c.priority %}<span class="warn-badge {% if c.priority=='high' %}red{% endif %}">优先级：{{ c.priority }}</span>{% endif %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <div style="color:#9ca3af;font-size:13px;">无遗漏罪名</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 右侧：当事人 + 证据 -->
+    <div>
+      <div class="section">
+        <div class="section-title"><span class="icon">👤</span> 当事人</div>
+        {% if defendants %}
+        <div class="person-grid">
+          {% for d in defendants %}
+          <div class="person-card">
+            <div class="person-role">{{ d.role }}</div>
+            <div class="person-name">{{ d.name }}</div>
+            {% if d.id %}<div style="font-size:12px;color:#6b7280;margin-top:2px;">ID: {{ d.id }}</div>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div style="color:#9ca3af;font-size:13px;">暂无当事人数据</div>
+        {% endif %}
+      </div>
+
+      <div class="section">
+        <div class="section-title"><span class="icon">🔍</span> 证据缺口</div>
+        {% if evidence_gaps %}
+        {% for gap in evidence_gaps %}
+        <div class="gap-item">
+          <div class="gap-severity sev-{{ gap.severity }}">{{ gap.severity|upper }}</div>
+          <div style="font-size:13px;margin-bottom:4px;">{{ gap.description }}</div>
+          {% if gap.suggestion %}<div style="font-size:12px;color:#92400e;">建议：{{ gap.suggestion }}</div>{% endif %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <div style="color:#9ca3af;font-size:13px;">暂无证据缺口记录</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- 历史记录 -->
+  {% if tracker_history %}
+  <div class="section">
+    <div class="section-title"><span class="icon">📜</span> 跟踪历史</div>
+    {% for h in tracker_history %}
+    <div style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px;">
+      <span style="color:#9ca3af;font-size:11px;">{{ h.time }}</span>
+      <span style="margin-left:8px;">{{ h.text }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+  async function toggleTrack() {
+    const btn = document.getElementById('track-btn');
+    const isTracked = btn.classList.contains('btn-danger');
+    const url = isTracked ? '/tracker/remove' : '/tracker/add';
+    const body = JSON.stringify({case_id: '{{ case_id }}'});
+    const res = await fetch(url, {method: 'POST', headers: {'Content-Type': 'application/json'}, body});
+    const data = await res.json();
+    if (data.ok || data.removed) {
+      if (isTracked) {
+        btn.className = 'btn btn-outline';
+        btn.textContent = '+ 跟踪';
+      } else {
+        btn.className = 'btn btn-danger';
+        btn.textContent = '取消跟踪';
+      }
+    }
+  }
+</script>
+
+</body>
+</html>

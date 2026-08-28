@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>案件追踪 — 追诉系统</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f0f2f5; color: #1f2937; font-size: 14px; }
+    .topbar { background: #1e3a5f; color: #fff; padding: 0 24px; height: 52px; display: flex; align-items: center; gap: 28px; }
+    .topbar .brand { font-size: 16px; font-weight: 700; color: #fff; text-decoration: none; }
+    .topbar .brand span { color: #fbbf24; }
+    .nav-links { display: flex; gap: 4px; }
+    .nav-links a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px; padding: 6px 14px; border-radius: 6px; }
+    .nav-links a:hover, .nav-links a.active { color: #fff; background: rgba(255,255,255,0.12); }
+    .container { max-width: 900px; margin: 0 auto; padding: 28px 20px; }
+    h1 { font-size: 22px; font-weight: 800; margin-bottom: 20px; color: #111827; }
+    .card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+    .btn { padding: 8px 18px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-primary { background: #1e3a5f; color: #fff; }
+    .btn-danger { background: #dc2626; color: #fff; }
+    .btn-outline { background: #fff; color: #1e3a5f; border: 1px solid #d1d5db; }
+    .tracked-item { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid #f3f4f6; }
+    .tracked-item:last-child { border-bottom: none; }
+    .tracked-icon { font-size: 1.6rem; flex-shrink: 0; }
+    .tracked-info { flex: 1; }
+    .tracked-name { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+    .tracked-meta { font-size: 12px; color: #6b7280; }
+    .tracked-status { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .status-watching { background: #fef3c7; color: #92400e; }
+    .status-updated { background: #dbeafe; color: #1d4ed8; }
+    .status-new { background: #d1fae5; color: #065f46; }
+    .empty { text-align: center; padding: 60px 20px; color: #9ca3af; }
+    .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+    .history-item { padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
+    .history-item:last-child { border-bottom: none; }
+    .history-time { font-size: 11px; color: #9ca3af; margin-bottom: 3px; }
+    .history-text { font-size: 13px; color: #374151; }
+    .section-title { font-size: 13px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 5px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; background: #fff;
+    }
+    .form-group textarea { resize: vertical; min-height: 80px; font-family: inherit; }
+    .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+    @media (max-width: 640px) { .tracked-item { flex-wrap: wrap; } }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="/" class="brand">追诉系统 <span>⚖</span></a>
+  <nav class="nav-links">
+    <a href="/">案件</a>
+    <a href="/stats">统计</a>
+    <a href="/tracker" class="active">跟踪</a>
+    <a href="/search">搜索</a>
+  </nav>
+</div>
+
+<div class="container">
+  <h1>👁 案件追踪</h1>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+    <!-- 跟踪列表 -->
+    <div class="card">
+      <div class="section-title">跟踪中的案件</div>
+      {% if tracked_cases %}
+      <div>
+        {% for item in tracked_cases %}
+        <div class="tracked-item">
+          <div class="tracked-icon">📋</div>
+          <div class="tracked-info">
+            <div class="tracked-name">{{ item.case_id }}</div>
+            <div class="tracked-meta">{{ item.added_at }}</div>
+          </div>
+          <span class="tracked-status status-watching">跟踪中</span>
+          <div style="display:flex;gap:6px;">
+            <a href="/case/{{ item.case_id }}" class="btn btn-outline" style="padding:4px 10px;font-size:12px;">查看</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty" style="padding:30px;">
+        <div style="font-size:2rem;margin-bottom:8px;">🔔</div>
+        <p style="font-size:13px;">暂无跟踪中的案件</p>
+        <p style="font-size:12px;color:#9ca3af;margin-top:4px;">从案件详情页添加跟踪</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- 快捷操作 -->
+    <div class="card">
+      <div class="section-title">快捷添加</div>
+      <form id="add-form" onsubmit="return false;">
+        <div class="form-group">
+          <label>案件ID</label>
+          <input type="text" id="case_id" placeholder="输入案件ID，如 hengda_case_1">
+        </div>
+        <div class="form-group">
+          <label>备注</label>
+          <textarea id="note" placeholder="可选备注，如'重点关注罪名遗漏'"></textarea>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-outline" onclick="clearForm()">清空</button>
+          <button class="btn btn-primary" onclick="addTracking()">+ 添加跟踪</button>
+        </div>
+      </form>
+      <div id="add-msg" style="margin-top:10px;font-size:13px;"></div>
+    </div>
+  </div>
+
+  <!-- 跟踪历史 -->
+  <div class="card" style="margin-top:16px;">
+    <div class="section-title">最近动态</div>
+    {% if tracked_cases and tracked_cases[0].history %}
+    <div>
+      {% for h in tracked_cases[0].history %}
+      <div class="history-item">
+        <div class="history-time">{{ h.time }}</div>
+        <div class="history-text">{{ h.text }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty" style="padding:20px;">
+      <p style="font-size:13px;color:#9ca3af;">暂无跟踪历史</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  async function addTracking() {
+    const caseId = document.getElementById('case_id').value.trim();
+    const note = document.getElementById('note').value.trim();
+    const msg = document.getElementById('add-msg');
+    if (!caseId) { msg.innerHTML = '<span style="color:#dc2626;">⚠ 请输入案件ID</span>'; return; }
+    const res = await fetch('/tracker/add', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({case_id: caseId, note})
+    });
+    const data = await res.json();
+    if (data.ok) {
+      msg.innerHTML = '<span style="color:#059669;">✅ 已添加跟踪：' + caseId + '</span>';
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      msg.innerHTML = '<span style="color:#dc2626;">❌ ' + (data.error || '添加失败') + '</span>';
+    }
+  }
+  function clearForm() { document.getElementById('case_id').value = ''; document.getElementById('note').value = ''; }
+</script>
+
+</body>
+</html>
