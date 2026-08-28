@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API文档 - 追诉系统</title>
+  <link rel="stylesheet" href="/static/mobile.css">
+  <style>
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f0f2f5;
+      color: #1f2937;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .topbar {
+      background: #1e3a5f;
+      color: #fff;
+      padding: 0 24px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+    .topbar .brand { font-size: 16px; font-weight: 700; color: #fff; text-decoration: none; }
+    .topbar .brand span { color: #fbbf24; }
+    .container { max-width: 1000px; margin: 0 auto; padding: 28px 20px; }
+    h1 { font-size: 24px; margin-bottom: 20px; color: #111827; }
+    h2 { font-size: 18px; margin: 30px 0 15px; color: #1e3a5f; border-bottom: 2px solid #1e3a5f; padding-bottom: 8px; }
+    h3 { font-size: 16px; margin: 20px 0 10px; color: #374151; }
+    .card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+    .endpoint { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    .method { 
+      display: inline-block; 
+      padding: 4px 10px; 
+      border-radius: 4px; 
+      font-size: 12px; 
+      font-weight: 700;
+      margin-right: 10px;
+    }
+    .method-get { background: #d1fae5; color: #065f46; }
+    .method-post { background: #dbeafe; color: #1e40af; }
+    .method-delete { background: #fee2e2; color: #991b1b; }
+    .path { font-family: 'Monaco', 'Menlo', monospace; font-size: 14px; color: #374151; }
+    .description { margin: 10px 0; color: #6b7280; }
+    .params { background: #fef3c7; padding: 12px; border-radius: 6px; margin: 10px 0; font-size: 13px; }
+    .params strong { color: #92400e; }
+    .example { background: #1f2937; color: #e5e7eb; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 10px 0; }
+    .example code { font-family: 'Monaco', 'Menlo', monospace; font-size: 13px; }
+    .tag { display: inline-block; background: #e5e7eb; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-right: 6px; }
+    .nav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .nav a { padding: 8px 16px; background: #fff; border-radius: 6px; text-decoration: none; color: #374151; border: 1px solid #e5e7eb; }
+    .nav a:hover { background: #1e3a5f; color: #fff; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th, td { border: 1px solid #e5e7eb; padding: 10px 12px; text-align: left; }
+    th { background: #f8fafc; font-weight: 600; }
+    code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+    .back-link { color: #6b7280; text-decoration: none; margin-bottom: 20px; display: inline-block; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="/" class="brand">⚖️ 追诉<span>系统</span></a>
+    <nav class="nav-links">
+      <a href="/">案件</a>
+      <a href="/stats">统计</a>
+      <a href="/search">搜索</a>
+      <a href="/docs" class="active">API</a>
+    </nav>
+  </div>
+  
+  <div class="container">
+    <a href="/" class="back-link">← 返回首页</a>
+    
+    <h1>📚 API 文档</h1>
+    
+    <div class="nav">
+      <a href="#auth">认证</a>
+      <a href="#cases">案件</a>
+      <a href="#defense">辩护</a>
+      <a href="#sentencing">量刑</a>
+      <a href="#compare">对比</a>
+      <a href="#export">导出</a>
+    </div>
+    
+    <!-- 基础信息 -->
+    <div class="card">
+      <h2>📖 基础信息</h2>
+      
+      <h3>认证方式</h3>
+      <p>大部分API需要登录认证。使用以下方式：</p>
+      <div class="example">
+        <code># 登录获取session
+curl -X POST http://localhost:5000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "your_user", "password": "your_pass"}' \
+  -c cookies.txt
+
+# 使用session访问受保护API
+curl http://localhost:5000/api/cases -b cookies.txt</code>
+      </div>
+      
+      <h3>响应格式</h3>
+      <p>所有API返回JSON格式。成功响应：</p>
+      <div class="example">
+        <code>{
+  "success": true,
+  "data": { ... }
+}</code>
+      </div>
+      <p>错误响应：</p>
+      <div class="example">
+        <code>{
+  "error": "错误信息",
+  "code": "error_code"
+}</code>
+      </div>
+    </div>
+    
+    <!-- 认证API -->
+    <div class="card" id="auth">
+      <h2>🔐 认证 API</h2>
+      
+      <div class="endpoint">
+        <span class="method method-post">POST</span>
+        <span class="path">/auth/login</span>
+        <p class="description">用户登录</p>
+        <div class="params">
+          <strong>请求体:</strong> <code>{"username": "string", "password": "string"}</code>
+        </div>
+        <div class="example">
+          <code>curl -X POST http://localhost:5000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "123456"}'</code>
+        </div>
+      </div>
+      
+      <div class="endpoint">
+        <span class="method method-post">POST</span>
+        <span class="path">/auth/register</span>
+        <p class="description">用户注册</p>
+        <div class="params">
+          <strong>请求体:</strong> <code>{"username": "string", "email": "string", "password": "string", "role": "user|lawyer|prosecutor"}</code>
+        </div>
+      </div>
+      
+      <div class="endpoint">
+        <span class="method method-get">GET</span>
+        <span class="path">/auth/logout</span>
+        <p class="description">退出登录</p>
+      </div>
+      
+      <div class="endpoint">
+        <span class="method method-get">GET</span>
+        <span class="path">/auth/profile</span>
+        <p class="description">获取用户资料（需登录）</p>
+      </div>
+    </div>
+    
+    <!-- 案件API -->
+    <div class="card" id="cases">
+      <h2>📁 案件 API</h2>
+      
+      <div class="endpoint">
+        <span class="method method-get">GET</span>
+        <span class="path">/api/cases</span>
+        <p class="description">获取案件列表</p>
+        <div class="params">
+          <strong>参数:</strong> <code>status</code> (可选): investigating|prosecuted|judged|appealed|closed
+        </div>
+        <div class="example">
+          <code>curl http://localhost:5000/api/cases?status=judged</code>
+        </div>
+      </div>
+      
+      <div class="endpoint">
+        <span class="method method-get">GET</span>
+        <span class="path">/api/case/&lt;case_id&gt;</span>
+        <p class="description">获取案件详情</p>
+        <div class="example">
+          <code>curl http://localhost:5000/api/case/CASE-001</code>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 辩护API -->
+    <div class="card" id="defense">
+      <h2>🛡️ 辩护 API</h2>
+      
+      <div class="endpoint">
+        <span class="method method-get">GET</span>
+        <span class="path">/api/defense/search</span>
+        <p class="description">搜索辩护案例</p>
+        <div class="params">
+          <strong>参数:</strong>
+          <code>crime</code> - 罪名<br>
+          <code>defense_type</code> - 辩护类型<br>
+          <code>limit</code> - 返回数量（默认10）
+        </div>
+        <div class="example">
+          <code>curl "http://localhost:5000/api/defense/search?crime=盗窃罪&defense_type=正当防卫"</code>
+        </div>
+      </div>
+      
+      <div class="endpoint">
+        <span class="method method-post">POST</span>
+        <span class="path">/api/defense/analyze</span>
+        <p class="description">分析案件辩护角度</p>
+        <div class="params">
+          <strong>请求体:</strong> <code>{"case_id": "string", "crime": "string", "facts": "string"}</code>
+        </div>
+      </div>
+      
+      <div class="endpoint">
+        <span class="method method-post">POST</span>
+        <span class="path">/api/defense/opinion</span>
+        <p class="description">生成辩护意见</p>
+        <div class="params">
+          <strong>请求体:</strong> <code>{"case_id": "string", "defense_type": "string", "facts": "string"}</code>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 量刑API -->
+    <div class="card" id="sentencing">
+      <h2>⚖️ 量刑 API</h2>
+      
+      <div class="endpoint">
+        <span class="method method-get">GET</span>
+        <span class="path">/api/sentencing/report</span>
+        <p class="description">获取量刑一致性报告</p>
+        <div class="params">
+          <strong>参数:</strong> <code>crime</code> (可选) - 按罪名筛选
+        </div>
+        <div class="example">
+          <code>curl "http://localhost:5000/api/sentencing/report?crime=盗窃罪"</code>
+        </div>
+      </div>
+      
+      <div class="endpoint">
+        <span class="method method-post">POST</span>
+        <span class="path">/api/sentencing/deviation</span>
+        <p class="description">分析个案量刑偏离度</p>
+        <div class="params">
+          <strong>请求体:</strong>
+          <code>{"case_id": "string", "crime": "string", "sentence_years": number, "province": "string", "is_自首": bool, ...}</code>
+        </div>
+        <div class="example">
+          <code>curl -X POST http://localhost:5000/api/sentencing/deviation \
+  -H "Content-Type: application/json" \
+  -d '{"crime": "盗窃罪", "sentence_years": 2.0, "province": "北京", "is_自首": true}'</code>
+        </div>
+      </div>
+      
+      <div class="endpoint">
+        <span class="method method-get">GET</span>
+        <span class="path">/api/sentencing/provincial</span>
+        <p class="description">获取各省量刑对比</p>
+      </div>
+    </div>
+    
+    <!-- 对比API -->
+    <div class="card" id="compare">
+      <h2>📊 对比 API</h2>
+      
+      <div class="endpoint">
+        <span class="method method-post">POST</span>
+        <span class="path">/api/compare</span>
+        <p class="description">对比多个案件</p>
+        <div class="params">
+          <strong>请求体:</strong> <code>{"case_ids": ["CASE-001", "CASE-002", ...]}</code>
+        </div>
+        <div class="example">
+          <code>curl -X POST http://localhost:5000/api/compare \
+  -H "Content-Type: application/json" \
+  -d '{"case_ids": ["CASE-001", "CASE-002"]}'</code>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 导出API -->
+    <div class="card" id="export">
+      <h2>📥 导出 API</h2>
+      
+      <div class="endpoint">
+        <span class="method method-get">GET</span>
+        <span class="path">/export/case/&lt;case_id&gt;</span>
+        <p class="description">导出案件报告（HTML格式，可打印为PDF）</p>
+      </div>
+      
+      <div class="endpoint">
+        <span class="method method-get">GET</span>
+        <span class="path">/export/comparison</span>
+        <p class="description">导出对比报告</p>
+        <div class="params">
+          <strong>参数:</strong> <code>case_id</code> - 案件ID（可多个）
+        </div>
+        <div class="example">
+          <code>curl "http://localhost:5000/export/comparison?case_id=CASE-001&case_id=CASE-002" -o report.html</code>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 收藏API -->
+    <div class="card">
+      <h2>⭐ 收藏 API</h2>
+      
+      <div class="endpoint">
+        <span class="method method-get">GET</span>
+        <span class="path">/auth/favorites</span>
+        <p class="description">获取收藏列表（需登录）</p>
+      </div>
+      
+      <div class="endpoint">
+        <span class="method method-post">POST</span>
+        <span class="path">/auth/favorites</span>
+        <p class="description">添加收藏</p>
+        <div class="params">
+          <strong>请求体:</strong> <code>{"case_id": "string"}</code>
+        </div>
+      </div>
+      
+      <div class="endpoint">
+        <span class="method method-delete">DELETE</span>
+        <span class="path">/auth/favorites</span>
+        <p class="description">移除收藏</p>
+        <div class="params">
+          <strong>请求体:</strong> <code>{"case_id": "string"}</code>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card" style="background: #f0f9ff; border: 1px solid #0ea5e9;">
+      <h2>💡 使用示例</h2>
+      
+      <h3>Python 示例</h3>
+      <div class="example">
+        <code>import requests
+
+# 登录
+session = requests.Session()
+session.post("http://localhost:5000/auth/login", 
+             json={"username": "admin", "password": "123456"})
+
+# 获取量刑报告
+report = session.get("http://localhost:5000/api/sentencing/report")
+print(report.json())
+
+# 分析偏离度
+result = session.post("http://localhost:5000/api/sentencing/deviation",
+                      json={"crime": "盗窃罪", "sentence_years": 2.0})
+print(result.json())</code>
+      </div>
+      
+      <h3>JavaScript 示例</h3>
+      <div class="example">
+        <code>// 登录
+const loginRes = await fetch('/auth/login', {
+  method: 'POST',
+  headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({username: 'admin', password: '123456'}),
+  credentials: 'include'
+});
+
+// 获取量刑报告
+const report = await fetch('/api/sentencing/report', {credentials: 'include'});
+const data = await report.json();</code>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
