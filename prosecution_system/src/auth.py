@@ -261,6 +261,8 @@ def _render_login_page() -> str:
         {% endif %}
         {% endwith %}
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="text" name="username" placeholder="用户名" required>
             <input type="password" name="password" placeholder="密码" required>
             <button type="submit">登 录</button>
@@ -302,6 +304,8 @@ def _render_register_page() -> str:
     <div class="register-box">
         <h1>📝 用户注册</h1>
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="text" name="username" placeholder="用户名" required>
             <input type="email" name="email" placeholder="邮箱" required>
             <input type="password" name="password" placeholder="密码（至少6位）" required minlength="6">

@@ -306,3 +306,65 @@ if __name__ == "__main__":
         print(f"  输出: {escaped[:50]}...")
     
     print("\n✅ 安全模块测试完成！")
+
+
+class CSRFProtection:
+    """CSRF保护"""
+    
+    _token_name = "csrf_token"
+    _session_key = "_csrf_token"
+    
+    @classmethod
+    def generate_token(cls) -> str:
+        """生成CSRF Token"""
+        import secrets
+        token = secrets.token_hex(32)
+        return token
+    
+    @classmethod
+    def set_token(cls) -> str:
+        """设置Token到Session"""
+        from flask import session
+        if cls._session_key not in session:
+            session[cls._session_key] = cls.generate_token()
+        return session[cls._session_key]
+    
+    @classmethod
+    def get_token(cls) -> str:
+        """获取Token"""
+        from flask import session
+        return session.get(cls._session_key, "")
+    
+    @classmethod
+    def validate_token(cls, token: str = None) -> bool:
+        """验证Token"""
+        from flask import session, request
+        
+        if token is None:
+            token = request.form.get(cls._token_name) or request.headers.get("X-CSRF-Token")
+        
+        if not token or not session.get(cls._session_key):
+            return False
+        
+        import secrets
+        # 使用常数时间比较防止时序攻击
+        return secrets.compare_digest(token, session[cls._session_key])
+
+
+def csrf_protect(f):
+    """CSRF保护装饰器"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if request.method in ["POST", "PUT", "DELETE", "PATCH"]:
+            if not CSRFProtection.validate_token():
+                if request.is_json:
+                    return jsonify({"error": "CSRF验证失败", "code": "csrf_invalid"}), 403
+                from flask import abort
+                abort(403)
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def generate_csrf_token() -> str:
+    """生成CSRF Token（供模板调用）"""
+    return CSRFProtection.set_token()

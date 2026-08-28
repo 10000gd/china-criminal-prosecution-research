@@ -28,6 +28,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 
 # 导入认证模块
 from auth import create_auth_blueprint, login_required, get_current_user
+from security import CSRFProtection, csrf_protect, generate_csrf_token
 import yaml
 
 from case_loader import CaseLoader
@@ -70,6 +71,7 @@ def inject_user():
     """注入当前用户信息到所有模板"""
     from flask import g
     g.current_user = get_current_user()
+    g.csrf_token = CSRFProtection.set_token()
     g.user_logged_in = 'user_id' in session
 
 
