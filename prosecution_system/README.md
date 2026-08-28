@@ -28,7 +28,13 @@
 - **个案偏离检测**：输入案件，输出偏离度报告
 - **Web界面**：`/sentencing`
 
-### 4. 案件管理
+### 4. 案件数据导入（新增🆕）
+- **多格式支持**：YAML/JSON/CSV/Excel
+- **模板导出**：一键生成案件模板
+- **批量导入**：CLI批量导入案件数据
+- **格式转换**：支持裁判文书JSON格式
+
+### 5. 案件管理
 - YAML格式案件配置
 - 全文检索案件库
 - 置信度评估
@@ -114,6 +120,14 @@ python cli.py sentencing-deviation --crime 盗窃罪 --sentence 2.5 --zishou  # 
 python cli.py lookup --article 第20条             # 查询条文
 python cli.py lookup --crime 盗窃罪               # 查询罪名相关法条
 
+# 数据导入 (🆕)
+python cli.py import cases/                    # 导入目录
+python cli.py import data.xlsx                # 导入Excel
+python cli.py import --template template.yaml # 导出模板
+
+# 数据统计 (🆕)
+python cli.py stats                           # 查看数据集统计
+
 # 输出JSON格式
 python cli.py search "正当防卫" --format json
 ```
@@ -140,7 +154,9 @@ prosecution_system/
 │   ├── defense_case_db.py       # 辩护案例数据库
 │   ├── defense_opinion_generator.py  # 辩护意见生成器
 │   ├── defense_report_builder.py     # 辩护报告构建器
-│   └── sentencing_consistency.py     # 量刑一致性分析
+│   ├── sentencing_consistency.py     # 量刑一致性分析
+│   ├── sentencing_cases.py           # 🆕 量刑案例库(75个)
+│   └── case_importer.py              # 🆕 案件数据导入器
 │   │
 │   └── web_app.py              # Flask Web应用
 │
@@ -251,7 +267,8 @@ GET /api/stats/company-geo
 | 刑法条文 | 🟢 优秀 | 402条，完全正确 |
 | 司法解释 | 🟡 良好 | 186条，时效性需关注 |
 | 全量法律库 | 🟡 可用 | 2,055部，7.3%日期损坏 |
-| 地方性法规 | 🔴 不可用 | 数据损坏，待修复 |
+| 量刑案例库 | 🟢 优秀 | 75个案例，9种罪名 |
+| 辩护案例库 | 🟢 优秀 | 19个案例，16种辩护类型 |
 | RAG索引 | 🟢 良好 | 78,240块 |
 
 详见：[docs/DATA_QUALITY.md](docs/DATA_QUALITY.md)
