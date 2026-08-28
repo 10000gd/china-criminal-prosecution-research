@@ -288,6 +288,71 @@ def tracker_log():
     return jsonify({"success": True})
 
 
+# ---- 案件对比 ----
+
+from case_comparison import CaseComparator, compare_cases
+
+@app.route("/compare")
+def compare_page():
+    """案件对比页面"""
+    case_ids = request.args.getlist("case_id")
+    if len(case_ids) < 2:
+        return render_template("compare.html", error="请选择至少2个案件进行对比", cases=[])
+    
+    cases_data = []
+    for case_id in case_ids:
+        try:
+            data = loader.load(case_id)
+            cases_data.append(data)
+        except FileNotFoundError:
+            return f"案件不存在: {case_id}", 404
+    
+    comparator = CaseComparator()
+    result = comparator.compare_cases(case_ids, cases_data)
+    
+    return render_template("compare.html", 
+                         comparison=result,
+                         case_ids=case_ids)
+
+@app.route("/api/compare", methods=["POST"])
+@login_required
+def api_compare():
+    """案件对比 API"""
+    data = request.get_json()
+    case_ids = data.get("case_ids", [])
+    
+    if len(case_ids) < 2:
+        return jsonify({"error": "至少需要2个案件"}), 400
+    if len(case_ids) > 5:
+        return jsonify({"error": "最多支持5个案件"}), 400
+    
+    cases_data = []
+    for case_id in case_ids:
+        try:
+            case_data = loader.load(case_id)
+            cases_data.append(case_data)
+        except FileNotFoundError:
+            return jsonify({"error": f"案件不存在: {case_id}"}), 404
+    
+    comparator = CaseComparator()
+    result = comparator.compare_cases(case_ids, cases_data)
+    
+    return jsonify({
+        "case_ids": result.case_ids,
+        "summary": result.summary,
+        "insights": result.insights,
+        "comparison_items": [
+            {
+                "field": item.field,
+                "label": item.label,
+                "values": item.values,
+                "highlight": item.highlight,
+            }
+            for item in result.comparison_items
+        ],
+    })
+
+
 # ---- API 接口 ----
 
 @app.route("/api/cases")
