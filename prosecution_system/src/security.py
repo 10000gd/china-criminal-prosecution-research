@@ -154,86 +154,201 @@ class OutputSanitizer:
 
 
 class RateLimiter:
-    """简单的速率限制器（内存版，生产环境建议用Redis）"""
+    """增强的速率限制器（内存版，生产环境建议用Redis）"""
     
-    _requests = {}  # {ip: [(timestamp, count), ...]}
-    _lock = None  # 简化版，无锁
+    _requests = {}
+    _burst_requests = {}  # 突发请求限制
+    _lock = __import__('threading').Lock()
     
     # 限制配置
     MAX_REQUESTS_PER_MINUTE = 60
     MAX_REQUESTS_PER_HOUR = 1000
+    MAX_REQUESTS_PER_SECOND = 10  # 突发限制
+    WINDOW_SECONDS = 60
     
     @classmethod
-    def check_rate_limit(cls, identifier: str = None) -> tuple[bool, str]:
+    def check_rate_limit(cls, identifier: str = None) -> tuple[bool, str, dict]:
         """检查速率限制
         
         Returns:
-            (allowed, message)
+            (allowed, message, info)
         """
         import time
-        from datetime import datetime
         
         if identifier is None:
-            identifier = request.remote_addr
+            try:
+                identifier = request.remote_addr
+            except:
+                identifier = "default"
         
         now = time.time()
         current_minute = int(now / 60) * 60
         current_hour = int(now / 3600) * 3600
         
-        # 初始化
-        if identifier not in cls._requests:
-            cls._requests[identifier] = {
-                'minute': [],
-                'hour': [],
+        with cls._lock:
+            # 初始化
+            if identifier not in cls._requests:
+                cls._requests[identifier] = {
+                    'minute': [],
+                    'hour': [],
+                }
+            if identifier not in cls._burst_requests:
+                cls._burst_requests[identifier] = []
+            
+            requests = cls._requests[identifier]
+            burst = cls._burst_requests[identifier]
+            
+            # 清理过期记录
+            requests['minute'] = [t for t in requests['minute'] if t >= current_minute]
+            requests['hour'] = [t for t in requests['hour'] if t >= current_hour]
+            burst = [t for t in burst if t >= now - 1]  # 保留1秒内的请求
+            
+            # 检查突发限制
+            if len(burst) >= cls.MAX_REQUESTS_PER_SECOND:
+                return False, "请求过于频繁，请稍后再试", {
+                    'limit': cls.MAX_REQUESTS_PER_SECOND,
+                    'remaining': 0,
+                    'reset': int(now + 1),
+                }
+            
+            # 检查每分钟限制
+            if len(requests['minute']) >= cls.MAX_REQUESTS_PER_MINUTE:
+                reset_time = current_minute + 60
+                return False, f"请求过于频繁，请在{reset_time - int(now)}秒后重试", {
+                    'limit': cls.MAX_REQUESTS_PER_MINUTE,
+                    'remaining': 0,
+                    'reset': reset_time,
+                }
+            
+            # 检查每小时限制
+            if len(requests['hour']) >= cls.MAX_REQUESTS_PER_HOUR:
+                return False, "请求次数超限，请稍后再试", {
+                    'limit': cls.MAX_REQUESTS_PER_HOUR,
+                    'remaining': 0,
+                    'reset': current_hour + 3600,
+                }
+            
+            # 记录请求
+            requests['minute'].append(now)
+            requests['hour'].append(now)
+            burst.append(now)
+            cls._burst_requests[identifier] = burst
+            
+            return True, "", {
+                'limit': cls.MAX_REQUESTS_PER_MINUTE,
+                'remaining': cls.MAX_REQUESTS_PER_MINUTE - len(requests['minute']),
+                'reset': current_minute + 60,
             }
-        
-        requests = cls._requests[identifier]
-        
-        # 清理过期记录
-        requests['minute'] = [t for t in requests['minute'] if t >= current_minute]
-        requests['hour'] = [t for t in requests['hour'] if t >= current_hour]
-        
-        # 检查每分钟限制
-        if len(requests['minute']) >= cls.MAX_REQUESTS_PER_MINUTE:
-            return False, "请求过于频繁，请稍后再试"
-        
-        # 检查每小时限制
-        if len(requests['hour']) >= cls.MAX_REQUESTS_PER_HOUR:
-            return False, "请求次数超限，请稍后再试"
-        
-        # 记录请求
-        requests['minute'].append(now)
-        requests['hour'].append(now)
-        
-        return True, ""
     
     @classmethod
     def cleanup(cls):
-        """清理过期数据（定期调用）"""
+        """清理过期数据"""
         import time
         now = time.time()
         one_hour_ago = now - 3600
         
-        for identifier in list(cls._requests.keys()):
-            requests = cls._requests[identifier]
-            requests['minute'] = [t for t in requests['minute'] if t >= one_hour_ago]
-            requests['hour'] = [t for t in requests['hour'] if t >= one_hour_ago]
+        with cls._lock:
+            for identifier in list(cls._requests.keys()):
+                requests = cls._requests[identifier]
+                requests['minute'] = [t for t in requests['minute'] if t >= one_hour_ago]
+                requests['hour'] = [t for t in requests['hour'] if t >= one_hour_ago]
+                
+                if not requests['minute'] and not requests['hour']:
+                    del cls._requests[identifier]
             
-            if not requests['minute'] and not requests['hour']:
-                del cls._requests[identifier]
+            for identifier in list(cls._burst_requests.keys()):
+                cls._burst_requests[identifier] = [t for t in cls._burst_requests[identifier] if t >= now - 1]
+                if not cls._burst_requests[identifier]:
+                    del cls._burst_requests[identifier]
+
+
+class APIRateLimiter:
+    """API专用速率限制器（基于令牌桶算法）"""
+    
+    _buckets = {}
+    _lock = __import__('threading').Lock()
+    
+    # API限制配置
+    API_LIMITS = {
+        'search': {'rate': 30, 'period': 60},      # 30次/分钟
+        'analysis': {'rate': 10, 'period': 60},    # 10次/分钟
+        'export': {'rate': 5, 'period': 60},       # 5次/分钟
+        'default': {'rate': 60, 'period': 60},     # 60次/分钟
+    }
+    
+    @classmethod
+    def check_api_limit(cls, api_name: str, identifier: str = None) -> tuple[bool, str]:
+        """检查API调用限制"""
+        import time
+        
+        if identifier is None:
+            try:
+                identifier = request.remote_addr
+            except:
+                identifier = "default"
+        
+        limits = cls.API_LIMITS.get(api_name, cls.API_LIMITS['default'])
+        rate = limits['rate']
+        period = limits['period']
+        
+        bucket_key = f"{identifier}:{api_name}"
+        
+        with cls._lock:
+            now = time.time()
+            
+            if bucket_key not in cls._buckets:
+                cls._buckets[bucket_key] = {'tokens': rate, 'last_update': now}
+            
+            bucket = cls._buckets[bucket_key]
+            
+            # 补充令牌
+            elapsed = now - bucket['last_update']
+            bucket['tokens'] = min(rate, bucket['tokens'] + elapsed * (rate / period))
+            bucket['last_update'] = now
+            
+            # 检查令牌
+            if bucket['tokens'] >= 1:
+                bucket['tokens'] -= 1
+                return True, ""
+            else:
+                wait_time = (1 - bucket['tokens']) * (period / rate)
+                return False, f"API调用限制，请在{int(wait_time)}秒后重试"
 
 
 def rate_limit(f):
     """速率限制装饰器"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        allowed, message = RateLimiter.check_rate_limit()
+        allowed, message, info = RateLimiter.check_rate_limit()
         if not allowed:
             if request.is_json:
-                return jsonify({"error": message, "code": "rate_limited"}), 429
+                response = jsonify({"error": message, "code": "rate_limited"})
+                for k, v in info.items():
+                    response.headers[f"X-RateLimit-{k.title()}"] = str(v)
+                return response, 429
             return f"错误: {message}", 429
+        
+        # 添加RateLimit头
+        if request.is_json:
+            pass  # 已在上面处理
+        
         return f(*args, **kwargs)
     return decorated_function
+
+
+def api_rate_limit(api_name: str):
+    """API专用速率限制装饰器"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            allowed, message = APIRateLimiter.check_api_limit(api_name)
+            if not allowed:
+                if request.is_json:
+                    return jsonify({"error": message, "code": "rate_limited"}), 429
+                return f"错误: {message}", 429
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
 
 
 def validate_json(*required_fields):
