@@ -291,52 +291,6 @@ class StatsAggregator:
             "max_amount": max(all_amounts) if all_amounts else 100000,
         }
 
-PROVINCE_TIER1 = frozenset({"北京", "上海", "江苏", "浙江", "广东", "深圳"})
-PROVINCE_TIER2 = frozenset({"天津", "重庆", "福建", "山东", "四川", "湖北", "湖南", "河南",
-                             "辽宁", "陕西", "安徽", "河北"})
-_NUM_PATTERN = re.compile(r"\d+")
-
-
-def _province_category(province: str) -> str:
-    if province in PROVINCE_TIER1:
-        return "一类地区（经济发达）"
-    elif province in PROVINCE_TIER2:
-        return "二类地区（中等发达）"
-    return "三类地区（欠发达）"
-
-
-@lru_cache(maxsize=1)
-def _build_provincial_stats(tdb) -> tuple:
-    """构建省级标准（缓存避免重复计算，缓存键基于 tdb 对象id）"""
-    theft = {}
-    for prov, data in tdb.theft_thresholds.items():
-        if prov == "DEFAULT":
-            continue
-        std = data.get("standard", "")
-        nums = _NUM_PATTERN.findall(std)
-        amount = int(nums[0]) if nums else 0
-        theft[prov] = {"standard": std, "amount": amount, "category": _province_category(prov)}
-
-    fraud = {}
-    for prov, data in tdb.fraud_thresholds.items():
-        if prov == "DEFAULT":
-            continue
-        std = data.get("standard", "")
-        nums = _NUM_PATTERN.findall(std)
-        amount = int(nums[0]) if nums else 0
-        fraud[prov] = {"standard": std, "amount": amount, "category": _province_category(prov)}
-
-    robbery = {}
-    for prov, data in tdb.robbery_thresholds.items():
-        if prov == "DEFAULT":
-            continue
-        amount = data if isinstance(data, int) else (
-            data.get("standard", 0) if isinstance(data, dict) else 0)
-        std = f"{amount}元（数额较大）" if amount else ""
-        robbery[prov] = {"standard": std, "amount": amount, "category": _province_category(prov)}
-
-    return theft, fraud, robbery
-
     # ===== 涉案公司地域分布 =====
 
     def get_company_geo_stats(self) -> Dict[str, Any]:
@@ -444,6 +398,51 @@ def _build_provincial_stats(tdb) -> tuple:
         fi = data.get("financial_info", {})
         return float(fi.get("total_amount", fi.get("amount", 0)))
 
+PROVINCE_TIER1 = frozenset({"北京", "上海", "江苏", "浙江", "广东", "深圳"})
+PROVINCE_TIER2 = frozenset({"天津", "重庆", "福建", "山东", "四川", "湖北", "湖南", "河南",
+                             "辽宁", "陕西", "安徽", "河北"})
+_NUM_PATTERN = re.compile(r"\d+")
+
+
+def _province_category(province: str) -> str:
+    if province in PROVINCE_TIER1:
+        return "一类地区（经济发达）"
+    elif province in PROVINCE_TIER2:
+        return "二类地区（中等发达）"
+    return "三类地区（欠发达）"
+
+
+@lru_cache(maxsize=1)
+def _build_provincial_stats(tdb) -> tuple:
+    """构建省级标准（缓存避免重复计算，缓存键基于 tdb 对象id）"""
+    theft = {}
+    for prov, data in tdb.theft_thresholds.items():
+        if prov == "DEFAULT":
+            continue
+        std = data.get("standard", "")
+        nums = _NUM_PATTERN.findall(std)
+        amount = int(nums[0]) if nums else 0
+        theft[prov] = {"standard": std, "amount": amount, "category": _province_category(prov)}
+
+    fraud = {}
+    for prov, data in tdb.fraud_thresholds.items():
+        if prov == "DEFAULT":
+            continue
+        std = data.get("standard", "")
+        nums = _NUM_PATTERN.findall(std)
+        amount = int(nums[0]) if nums else 0
+        fraud[prov] = {"standard": std, "amount": amount, "category": _province_category(prov)}
+
+    robbery = {}
+    for prov, data in tdb.robbery_thresholds.items():
+        if prov == "DEFAULT":
+            continue
+        amount = data if isinstance(data, int) else (
+            data.get("standard", 0) if isinstance(data, dict) else 0)
+        std = f"{amount}元（数额较大）" if amount else ""
+        robbery[prov] = {"standard": std, "amount": amount, "category": _province_category(prov)}
+
+    return theft, fraud, robbery
 
 # ===== CLI =====
 
