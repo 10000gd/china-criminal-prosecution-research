@@ -1,0 +1,49 @@
+# ============================================================
+# .dockerignore - 检察机关办案系统
+# ============================================================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
+
+# Git
+.git/
+.gitignore
+
+# 测试
+.pytest_cache/
+.coverage
+htmlcov/
+tests/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 数据（运行时挂载）
+cases/*.yaml
+data/
+backups/
+output/
+*.db
+*.sqlite
+
+# Docker（排除 docker-compose.yml，但保留 Dockerfile）
+docker-compose*.yml
+
+# 文档
+*.md
+!README.md
+docs/
+
+# Node（如果有）
+node_modules/
