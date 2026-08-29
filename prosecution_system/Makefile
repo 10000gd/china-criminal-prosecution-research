@@ -1,60 +1,102 @@
-.PHONY: help install dev prod docker test clean backup
+# ============================================================
+# Makefile - 检察机关办案系统
+# ============================================================
+# 用法:
+#   make build          # 构建 Docker 镜像
+#   make up             # 启动所有服务（docker-compose）
+#   make down           # 停止所有服务
+#   make web            # 仅启动 Web 服务
+#   make logs           # 查看日志
+#   make cli CMD=health  # 运行 CLI 命令
+#   make test           # 运行测试
+#   make benchmark      # 运行 RAG benchmark
+# ============================================================
 
-help:
-	@echo "刑事追诉智能辅助系统 - Makefile"
-	@echo ""
-	@echo "可用命令:"
-	@echo "  make install    - 安装依赖"
-	@echo "  make dev       - 开发模式运行"
-	@echo "  make prod      - 生产模式运行"
-	@echo "  make docker    - Docker部署"
-	@echo "  make test      - 运行测试"
-	@echo "  make clean     - 清理缓存"
-	@echo "  make backup    - 备份数据库"
+IMAGE_NAME ?= prosecution-system
+PORT       ?= 5000
+COMPOSE    := docker-compose
 
-install:
-	python3 -m venv venv
-	./venv/bin/pip install -r requirements.txt
+.PHONY: build up down web logs cli test benchmark clean help
 
-dev:
-	./venv/bin/python src/web_app.py
+# ── Docker 构建 ──────────────────────────────────────────
 
-prod:
-	./venv/bin/pip install gunicorn
-	./venv/bin/gunicorn -w 4 -b 0.0.0.0:5000 --timeout 120 'src.web_app:app'
+build:
+	docker build --platform linux/amd64 -t $(IMAGE_NAME) .
 
-docker-build:
-	docker build -t prosecution-system .
+build-no-cache:
+	docker build --platform linux/amd64 --no-cache -t $(IMAGE_NAME) .
 
-docker:
-	docker-compose up -d
-	@echo "访问 http://localhost:5000"
+# ── Docker Compose ───────────────────────────────────────
 
-docker-stop:
-	docker-compose down
+up:
+	$(COMPOSE) up -d
+	@echo "✅ Web 服务已启动: http://localhost:$(PORT)"
+	@echo "   CLI 命令: make cli CMD=health"
 
-docker-logs:
-	docker-compose logs -f
+down:
+	$(COMPOSE) down
+
+restart: down up
+
+logs:
+	$(COMPOSE) logs -f
+
+# ── 独立 Web 服务 ─────────────────────────────────────────
+
+web:
+	docker run --rm \
+		-p $(PORT):5000 \
+		-v $(PWD)/cases:/app/cases \
+		-v $(PWD)/data:/app/data \
+		-v $(PWD)/output:/app/output \
+		-e PORT=5000 \
+		$(IMAGE_NAME)
+
+# ── CLI 命令 ──────────────────────────────────────────────
+# 示例: make cli CMD="health"
+# 示例: make cli CMD="rag-search '盗窃罪数额较大'"
+# 示例: make cli CMD="benchmark"
+
+cli:
+	docker run --rm --platform linux/amd64 \
+		-v $(PWD)/cases:/app/cases \
+		-v $(PWD)/data:/app/data \
+		$(IMAGE_NAME) $(CMD)
+
+# 直接运行（无需 Docker）
+cli-local:
+	@echo "Running: python -m src.cli $(CMD)"
+	python3 -m src.cli $(CMD)
+
+# ── 测试 ──────────────────────────────────────────────────
 
 test:
-	PYTHONPATH=src ./venv/bin/python -m pytest tests/ -v
+	python3 -m pytest tests/ -v --tb=short
 
-test-cov:
-	PYTHONPATH=src ./venv/bin/python -m pytest tests/ --cov=src --cov-report=html
+test-quick:
+	python3 -m pytest tests/ -x --tb=short
+
+# ── RAG Benchmark ─────────────────────────────────────────
+
+benchmark:
+	python3 -m src.rag_benchmark
+
+benchmark-json:
+	python3 -m src.rag_benchmark --export-json benchmark_results.json
+
+# ── 清理 ──────────────────────────────────────────────────
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
-	find . -type f -name "*.pyc" -delete
-	rm -rf .pytest_cache htmlcov
-	rm -rf venv
+	find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	find . -type f -name "*.pyo" -delete 2>/dev/null || true
+	rm -rf .pytest_cache 2>/dev/null || true
+	rm -rf htmlcov 2>/dev/null || true
+	rm -f benchmark_results.json 2>/dev/null || true
+	@echo "✅ 清理完成"
 
-backup:
-	@mkdir -p backups
-	cp data/prosecution.db backups/backup_$$(date +%Y%m%d_%H%M%S).db
-	@echo "备份完成"
+# ── 帮助 ──────────────────────────────────────────────────
 
-stats:
-	./venv/bin/python cli_tools.py stats
-
-cli-search:
-	@read -p "搜索关键词: " q; ./venv/bin/python cli_tools.py search "$$q"
+help:
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
+		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'

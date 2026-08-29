@@ -60,7 +60,7 @@ cases/legaldb/*.jsonl
 *.swp
 
 # Docker
-.dockerignore
+!.dockerignore   # 提交 .dockerignore
 
 # Node (如有前端)
 node_modules/
