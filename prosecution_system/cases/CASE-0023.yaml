@@ -1,0 +1,51 @@
+meta:
+  case_id: CASE-0023
+  case_name: 山西市盗窃案
+  status: active
+  province: 山西
+  created_at: '2026-06-28'
+case_info:
+  crime_type: 盗窃罪
+  province: 山西
+  amount: 17087.71
+  level: 数额巨大
+  description: 被告人孙七在山西市写字楼内，趁无人之机秘密窃取他人财物，涉案金额17088元。
+  arrest_date: '2026-06-04'
+  prosecution_date: '2026-08-26'
+charges:
+  primary:
+    article: 刑法第264条
+    name: 盗窃罪
+    amount: 17087.71
+    level: 数额巨大
+    recommended_sentence: 10年有期徒刑
+defendants_person:
+- 徐鹏
+defendants_corp: []
+victims:
+- 被害人786
+- 被害人378
+- 被害人172
+evidence_gaps:
+- 电子数据（微信记录/银行流水）尚未全面调取
+- 证人证言之间存在矛盾，需进一步核实
+- 伤情鉴定结论尚未正式送达
+assets:
+  stolen_property_value: 17087.71
+  recovered_value: 1847.16
+  recovery_rate: 0.026
+comparable_cases:
+  reference:
+  - case_name: 山西中院盗窃案
+    amount: 15802.0
+    sentence: 4年有期徒刑
+hallucination_rate: 0.129
+confidence_score: 0.83
+legal_arguments:
+- 程序辩护：侦查阶段存在超期羁押，程序违法
+aggravating_factors:
+- 惯犯
+- 流窜作案
+mitigating_factors:
+- 未成年人
+- 犯罪中止

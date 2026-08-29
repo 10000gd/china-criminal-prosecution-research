@@ -1,0 +1,52 @@
+meta:
+  case_id: CASE-0017
+  case_name: 吉林市盗窃案
+  status: draft
+  province: 吉林
+  created_at: '2026-06-13'
+case_info:
+  crime_type: 盗窃罪
+  province: 吉林
+  amount: 678533.81
+  level: 数额特别巨大
+  description: 被告人马超在吉林市居民小区内，趁无人之机秘密窃取他人财物，涉案金额678534元。
+  arrest_date: '2026-06-04'
+  prosecution_date: '2026-08-16'
+charges:
+  primary:
+    article: 刑法第264条
+    name: 盗窃罪
+    amount: 678533.81
+    level: 数额特别巨大
+    recommended_sentence: 6年有期徒刑
+defendants_person:
+- 高建
+- 陈二
+defendants_corp: []
+victims:
+- 被害人197
+- 被害人431
+evidence_gaps:
+- 涉案资金流向追踪不完整，存在断点
+- 证人证言之间存在矛盾，需进一步核实
+- 被告人口供反复，存在合理怀疑
+assets:
+  stolen_property_value: 678533.81
+  recovered_value: 386157.16
+  recovery_rate: 0.406
+comparable_cases:
+  reference:
+  - case_name: 吉林中院盗窃案
+    amount: 769111.0
+    sentence: 3年有期徒刑
+hallucination_rate: 0.107
+confidence_score: 0.76
+legal_arguments:
+- 量刑辩护：已全额退赃，被害人出具谅解书，请求从轻处罚
+- 数额辩护：涉案金额认定有误，鉴定意见存在瑕疵
+aggravating_factors:
+- 惯犯
+mitigating_factors:
+- 自首
+- 偶犯
+- 认罪认罚

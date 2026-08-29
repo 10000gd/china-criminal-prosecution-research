@@ -1,0 +1,60 @@
+meta:
+  case_id: CASE-0019
+  case_name: 云南市电信诈骗案
+  status: active
+  province: 云南
+  created_at: '2026-08-01'
+case_info:
+  crime_type: 诈骗罪
+  province: 云南
+  amount: 329060.83
+  level: 数额巨大
+  description: 被告人吴昊伙同他人在云南市通过电信网络实施诈骗犯罪，虚构事实骗取被害人信任，涉案金额329061元。
+  arrest_date: '2026-07-31'
+  prosecution_date: '2026-08-24'
+charges:
+  primary:
+    article: 刑法第266条
+    name: 诈骗罪
+    amount: 329060.83
+    level: 数额巨大
+    recommended_sentence: 15年有期徒刑
+defendants_person:
+- 徐鹏
+- 李四
+- 朱琳
+- 郑十
+- 赵六
+defendants_corp:
+- 宏达物流有限公司
+victims:
+- 被害人684
+- 被害人544
+- 被害人573
+- 被害人610
+- 被害人325
+- 被害人973
+- 被害人774
+- 被害人913
+evidence_gaps:
+- 毒品含量鉴定未完成，影响量刑档次认定
+- 涉案资金流向追踪不完整，存在断点
+assets:
+  defrauded_amount: 329060.83
+  recovered_amount: 163984.67
+  recovery_rate: 0.329
+comparable_cases:
+  reference:
+  - case_name: 云南高院诈骗案
+    amount: 381343.0
+    sentence: 10年有期徒刑
+hallucination_rate: 0.179
+confidence_score: 0.81
+legal_arguments:
+- 数额辩护：涉案金额认定有误，鉴定意见存在瑕疵
+- 程序辩护：侦查阶段存在超期羁押，程序违法
+aggravating_factors:
+- 惯犯
+- 累犯
+- 威胁证人
+mitigating_factors: []

@@ -1,0 +1,59 @@
+meta:
+  case_id: CASE-0040
+  case_name: 四川市电信诈骗案
+  status: draft
+  province: 四川
+  created_at: '2026-06-25'
+case_info:
+  crime_type: 诈骗罪
+  province: 四川
+  amount: 319399.09
+  level: 数额巨大
+  description: 被告人何平伙同他人在四川市通过电信网络实施诈骗犯罪，虚构事实骗取被害人信任，涉案金额319399元。
+  arrest_date: '2026-06-05'
+  prosecution_date: '2026-08-08'
+charges:
+  primary:
+    article: 刑法第266条
+    name: 诈骗罪
+    amount: 319399.09
+    level: 数额巨大
+    recommended_sentence: 5年有期徒刑
+defendants_person:
+- 林志
+defendants_corp:
+- 华盛贸易有限公司
+- 天成电子科技有限公司
+victims:
+- 被害人35
+- 被害人594
+- 被害人374
+- 被害人750
+- 被害人135
+- 被害人93
+- 被害人932
+- 被害人303
+evidence_gaps:
+- 涉案资金流向追踪不完整，存在断点
+- 证人证言之间存在矛盾，需进一步核实
+assets:
+  defrauded_amount: 319399.09
+  recovered_amount: 38480.2
+  recovery_rate: 0.472
+comparable_cases:
+  reference:
+  - case_name: 四川高院诈骗案
+    amount: 367496.0
+    sentence: 8年有期徒刑
+hallucination_rate: 0.197
+confidence_score: 0.86
+legal_arguments:
+- 罪轻辩护：存在自首情节，依法可以从轻或减轻处罚
+aggravating_factors:
+- 累犯
+- 拒不认罪
+- 流窜作案
+mitigating_factors:
+- 偶犯
+- 自首
+- 坦白

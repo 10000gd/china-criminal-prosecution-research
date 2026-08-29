@@ -1,0 +1,47 @@
+meta:
+  case_id: CASE-0045
+  case_name: 山东市毒品犯罪案
+  status: active
+  province: 山东
+  created_at: '2026-03-13'
+case_info:
+  crime_type: 毒品犯罪
+  province: 山东
+  drug_type: 麻古
+  weight_grams: 254.4
+  level: 情节特别严重
+  description: 被告人马超在山东市酒店房间被查获麻古，重量254.4克。
+  arrest_date: '2026-07-01'
+  prosecution_date: '2026-08-09'
+charges:
+  primary:
+    article: 刑法第347条
+    name: 走私/贩卖毒品罪
+    weight_grams: 254.4
+    drug_type: 麻古
+    level: 情节特别严重
+    recommended_sentence: 1年有期徒刑至死刑
+defendants_person:
+- 孙超
+defendants_corp: []
+victims: []
+evidence_gaps:
+- 毒品含量鉴定尚未完成
+- 毒品来源尚未查清
+- 是否存在特情介入需核实
+assets:
+  drug_weight: 254.4
+  seized_cash: 42364.93
+comparable_cases:
+  reference:
+  - case_name: 山东毒品案
+    weight: 246.9
+    sentence: 6年有期徒刑
+hallucination_rate: 0.089
+confidence_score: 0.93
+legal_arguments:
+- 无罪辩护：指控证据链不完整，不能排除合理怀疑
+aggravating_factors:
+- 涉案人数众多
+- 有组织犯罪
+mitigating_factors: []

@@ -1,0 +1,53 @@
+meta:
+  case_id: CASE-0035
+  case_name: 江苏市盗窃案
+  status: active
+  province: 江苏
+  created_at: '2026-06-17'
+case_info:
+  crime_type: 盗窃罪
+  province: 江苏
+  amount: 406583.95
+  level: 数额特别巨大
+  description: 被告人罗锋在江苏市居民小区内，趁无人之机秘密窃取他人财物，涉案金额406584元。
+  arrest_date: '2026-06-14'
+  prosecution_date: '2026-08-11'
+charges:
+  primary:
+    article: 刑法第264条
+    name: 盗窃罪
+    amount: 406583.95
+    level: 数额特别巨大
+    recommended_sentence: 8年有期徒刑
+defendants_person:
+- 徐鹏
+defendants_corp: []
+victims:
+- 被害人354
+- 被害人341
+- 被害人566
+- 被害人782
+evidence_gaps:
+- 涉案资金流向追踪不完整，存在断点
+- 伤情鉴定结论尚未正式送达
+- 证人证言之间存在矛盾，需进一步核实
+assets:
+  stolen_property_value: 406583.95
+  recovered_value: 353566.09
+  recovery_rate: 0.981
+comparable_cases:
+  reference:
+  - case_name: 江苏中院盗窃案
+    amount: 364105.0
+    sentence: 4年有期徒刑
+hallucination_rate: 0.097
+confidence_score: 0.84
+legal_arguments:
+- 罪轻辩护：存在自首情节，依法可以从轻或减轻处罚
+aggravating_factors:
+- 威胁证人
+- 毁灭证据
+mitigating_factors:
+- 未成年人
+- 自首
+- 从犯

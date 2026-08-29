@@ -1,0 +1,44 @@
+meta:
+  case_id: CASE-0031
+  case_name: 西藏市故意伤害案
+  status: completed
+  province: 西藏
+  created_at: '2026-08-08'
+case_info:
+  crime_type: 故意伤害罪
+  province: 西藏
+  injury_level: 致死/致残
+  compensation_demand: 107996.31
+  description: 被告人郭靖因琐事纠纷与被害人发生争执，使用铁管将被害人打伤，经鉴定为致死/致残。
+  arrest_date: '2026-07-18'
+  prosecution_date: '2026-08-10'
+charges:
+  primary:
+    article: 刑法第234条
+    name: 故意伤害罪
+    injury_level: 致死/致残
+    recommended_sentence: 5年有期徒刑至死刑
+defendants_person:
+- 张三
+defendants_corp: []
+victims:
+- 被害人94
+evidence_gaps:
+- 现场监控录像不完整，关键时段存在盲区
+assets:
+  compensation_demand: 107996.31
+  paid_compensation: 75565.09
+comparable_cases:
+  reference:
+  - case_name: 西藏故意伤害案
+    injury_level: 致死/致残
+    sentence: 5年有期徒刑
+hallucination_rate: 0.136
+confidence_score: 0.84
+legal_arguments:
+- 量刑辩护：已全额退赃，被害人出具谅解书，请求从轻处罚
+aggravating_factors:
+- 威胁证人
+- 累犯
+mitigating_factors:
+- 犯罪中止

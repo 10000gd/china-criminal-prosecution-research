@@ -1,0 +1,48 @@
+meta:
+  case_id: CASE-0034
+  case_name: 浙江市故意伤害案
+  status: active
+  province: 浙江
+  created_at: '2026-07-30'
+case_info:
+  crime_type: 故意伤害罪
+  province: 浙江
+  injury_level: 重伤
+  compensation_demand: 81598.14
+  description: 被告人徐鹏因琐事纠纷与被害人发生争执，使用菜刀将被害人打伤，经鉴定为重伤。
+  arrest_date: '2026-06-26'
+  prosecution_date: '2026-07-31'
+charges:
+  primary:
+    article: 刑法第234条
+    name: 故意伤害罪
+    injury_level: 重伤
+    recommended_sentence: 12年有期徒刑至死刑
+defendants_person:
+- 陈二
+defendants_corp: []
+victims:
+- 被害人522
+evidence_gaps:
+- 被告人口供反复，存在合理怀疑
+- 涉案资金流向追踪不完整，存在断点
+- 伤情鉴定结论尚未正式送达
+assets:
+  compensation_demand: 81598.14
+  paid_compensation: 27559.75
+comparable_cases:
+  reference:
+  - case_name: 浙江故意伤害案
+    injury_level: 重伤
+    sentence: 8年有期徒刑
+hallucination_rate: 0.087
+confidence_score: 0.79
+legal_arguments:
+- 罪轻辩护：被告人系从犯，应从轻或减轻处罚
+- 程序辩护：侦查阶段存在超期羁押，程序违法
+aggravating_factors:
+- 有组织犯罪
+- 流窜作案
+mitigating_factors:
+- 取得谅解
+- 退赃退赔

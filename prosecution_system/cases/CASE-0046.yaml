@@ -1,0 +1,56 @@
+meta:
+  case_id: CASE-0046
+  case_name: 福建市电信诈骗案
+  status: draft
+  province: 福建
+  created_at: '2026-04-01'
+case_info:
+  crime_type: 诈骗罪
+  province: 福建
+  amount: 139682.95
+  level: 数额巨大
+  description: 被告人朱琳伙同他人在福建市通过电信网络实施诈骗犯罪，虚构事实骗取被害人信任，涉案金额139683元。
+  arrest_date: '2026-07-18'
+  prosecution_date: '2026-08-17'
+charges:
+  primary:
+    article: 刑法第266条
+    name: 诈骗罪
+    amount: 139682.95
+    level: 数额巨大
+    recommended_sentence: 12年有期徒刑
+defendants_person:
+- 陈二
+- 徐鹏
+- 马超
+- 郭靖
+- 吴昊
+defendants_corp: []
+victims:
+- 被害人874
+- 被害人671
+evidence_gaps:
+- 毒品含量鉴定未完成，影响量刑档次认定
+- 涉案物品价格鉴定意见尚未作出
+- 伤情鉴定结论尚未正式送达
+assets:
+  defrauded_amount: 139682.95
+  recovered_amount: 37844.71
+  recovery_rate: 0.137
+comparable_cases:
+  reference:
+  - case_name: 福建高院诈骗案
+    amount: 130684.0
+    sentence: 10年有期徒刑
+hallucination_rate: 0.168
+confidence_score: 0.8
+legal_arguments:
+- 量刑辩护：已全额退赃，被害人出具谅解书，请求从轻处罚
+- 罪轻辩护：存在自首情节，依法可以从轻或减轻处罚
+aggravating_factors:
+- 拒不认罪
+- 有组织犯罪
+mitigating_factors:
+- 偶犯
+- 未成年人
+- 犯罪中止

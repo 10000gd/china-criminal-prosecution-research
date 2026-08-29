@@ -1,0 +1,50 @@
+meta:
+  case_id: CASE-0012
+  case_name: 河北市毒品犯罪案
+  status: active
+  province: 河北
+  created_at: '2026-08-10'
+case_info:
+  crime_type: 毒品犯罪
+  province: 河北
+  drug_type: 麻古
+  weight_grams: 312.47
+  level: 情节特别严重
+  description: 被告人朱琳在河北市停车场被查获麻古，重量312.5克。
+  arrest_date: '2026-06-25'
+  prosecution_date: '2026-08-21'
+charges:
+  primary:
+    article: 刑法第347条
+    name: 走私/贩卖毒品罪
+    weight_grams: 312.47
+    drug_type: 麻古
+    level: 情节特别严重
+    recommended_sentence: 3年有期徒刑至死刑
+defendants_person:
+- 王五
+- 郑十
+defendants_corp: []
+victims: []
+evidence_gaps:
+- 毒品含量鉴定尚未完成
+- 毒品来源尚未查清
+- 是否存在特情介入需核实
+assets:
+  drug_weight: 312.47
+  seized_cash: 18476.35
+comparable_cases:
+  reference:
+  - case_name: 河北毒品案
+    weight: 269.7
+    sentence: 13年有期徒刑
+hallucination_rate: 0.114
+confidence_score: 0.85
+legal_arguments:
+- 定性辩护：指控罪名定性错误，应认定为较轻罪名
+aggravating_factors:
+- 流窜作案
+- 有组织犯罪
+mitigating_factors:
+- 偶犯
+- 未成年人

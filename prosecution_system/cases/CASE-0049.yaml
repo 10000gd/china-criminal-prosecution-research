@@ -1,0 +1,53 @@
+meta:
+  case_id: CASE-0049
+  case_name: 吉林市电信诈骗案
+  status: draft
+  province: 吉林
+  created_at: '2026-06-06'
+case_info:
+  crime_type: 诈骗罪
+  province: 吉林
+  amount: 186916.39
+  level: 数额巨大
+  description: 被告人胡军伙同他人在吉林市通过电信网络实施诈骗犯罪，虚构事实骗取被害人信任，涉案金额186916元。
+  arrest_date: '2026-06-13'
+  prosecution_date: '2026-08-27'
+charges:
+  primary:
+    article: 刑法第266条
+    name: 诈骗罪
+    amount: 186916.39
+    level: 数额巨大
+    recommended_sentence: 3年有期徒刑
+defendants_person:
+- 周八
+- 郭靖
+defendants_corp: []
+victims:
+- 被害人279
+- 被害人454
+evidence_gaps:
+- 涉案资金流向追踪不完整，存在断点
+- 伤情鉴定结论尚未正式送达
+- 被告人口供反复，存在合理怀疑
+assets:
+  defrauded_amount: 186916.39
+  recovered_amount: 49575.18
+  recovery_rate: 0.164
+comparable_cases:
+  reference:
+  - case_name: 吉林高院诈骗案
+    amount: 205978.0
+    sentence: 4年有期徒刑
+hallucination_rate: 0.156
+confidence_score: 0.63
+legal_arguments:
+- 程序辩护：侦查阶段存在超期羁押，程序违法
+- 定性辩护：指控罪名定性错误，应认定为较轻罪名
+aggravating_factors:
+- 多次作案
+- 惯犯
+mitigating_factors:
+- 犯罪中止
+- 初犯
+- 未成年人

@@ -1,0 +1,49 @@
+meta:
+  case_id: CASE-0044
+  case_name: 河北市盗窃案
+  status: draft
+  province: 河北
+  created_at: '2026-08-28'
+case_info:
+  crime_type: 盗窃罪
+  province: 河北
+  amount: 118725.3
+  level: 数额特别巨大
+  description: 被告人刘一在河北市超市内，趁无人之机秘密窃取他人财物，涉案金额118725元。
+  arrest_date: '2026-08-12'
+  prosecution_date: '2026-08-12'
+charges:
+  primary:
+    article: 刑法第264条
+    name: 盗窃罪
+    amount: 118725.3
+    level: 数额特别巨大
+    recommended_sentence: 5年有期徒刑
+defendants_person:
+- 赵六
+defendants_corp: []
+victims:
+- 被害人135
+evidence_gaps:
+- 指纹/DNA 比对结果未最终确认
+assets:
+  stolen_property_value: 118725.3
+  recovered_value: 93791.17
+  recovery_rate: 0.238
+comparable_cases:
+  reference:
+  - case_name: 河北中院盗窃案
+    amount: 110356.0
+    sentence: 2年有期徒刑
+hallucination_rate: 0.103
+confidence_score: 0.68
+legal_arguments:
+- 程序辩护：侦查阶段存在超期羁押，程序违法
+- 无罪辩护：指控证据链不完整，不能排除合理怀疑
+aggravating_factors:
+- 流窜作案
+- 威胁证人
+mitigating_factors:
+- 退赃退赔
+- 胁从犯
+- 偶犯

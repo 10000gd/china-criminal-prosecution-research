@@ -1,0 +1,52 @@
+meta:
+  case_id: CASE-0001
+  case_name: 上海市盗窃案
+  status: draft
+  province: 上海
+  created_at: '2026-06-19'
+case_info:
+  crime_type: 盗窃罪
+  province: 上海
+  amount: 89775.79
+  level: 数额特别巨大
+  description: 被告人郑十在上海市超市内，趁无人之机秘密窃取他人财物，涉案金额89776元。
+  arrest_date: '2026-08-11'
+  prosecution_date: '2026-08-06'
+charges:
+  primary:
+    article: 刑法第264条
+    name: 盗窃罪
+    amount: 89775.79
+    level: 数额特别巨大
+    recommended_sentence: 2年有期徒刑
+defendants_person:
+- 罗锋
+- 朱琳
+- 王五
+defendants_corp: []
+victims:
+- 被害人33
+- 被害人31
+- 被害人96
+- 被害人224
+evidence_gaps:
+- 毒品含量鉴定未完成，影响量刑档次认定
+assets:
+  stolen_property_value: 89775.79
+  recovered_value: 54046.71
+  recovery_rate: 0.561
+comparable_cases:
+  reference:
+  - case_name: 上海中院盗窃案
+    amount: 97533.0
+    sentence: 5年有期徒刑
+hallucination_rate: 0.134
+confidence_score: 0.76
+legal_arguments:
+- 数额辩护：涉案金额认定有误，鉴定意见存在瑕疵
+- 无罪辩护：指控证据链不完整，不能排除合理怀疑
+aggravating_factors: []
+mitigating_factors:
+- 退赃退赔
+- 认罪认罚
+- 自首

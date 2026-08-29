@@ -1,0 +1,47 @@
+meta:
+  case_id: CASE-0021
+  case_name: 安徽职务侵占案
+  status: completed
+  province: 安徽
+  created_at: '2026-05-13'
+case_info:
+  crime_type: 职务侵占罪
+  province: 安徽
+  amount: 909865.7
+  level: 数额较大
+  description: 被告人朱琳利用在某公司担任项目经理的职务便利，将公司财物非法占为己有，涉案金额909866元。
+  arrest_date: '2026-06-12'
+  prosecution_date: '2026-08-01'
+charges:
+  primary:
+    article: 刑法第271条
+    name: 职务侵占罪
+    amount: 909865.7
+    level: 数额较大
+    recommended_sentence: 4年有期徒刑
+defendants_person:
+- 孙超
+defendants_corp:
+- 天成电子科技有限公司
+victims:
+- 被害单位员工447
+evidence_gaps:
+- 现场监控录像不完整，关键时段存在盲区
+- 涉案资金流向追踪不完整，存在断点
+assets:
+  embezzled_amount: 909865.7
+  recovered_amount: 244666.19
+  recovery_rate: 0.543
+comparable_cases:
+  reference:
+  - case_name: 安徽职务侵占案
+    amount: 875042.0
+    sentence: 3年有期徒刑
+hallucination_rate: 0.176
+confidence_score: 0.9
+legal_arguments:
+- 量刑辩护：已全额退赃，被害人出具谅解书，请求从轻处罚
+aggravating_factors:
+- 涉案人数众多
+- 多次作案
+mitigating_factors: []

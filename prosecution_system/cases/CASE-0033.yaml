@@ -1,0 +1,49 @@
+meta:
+  case_id: CASE-0033
+  case_name: 上海市盗窃案
+  status: completed
+  province: 上海
+  created_at: '2026-04-19'
+case_info:
+  crime_type: 盗窃罪
+  province: 上海
+  amount: 776171.63
+  level: 数额特别巨大
+  description: 被告人张三在上海市停车场内，趁无人之机秘密窃取他人财物，涉案金额776172元。
+  arrest_date: '2026-06-30'
+  prosecution_date: '2026-08-16'
+charges:
+  primary:
+    article: 刑法第264条
+    name: 盗窃罪
+    amount: 776171.63
+    level: 数额特别巨大
+    recommended_sentence: 1年有期徒刑
+defendants_person:
+- 马超
+defendants_corp: []
+victims:
+- 被害人638
+- 被害人775
+- 被害人511
+evidence_gaps:
+- 伤情鉴定结论尚未正式送达
+- 现场监控录像不完整，关键时段存在盲区
+- 电子数据（微信记录/银行流水）尚未全面调取
+assets:
+  stolen_property_value: 776171.63
+  recovered_value: 207281.48
+  recovery_rate: 0.131
+comparable_cases:
+  reference:
+  - case_name: 上海中院盗窃案
+    amount: 710361.0
+    sentence: 4年有期徒刑
+hallucination_rate: 0.074
+confidence_score: 0.89
+legal_arguments:
+- 定性辩护：指控罪名定性错误，应认定为较轻罪名
+aggravating_factors: []
+mitigating_factors:
+- 胁从犯
+- 初犯

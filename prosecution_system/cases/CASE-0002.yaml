@@ -1,0 +1,51 @@
+meta:
+  case_id: CASE-0002
+  case_name: 浙江市电信诈骗案
+  status: completed
+  province: 浙江
+  created_at: '2026-08-02'
+case_info:
+  crime_type: 诈骗罪
+  province: 浙江
+  amount: 478734.9
+  level: 数额巨大
+  description: 被告人王五伙同他人在浙江市通过电信网络实施诈骗犯罪，虚构事实骗取被害人信任，涉案金额478735元。
+  arrest_date: '2026-07-11'
+  prosecution_date: '2026-08-26'
+charges:
+  primary:
+    article: 刑法第266条
+    name: 诈骗罪
+    amount: 478734.9
+    level: 数额巨大
+    recommended_sentence: 8年有期徒刑
+defendants_person:
+- 郭靖
+- 刘一
+- 李四
+defendants_corp:
+- 瑞丰医疗器械有限公司
+- 恒通投资有限公司
+victims:
+- 被害人997
+- 被害人945
+evidence_gaps:
+- 电子数据（微信记录/银行流水）尚未全面调取
+- 被告人口供反复，存在合理怀疑
+assets:
+  defrauded_amount: 478734.9
+  recovered_amount: 238238.98
+  recovery_rate: 0.371
+comparable_cases:
+  reference:
+  - case_name: 浙江高院诈骗案
+    amount: 548000.0
+    sentence: 6年有期徒刑
+hallucination_rate: 0.235
+confidence_score: 0.61
+legal_arguments:
+- 数额辩护：涉案金额认定有误，鉴定意见存在瑕疵
+aggravating_factors:
+- 流窜作案
+- 惯犯
+mitigating_factors: []
