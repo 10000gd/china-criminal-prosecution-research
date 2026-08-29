@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>法条语义检索 — 追诉系统</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f0f2f5; color: #1f2937; font-size: 14px; }
+    a { color: #1e3a5f; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── 顶部导航 ── */
+    .topbar { background: #1e3a5f; color: #fff; padding: 0 24px; height: 52px; display: flex; align-items: center; gap: 28px; }
+    .topbar .brand { font-size: 16px; font-weight: 700; color: #fff; text-decoration: none; }
+    .topbar .brand span { color: #fbbf24; }
+    .nav-links { display: flex; gap: 4px; }
+    .nav-links a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px; padding: 6px 14px; border-radius: 6px; }
+    .nav-links a:hover, .nav-links a.active { color: #fff; background: rgba(255,255,255,0.12); }
+
+    /* ── 主容器 ── */
+    .container { max-width: 900px; margin: 0 auto; padding: 28px 20px; }
+
+    /* ── 标题区 ── */
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { font-size: 20px; font-weight: 800; color: #111827; margin-bottom: 6px; }
+    .page-header p { color: #6b7280; font-size: 13px; }
+
+    /* ── 搜索框 ── */
+    .search-panel { background: #fff; border-radius: 12px; padding: 22px; margin-bottom: 20px; border: 1px solid #e5e7eb; }
+    .search-panel .hint { font-size: 12px; color: #9ca3af; margin-bottom: 10px; }
+    .search-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .search-form input { flex: 1; min-width: 200px; padding: 11px 16px; border: 2px solid #d1d5db; border-radius: 10px; font-size: 15px; }
+    .search-form input:focus { outline: none; border-color: #1e3a5f; box-shadow: 0 0 0 3px rgba(30,58,95,0.1); }
+    .search-form select { padding: 10px 14px; border: 2px solid #d1d5db; border-radius: 10px; font-size: 14px; background: #fff; }
+    .btn { padding: 10px 22px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .btn-primary { background: #1e3a5f; color: #fff; }
+    .btn-primary:hover { background: #2d4f7a; }
+    .btn-outline { background: #fff; color: #1e3a5f; border: 2px solid #1e3a5f; }
+    .btn-outline:hover { background: #f0f4f8; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* ── 策略标签 ── */
+    .strategy-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+    .strategy-tabs label { font-size: 13px; color: #6b7280; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+    .strategy-tabs input[type="radio"] { accent-color: #1e3a5f; }
+
+    /* ── 结果元信息 ── */
+    .results-meta { font-size: 13px; color: #6b7280; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+    .results-meta strong { color: #111827; }
+    .mode-badge { background: #dbeafe; color: #1e3a5f; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+
+    /* ── 结果列表 ── */
+    .result-item { background: #fff; border-radius: 10px; padding: 18px 20px; margin-bottom: 12px; border: 1px solid #e5e7eb; transition: all 0.15s; cursor: pointer; }
+    .result-item:hover { border-color: #1e3a5f; box-shadow: 0 2px 12px rgba(30,58,95,0.1); transform: translateY(-1px); }
+    .result-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 12px; }
+    .result-law { font-size: 14px; font-weight: 700; color: #111827; flex: 1; }
+    .result-category { font-size: 11px; background: #f3f4f6; color: #6b7280; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
+    .result-meta { display: flex; gap: 16px; font-size: 12px; color: #9ca3af; margin-bottom: 8px; }
+    .result-preview { font-size: 13px; color: #374151; line-height: 1.7; }
+    .result-preview .highlight { background: #fef9c3; color: #92400e; padding: 0 2px; border-radius: 2px; }
+    .result-footer { margin-top: 10px; display: flex; justify-content: flex-end; }
+    .result-score { font-size: 12px; color: #1e3a5f; font-weight: 600; background: #e8f0fe; padding: 3px 10px; border-radius: 20px; }
+    .score-bm25 { background: #fef3c7; color: #92400e; }
+    .score-vector { background: #d1fae5; color: #065f46; }
+
+    /* ── 空状态 ── */
+    .empty-state { text-align: center; padding: 60px 20px; color: #9ca3af; }
+    .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state p { font-size: 15px; }
+
+    /* ── 示例查询 ── */
+    .example-queries { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .example-queries button { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 20px; padding: 5px 14px; font-size: 12px; color: #374151; cursor: pointer; transition: all 0.1s; }
+    .example-queries button:hover { background: #1e3a5f; color: #fff; border-color: #1e3a5f; }
+
+    /* ── 加载动画 ── */
+    .loading { display: none; text-align: center; padding: 40px; color: #6b7280; }
+    .loading.visible { display: block; }
+    .spinner { width: 28px; height: 28px; border: 3px solid #e5e7eb; border-top-color: #1e3a5f; border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 10px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── 法条详情弹窗 ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: #fff; border-radius: 14px; max-width: 700px; width: 100%; max-height: 80vh; overflow-y: auto; }
+    .modal-header { padding: 18px 24px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h3 { font-size: 15px; color: #111827; }
+    .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #9ca3af; }
+    .modal-body { padding: 20px 24px; font-size: 14px; line-height: 2; color: #374151; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+
+<!-- 导航栏 -->
+<div class="topbar">
+  <a href="/" class="brand">追诉系统 <span>⚖</span></a>
+  <nav class="nav-links">
+    <a href="/">案件</a>
+    <a href="/stats">统计</a>
+    <a href="/tracker">跟踪</a>
+    <a href="/search">搜索</a>
+    <a href="/law/search" class="active">🔍 法条检索</a>
+    <a href="/docs">文档</a>
+  </nav>
+</div>
+
+<div class="container">
+
+  <!-- 标题 -->
+  <div class="page-header">
+    <h1>⚖️ 法条语义检索</h1>
+    <p>基于向量语义 + BM25 混合检索，覆盖 2,055 部法律 · 78,240 个文本块</p>
+  </div>
+
+  <!-- 搜索面板 -->
+  <div class="search-panel">
+    <div class="hint">💡 支持自然语言提问，例如"盗窃罪数额较大是多少"或"毒品犯罪死刑标准"</div>
+    <div class="search-form">
+      <input type="text" id="query" placeholder="输入法律问题..." value="{{ query or '' }}" autofocus>
+      <select id="mode">
+        <option value="hybrid" {% if mode=='hybrid' %}selected{% endif %}>🔀 混合检索（推荐）</option>
+        <option value="bm25" {% if mode=='bm25' %}selected{% endif %}>📄 BM25 关键词</option>
+      </select>
+      <select id="top_k">
+        <option value="5" {% if top_k==5 %}selected{% endif %}>Top 5</option>
+        <option value="10" {% if top_k==10 %}selected{% endif %}>Top 10</option>
+        <option value="20" {% if top_k==20 %}selected{% endif %}>Top 20</option>
+      </select>
+      <button class="btn btn-primary" onclick="doSearch()">🔍 检索</button>
+    </div>
+    <div class="example-queries">
+      <span style="font-size:12px;color:#9ca3af;margin-right:4px;align-self:center;">示例：</span>
+      <button onclick="fillQuery('盗窃罪数额较大标准是多少')">盗窃罪数额较大标准</button>
+      <button onclick="fillQuery('毒品犯罪判处死刑的条件')">毒品犯罪死刑条件</button>
+      <button onclick="fillQuery('职务侵占罪入罪数额门槛')">职务侵占罪入罪门槛</button>
+      <button onclick="fillQuery('故意伤害致人重伤怎么判')">故意伤害致人重伤</button>
+      <button onclick="fillQuery('开设赌场罪抽头渔利多少入罪')">开设赌场罪入罪标准</button>
+      <button onclick="fillQuery('累犯从重处罚规定')">累犯从重处罚</button>
+    </div>
+  </div>
+
+  <!-- 加载中 -->
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div>正在检索法律数据库...</div>
+  </div>
+
+  <!-- 结果 -->
+  <div id="results"></div>
+
+</div>
+
+<!-- 法条详情弹窗 -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">法条详情</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ── 搜索 ──────────────────────────────────────────────────
+async function doSearch() {
+  const query = document.getElementById('query').value.trim();
+  if (!query) return;
+
+  const mode = document.getElementById('mode').value;
+  const topK = document.getElementById('top_k').value;
+
+  const resultsEl = document.getElementById('results');
+  const loadingEl = document.getElementById('loading');
+
+  loadingEl.classList.add('visible');
+  resultsEl.innerHTML = '';
+
+  try {
+    const resp = await fetch(`/api/law/search?q=${encodeURIComponent(query)}&mode=${mode}&top=${topK}`);
+    const data = await resp.json();
+
+    loadingEl.classList.remove('visible');
+
+    if (!data.results || data.results.length === 0) {
+      resultsEl.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>未找到相关法条</p></div>`;
+      return;
+    }
+
+    const modeLabel = mode === 'hybrid' ? '🔀 混合检索' : '📄 BM25 关键词';
+    let html = `<div class="results-meta">
+      <span>找到 <strong>${data.results.length}</strong> 条相关法条 · ${data.time_ms}ms</span>
+      <span class="mode-badge">${modeLabel}</span>
+    </div>`;
+
+    for (const r of data.results) {
+      const preview = highlight(r.preview, query);
+      const scoreLabel = r.score_type === 'bm25' ? 'BM25' : (r.score_type === 'vector' ? '向量' : '综合');
+      const scoreClass = r.score_type === 'bm25' ? 'score-bm25' : 'score-vector';
+      const lawShort = r.law.length > 50 ? r.law.substring(0, 50) + '…' : r.law;
+
+      html += `<div class="result-item" onclick='showDetail(${JSON.stringify(r).replace(/'/g, "&#39;")})'>
+        <div class="result-header">
+          <span class="result-law">${lawShort}</span>
+          <span class="result-category">${r.category || '法律'}</span>
+        </div>
+        <div class="result-meta">
+          ${r.article ? `<span>第 ${r.article} 条</span>` : ''}
+          <span>相似度 <strong>${(r.score * 100).toFixed(1)}%</strong></span>
+        </div>
+        <div class="result-preview">${preview}</div>
+        <div class="result-footer">
+          <span class="result-score ${scoreClass}">${scoreLabel} ${(r.score * 100).toFixed(1)}%</span>
+        </div>
+      </div>`;
+    }
+
+    resultsEl.innerHTML = html;
+  } catch (err) {
+    loadingEl.classList.remove('visible');
+    resultsEl.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>检索失败: ${err.message}</p></div>`;
+  }
+}
+
+// ── 高亮关键词 ────────────────────────────────────────────
+function highlight(text, query) {
+  if (!text || !query) return text;
+  const words = query.replace(/[^\w\u4e00-\u9fff]/g, ' ').split(/\s+/).filter(w => w.length > 1);
+  let result = text;
+  for (const w of words) {
+    result = result.replace(new RegExp(w, 'gi'), m => `<span class="highlight">${m}</span>`);
+  }
+  return result;
+}
+
+// ── 详情弹窗 ─────────────────────────────────────────────
+function showDetail(r) {
+  document.getElementById('modal-title').textContent = r.law + (r.article ? ` 第${r.article}条` : '');
+  document.getElementById('modal-body').textContent = r.content || r.preview;
+  document.getElementById('modal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('active');
+}
+
+function fillQuery(q) {
+  document.getElementById('query').value = q;
+  doSearch();
+}
+
+// ── 键盘回车搜索 ─────────────────────────────────────────
+document.getElementById('query').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+
+// ── 点击弹窗背景关闭 ─────────────────────────────────────
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target.id === 'modal') closeModal();
+});
+
+// ── 页面加载时如果有 query 参数则自动搜索 ──────────────────
+{% if query %}
+doSearch();
+{% endif %}
+</script>
+</body>
+</html>

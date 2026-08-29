@@ -55,6 +55,16 @@ api_docs_bp = create_api_docs_blueprint(app)
 app.register_blueprint(api_docs_bp)
 
 loader = CaseLoader()
+# LawRAG: 法律语义检索（惰性初始化，首次搜索时加载）
+_rag_instance = None
+
+def get_rag():
+    global _rag_instance
+    if _rag_instance is None:
+        from law_rag import LawRAG
+        _rag_instance = LawRAG(enable_vector=True)
+    return _rag_instance
+
 OUTPUT_DIR = Path(__file__).parent.parent / "output"
 DATA_DIR = Path(__file__).parent.parent / "data"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -199,6 +209,79 @@ def search():
         name_matches=name_matches,
         search_history=user.search_history[:10] if user else [],
     )
+
+
+# ── 法律 RAG 检索 ─────────────────────────────────────────
+
+@app.route("/law/search")
+def law_search_page():
+    """法律语义检索页面"""
+    query = request.args.get("q", "").strip()
+    mode = request.args.get("mode", "hybrid")
+    top_k = request.args.get("top_k", "10")
+    return render_template(
+        "law_search.html",
+        query=query,
+        mode=mode,
+        top_k=int(top_k),
+    )
+
+
+@app.route("/api/law/search")
+def api_law_search():
+    """法律检索 API
+
+    GET /api/law/search?q=查询内容&mode=hybrid|bm25&top=10
+    """
+    import time
+    query = request.args.get("q", "").strip()
+    mode = request.args.get("mode", "hybrid")
+    top_k = min(int(request.args.get("top", 10)), 50)
+
+    if not query:
+        return jsonify({"error": "缺少查询参数 q"}), 400
+
+    try:
+        rag = get_rag()
+        t0 = time.time()
+        hits = rag.search(query, top_k=top_k, hybrid=(mode == "hybrid"))
+        elapsed_ms = round((time.time() - t0) * 1000)
+
+        results = []
+        for h in hits:
+            bm25_s = h.get("bm25_score", 0)
+            vec_s = h.get("vector_score", 0)
+            score = h.get("score", 0) or bm25_s or vec_s
+            if mode == "bm25" or (mode == "hybrid" and vec_s == 0 and bm25_s > 0):
+                score_type = "bm25"
+            elif mode == "hybrid":
+                score_type = "hybrid"
+            else:
+                score_type = "vector"
+
+            results.append({
+                "law": h.get("law", ""),
+                "article": h.get("article", ""),
+                "category": h.get("category", ""),
+                "score": float(score),
+                "score_type": score_type,
+                "bm25_score": float(bm25_s) if bm25_s else 0.0,
+                "vector_score": float(vec_s) if vec_s else 0.0,
+                "preview": h.get("preview", ""),
+                "content": h.get("content", ""),
+            })
+
+        return jsonify({
+            "query": query,
+            "mode": mode,
+            "time_ms": elapsed_ms,
+            "total": len(results),
+            "results": results,
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 
 # ---- 报告生成 ----
@@ -804,6 +887,85 @@ def api_sentencing_provincial():
     comparison = analyzer.get_provincial_comparison(crime)
     
     return jsonify(comparison)
+
+
+# ── 入罪门槛 ───────────────────────────────────────────────
+
+@app.route("/threshold")
+def threshold_page():
+    """入罪门槛对比页面"""
+    crime = request.args.get("crime", "盗窃罪")
+    from threshold_api import CRIME_THRESHOLDS, CRIME_LABELS
+    thresholds = CRIME_THRESHOLDS.get(crime, {})
+    rows = []
+    for province, data in thresholds.items():
+        threshold = data.get("low", 0)
+        rows.append({
+            "province": province,
+            "threshold_yuan": threshold,
+            "threshold_wan": round(threshold / 10000, 2),
+            "standard": data.get("standard", ""),
+        })
+    rows.sort(key=lambda x: x["threshold_yuan"])
+    return render_template(
+        "threshold.html",
+        crime=crime,
+        crime_label=CRIME_LABELS.get(crime, crime),
+        rows=rows,
+        available_crimes=list(CRIME_THRESHOLDS.keys()),
+    )
+
+
+@app.route("/api/threshold")
+def api_threshold():
+    """入罪门槛 API
+
+    GET /api/threshold?crime=盗窃罪              → 所有省份
+    GET /api/threshold?crime=盗窃罪&province=北京  → 单一省份
+    GET /api/threshold?crime=盗窃罪&amount=5000   → 判断是否入罪
+    """
+    crime = request.args.get("crime", "盗窃罪")
+    province = request.args.get("province", "").strip()
+    amount = request.args.get("amount", type=float, default=0)
+
+    from threshold_api import CRIME_THRESHOLDS
+    thresholds = CRIME_THRESHOLDS.get(crime, {})
+
+    if province:
+        data = thresholds.get(province, {})
+        if not data:
+            return jsonify({"error": f"未找到省份: {province}"}), 404
+        threshold = data.get("low", 0)
+        return jsonify({
+            "province": province,
+            "crime": crime,
+            "threshold_yuan": threshold,
+            "threshold_wan": round(threshold / 10000, 2),
+            "standard": data.get("standard", ""),
+            "legal_basis": data.get("legal_basis", ""),
+            "reached": amount > 0 and amount >= threshold if amount else None,
+        })
+
+    rows = []
+    for p, data in thresholds.items():
+        threshold = data.get("low", 0)
+        reached = None
+        if amount > 0:
+            reached = amount >= threshold
+        rows.append({
+            "province": p,
+            "threshold_yuan": threshold,
+            "threshold_wan": round(threshold / 10000, 2),
+            "standard": data.get("standard", ""),
+            "reached": reached,
+        })
+    rows.sort(key=lambda x: x["threshold_yuan"])
+    return jsonify({
+        "crime": crime,
+        "amount": amount,
+        "count": len(rows),
+        "rows": rows,
+    })
 
 
 # ---- 运行 ----
