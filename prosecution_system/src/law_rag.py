@@ -84,9 +84,20 @@ class LawEmbedder:
 
     @property
     def model(self):
-        """懒加载模型，首次访问时初始化"""
+        """懒加载模型，首次访问时初始化（网络错误时由调用方处理）"""
         if self._model is None:
             print(f"  [向量] 加载模型: {self.model_name} ...")
+            import os
+            # 限制下载超时，避免网络不可用时永久挂起
+            os.environ['HF_HUB_DOWNLOAD_TIMEOUT'] = '10'
+            os.environ['HF_HUB_HTTP_TIMEOUT'] = '10'
+            # Patch httpx.Client 以全局设置超时
+            import httpx
+            _orig_init = httpx.Client.__init__
+            def _patched_init(self, *args, **kwargs):
+                kwargs.setdefault('timeout', httpx.Timeout(10.0, connect=5.0))
+                _orig_init(self, *args, **kwargs)
+            httpx.Client.__init__ = _patched_init
             from sentence_transformers import SentenceTransformer
             self._model = SentenceTransformer(self.model_name)
             self._vector_dim = self._model.get_sentence_embedding_dimension()
@@ -232,6 +243,14 @@ class LawRAG:
         self._chunk_id_list: List[str] = []  # 与向量矩阵一一对应
         self._vector_loaded = False
 
+        # TF-IDF Fallback（网络不可用时替代向量检索）
+        self._tfidf_matrix: Any = None
+        self._tfidf_vectorizer: Any = None
+        self._use_tfidf_fallback = False
+
+        # 自动加载索引缓存（惰性）
+        self.index_laws()
+
     @property
     def vector_enabled(self) -> bool:
         return self.enable_vector
@@ -333,17 +352,15 @@ class LawRAG:
         return chunks
 
     def _ensure_vector(self):
-        """确保向量索引已加载（懒加载）"""
+        """确保向量索引已加载（懒加载）；网络不可用时降级为 TF-IDF → BM25"""
         if not self.enable_vector:
             return
         if self._vector_loaded:
             return
+        if self._use_tfidf_fallback:
+            return  # 已知不可用，已切换
 
-        # 初始化嵌入器
-        if self.embedder is None:
-            self.embedder = LawEmbedder()
-
-        # 尝试加载向量缓存
+        # 尝试加载向量缓存（优先）
         if self._vector_index_file.exists() and self._chunk_ids_file.exists():
             print("  [向量] 加载向量缓存...")
             try:
@@ -356,10 +373,48 @@ class LawRAG:
                 self._vector_loaded = True
                 return
             except Exception as e:
-                print(f"  [向量] 加载缓存失败，将重新生成: {e}")
+                print(f"  [向量] 加载缓存失败: {e}")
 
-        # 构建向量索引
-        self._build_vector_index()
+        # 网络可用性预检（快速）
+        import socket
+        network_ok = False
+        try:
+            socket.setdefaulttimeout(3)
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM).close()
+            # 尝试连接 HuggingFace 元数据服务器
+            socket.create_connection(('huggingface.co', 443), timeout=3)
+            network_ok = True
+        except Exception:
+            pass
+
+        if not network_ok:
+            print("  [向量] 网络不可达，跳过 transformer 加载，切换 TF-IDF fallback")
+            self._build_tfidf_index()
+            self._vector_loaded = True
+            return
+
+        # 初始化嵌入器
+        if self.embedder is None:
+            try:
+                self.embedder = LawEmbedder()
+            except Exception as e:
+                print(f"  [向量] 嵌入器初始化失败: {e}，切换 TF-IDF fallback")
+                self._build_tfidf_index()
+                self._vector_loaded = True
+                return
+
+        # 构建向量索引（网络错误时降级 TF-IDF）
+        try:
+            self._build_vector_index()
+        except Exception as e:
+            print(f"  [向量] 向量索引构建失败: {e}")
+            print(f"  [向量] 切换 TF-IDF fallback...")
+            try:
+                self._build_tfidf_index()
+            except Exception as tfidf_err:
+                print(f"  [向量] TF-IDF fallback 也失败: {tfidf_err}，降级为纯 BM25")
+                self.enable_vector = False
+            self._vector_loaded = True
 
     def _build_vector_index(self):
         """构建向量索引并缓存"""
@@ -401,23 +456,57 @@ class LawRAG:
         """计算余弦相似度（向量已归一化时即点积）"""
         return sum(x * y for x, y in zip(a, b))
 
+    def _build_tfidf_index(self):
+        """构建 TF-IDF 索引（网络不可用时的本地 fallback）"""
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        import numpy as np
+
+        print("  [向量] 构建 TF-IDF fallback 索引...")
+        texts = [c.content for c in self.chunks]
+        self._tfidf_vectorizer = TfidfVectorizer(
+            max_features=10000,
+            ngram_range=(1, 2),
+            min_df=2,
+            max_df=0.95,
+        )
+        self._tfidf_matrix = self._tfidf_vectorizer.fit_transform(texts)
+        self._use_tfidf_fallback = True
+        print(f"  [向量] TF-IDF 索引完成: {self._tfidf_matrix.shape[0]} 文档 × {self._tfidf_matrix.shape[1]} 特征")
+
     def _search_vector(self, query: str, top_k: int = 10) -> List[Tuple[int, float]]:
         """纯向量检索（top_k 结果，return [(chunk_idx, score)]）"""
+        import numpy as np
         self._ensure_vector()
-        if self._vector_matrix is None:
+
+        # Transformer 向量模式
+        if self._vector_matrix is not None:
+            q_vec = self.embedder.encode_single(query)
+            scores_list: List[Tuple[int, float]] = []
+            for i, vec in enumerate(self._vector_matrix):
+                score = self._cosine_sim(q_vec, vec)
+                if score > 0:
+                    scores_list.append((i, score))
+        # TF-IDF fallback 模式
+        elif self._use_tfidf_fallback and self._tfidf_matrix is not None:
+            q_vec = self._tfidf_vectorizer.transform([query]).toarray()[0]
+            nonzero = np.nonzero(q_vec)[0]
+            scores_list = []
+            if len(nonzero) > 0:
+                doc_scores = self._tfidf_matrix[:, nonzero].toarray()
+                q_norm = np.linalg.norm(q_vec)
+                if q_norm > 0:
+                    for doc_idx in range(doc_scores.shape[0]):
+                        doc_vec = doc_scores[doc_idx]
+                        doc_norm = np.linalg.norm(doc_vec)
+                        if doc_norm > 0:
+                            score = float(np.dot(doc_vec, q_vec) / (doc_norm * q_norm))
+                            if score > 0:
+                                scores_list.append((doc_idx, score))
+        else:
             return []
 
-        q_vec = self.embedder.encode_single(query)
-
-        # 暴力计算余弦相似度（chunk数量通常几千到几万，可接受）
-        # 如需优化可换 FAISS，这里保持零依赖
-        scores = []
-        for i, vec in enumerate(self._vector_matrix):
-            sim = self._cosine_sim(q_vec, vec)
-            scores.append((i, sim))
-
-        scores.sort(key=lambda x: -x[1])
-        return scores[:top_k]
+        scores_list.sort(key=lambda x: -x[1])
+        return scores_list[:top_k]
 
     def _rrf_fusion(self, bm25_results: List[Tuple[int, float]],
                     vector_results: List[Tuple[int, float]],
@@ -508,7 +597,8 @@ class LawRAG:
         bm25_ranked = sorted(scores.items(), key=lambda x: (-x[1], -chunk_freq.get(x[0], 0)))
 
         # ===== 向量检索 =====
-        if hybrid and self.enable_vector:
+        use_vector = hybrid and (self.enable_vector or self._use_tfidf_fallback)
+        if use_vector:
             vector_ranked = self._search_vector(query, top_k=top_k * 2)
             # RRF 融合
             fused_order = self._rrf_fusion(bm25_ranked[:top_k*3], vector_ranked)
@@ -522,7 +612,7 @@ class LawRAG:
             chunk = self.chunks[chunk_idx]
             bm25_score = scores.get(chunk_idx, 0)
 
-            # 向量得分（如果可用）
+            # 向量得分（Transformer 或 TF-IDF）
             vector_score = 0.0
             if self.enable_vector and self._vector_matrix:
                 try:
@@ -532,6 +622,19 @@ class LawRAG:
                         self._vector_matrix[vec_idx]
                     )
                 except (ValueError, IndexError):
+                    pass
+            elif self._use_tfidf_fallback and self._tfidf_matrix is not None:
+                try:
+                    import numpy as np
+                    q_vec = self._tfidf_vectorizer.transform([query]).toarray()[0]
+                    nonzero = np.nonzero(q_vec)[0]
+                    if len(nonzero) > 0:
+                        doc_vec = self._tfidf_matrix[chunk_idx, nonzero].toarray().flatten()
+                        q_norm = np.linalg.norm(q_vec)
+                        doc_norm = np.linalg.norm(doc_vec)
+                        if q_norm > 0 and doc_norm > 0:
+                            vector_score = float(np.dot(doc_vec, q_vec) / (doc_norm * q_norm))
+                except Exception:
                     pass
 
             preview = self._get_preview(chunk.content, query, radius=100)
