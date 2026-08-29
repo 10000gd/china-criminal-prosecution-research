@@ -1,0 +1,53 @@
+meta:
+  case_id: CASE-0047
+  case_name: 辽宁市盗窃案
+  status: draft
+  province: 辽宁
+  created_at: '2026-05-25'
+case_info:
+  crime_type: 盗窃罪
+  province: 辽宁
+  amount: 345955.71
+  level: 数额特别巨大
+  description: 被告人孙七在辽宁市停车场内，趁无人之机秘密窃取他人财物，涉案金额345956元。
+  arrest_date: '2026-08-21'
+  prosecution_date: '2026-08-11'
+charges:
+  primary:
+    article: 刑法第264条
+    name: 盗窃罪
+    amount: 345955.71
+    level: 数额特别巨大
+    recommended_sentence: 9年有期徒刑
+defendants_person:
+- 杨明
+- 何平
+- 赵六
+defendants_corp: []
+victims:
+- 被害人363
+- 被害人895
+- 被害人682
+- 被害人964
+evidence_gaps:
+- 现场监控录像不完整，关键时段存在盲区
+- 被告人口供反复，存在合理怀疑
+assets:
+  stolen_property_value: 345955.71
+  recovered_value: 207715.3
+  recovery_rate: 0.352
+comparable_cases:
+  reference:
+  - case_name: 辽宁中院盗窃案
+    amount: 356738.0
+    sentence: 2年有期徒刑
+hallucination_rate: 0.081
+confidence_score: 0.77
+legal_arguments:
+- 罪轻辩护：存在自首情节，依法可以从轻或减轻处罚
+aggravating_factors:
+- 拒不认罪
+- 流窜作案
+mitigating_factors:
+- 犯罪中止
+- 坦白

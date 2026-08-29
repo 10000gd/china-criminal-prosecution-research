@@ -50,7 +50,7 @@ class CaseSearchIndex:
         self.index: Dict[str, List[str]] = {}
         # 案件元数据缓存: case_id -> meta dict
         self.case_meta: Dict[str, Dict] = {}
-        self._rebuild()
+        self.rebuild()
 
     def _tokenize(self, text: str) -> List[str]:
         """简单分词：中文按单字，英文按单词（均小写）"""

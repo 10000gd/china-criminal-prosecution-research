@@ -1,0 +1,48 @@
+meta:
+  case_id: CASE-0038
+  case_name: 天津市毒品犯罪案
+  status: active
+  province: 天津
+  created_at: '2026-07-15'
+case_info:
+  crime_type: 毒品犯罪
+  province: 天津
+  drug_type: 海洛因
+  weight_grams: 285.13
+  level: 情节特别严重
+  description: 被告人王五在天津市物流点被查获海洛因，重量285.1克。
+  arrest_date: '2026-07-11'
+  prosecution_date: '2026-08-10'
+charges:
+  primary:
+    article: 刑法第347条
+    name: 走私/贩卖毒品罪
+    weight_grams: 285.13
+    drug_type: 海洛因
+    level: 情节特别严重
+    recommended_sentence: 11年有期徒刑至死刑
+defendants_person:
+- 孙超
+defendants_corp: []
+victims: []
+evidence_gaps:
+- 毒品含量鉴定尚未完成
+- 毒品来源尚未查清
+- 是否存在特情介入需核实
+assets:
+  drug_weight: 285.13
+  seized_cash: 45641.45
+comparable_cases:
+  reference:
+  - case_name: 天津毒品案
+    weight: 244.4
+    sentence: 12年有期徒刑
+hallucination_rate: 0.107
+confidence_score: 0.81
+legal_arguments:
+- 数额辩护：涉案金额认定有误，鉴定意见存在瑕疵
+aggravating_factors:
+- 累犯
+- 跨境犯罪
+- 有组织犯罪
+mitigating_factors: []

@@ -1,0 +1,51 @@
+meta:
+  case_id: CASE-0009
+  case_name: 湖北市电信诈骗案
+  status: draft
+  province: 湖北
+  created_at: '2026-05-06'
+case_info:
+  crime_type: 诈骗罪
+  province: 湖北
+  amount: 98220.27
+  level: 数额巨大
+  description: 被告人孙七伙同他人在湖北市通过电信网络实施诈骗犯罪，虚构事实骗取被害人信任，涉案金额98220元。
+  arrest_date: '2026-07-05'
+  prosecution_date: '2026-08-24'
+charges:
+  primary:
+    article: 刑法第266条
+    name: 诈骗罪
+    amount: 98220.27
+    level: 数额巨大
+    recommended_sentence: 7年有期徒刑
+defendants_person:
+- 郑十
+- 王五
+- 徐鹏
+- 朱琳
+defendants_corp: []
+victims:
+- 被害人668
+evidence_gaps:
+- 现场监控录像不完整，关键时段存在盲区
+- 电子数据（微信记录/银行流水）尚未全面调取
+- 涉案资金流向追踪不完整，存在断点
+assets:
+  defrauded_amount: 98220.27
+  recovered_amount: 50015.47
+  recovery_rate: 0.1
+comparable_cases:
+  reference:
+  - case_name: 湖北高院诈骗案
+    amount: 97656.0
+    sentence: 6年有期徒刑
+hallucination_rate: 0.27
+confidence_score: 0.85
+legal_arguments:
+- 量刑辩护：已全额退赃，被害人出具谅解书，请求从轻处罚
+aggravating_factors: []
+mitigating_factors:
+- 认罪认罚
+- 从犯
+- 未成年人

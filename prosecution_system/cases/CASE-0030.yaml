@@ -1,0 +1,63 @@
+meta:
+  case_id: CASE-0030
+  case_name: 宁夏市电信诈骗案
+  status: draft
+  province: 宁夏
+  created_at: '2026-08-09'
+case_info:
+  crime_type: 诈骗罪
+  province: 宁夏
+  amount: 122212.99
+  level: 数额巨大
+  description: 被告人周八伙同他人在宁夏市通过电信网络实施诈骗犯罪，虚构事实骗取被害人信任，涉案金额122213元。
+  arrest_date: '2026-08-28'
+  prosecution_date: '2026-08-16'
+charges:
+  primary:
+    article: 刑法第266条
+    name: 诈骗罪
+    amount: 122212.99
+    level: 数额巨大
+    recommended_sentence: 10年有期徒刑
+defendants_person:
+- 孙超
+- 陈二
+- 李四
+- 郑十
+- 高建
+defendants_corp:
+- 中兴通讯股份有限公司
+victims:
+- 被害人73
+- 被害人704
+- 被害人240
+- 被害人947
+- 被害人271
+- 被害人807
+- 被害人811
+- 被害人641
+evidence_gaps:
+- 涉案物品价格鉴定意见尚未作出
+- 涉案资金流向追踪不完整，存在断点
+- 现场监控录像不完整，关键时段存在盲区
+assets:
+  defrauded_amount: 122212.99
+  recovered_amount: 39931.56
+  recovery_rate: 0.389
+comparable_cases:
+  reference:
+  - case_name: 宁夏高院诈骗案
+    amount: 142178.0
+    sentence: 5年有期徒刑
+hallucination_rate: 0.096
+confidence_score: 0.65
+legal_arguments:
+- 程序辩护：侦查阶段存在超期羁押，程序违法
+- 定性辩护：指控罪名定性错误，应认定为较轻罪名
+aggravating_factors:
+- 威胁证人
+- 流窜作案
+mitigating_factors:
+- 认罪认罚
+- 取得谅解
+- 未成年人

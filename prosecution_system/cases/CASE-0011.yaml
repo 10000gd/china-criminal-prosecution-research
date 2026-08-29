@@ -1,0 +1,47 @@
+meta:
+  case_id: CASE-0011
+  case_name: 河南市故意伤害案
+  status: active
+  province: 河南
+  created_at: '2026-05-17'
+case_info:
+  crime_type: 故意伤害罪
+  province: 河南
+  injury_level: 轻伤
+  compensation_demand: 13592.17
+  description: 被告人赵六因邻里矛盾与被害人发生争执，使用菜刀将被害人打伤，经鉴定为轻伤。
+  arrest_date: '2026-06-15'
+  prosecution_date: '2026-08-10'
+charges:
+  primary:
+    article: 刑法第234条
+    name: 故意伤害罪
+    injury_level: 轻伤
+    recommended_sentence: 1年有期徒刑至死刑
+defendants_person:
+- 郭靖
+defendants_corp: []
+victims:
+- 被害人84
+evidence_gaps:
+- 毒品含量鉴定未完成，影响量刑档次认定
+- 指纹/DNA 比对结果未最终确认
+assets:
+  compensation_demand: 13592.17
+  paid_compensation: 8893.28
+comparable_cases:
+  reference:
+  - case_name: 河南故意伤害案
+    injury_level: 轻伤
+    sentence: 4年有期徒刑
+hallucination_rate: 0.15
+confidence_score: 0.73
+legal_arguments:
+- 量刑辩护：已全额退赃，被害人出具谅解书，请求从轻处罚
+- 罪轻辩护：被告人系从犯，应从轻或减轻处罚
+aggravating_factors:
+- 累犯
+- 威胁证人
+mitigating_factors:
+- 偶犯
+- 初犯

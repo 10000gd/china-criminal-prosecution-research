@@ -1,0 +1,45 @@
+meta:
+  case_id: CASE-0018
+  case_name: 陕西市故意伤害案
+  status: draft
+  province: 陕西
+  created_at: '2026-06-04'
+case_info:
+  crime_type: 故意伤害罪
+  province: 陕西
+  injury_level: 致死/致残
+  compensation_demand: 132770.77
+  description: 被告人王五因债务矛盾与被害人发生争执，使用木棍将被害人打伤，经鉴定为致死/致残。
+  arrest_date: '2026-07-31'
+  prosecution_date: '2026-08-04'
+charges:
+  primary:
+    article: 刑法第234条
+    name: 故意伤害罪
+    injury_level: 致死/致残
+    recommended_sentence: 4年有期徒刑至死刑
+defendants_person:
+- 孙七
+defendants_corp: []
+victims:
+- 被害人26
+evidence_gaps:
+- 涉案物品价格鉴定意见尚未作出
+assets:
+  compensation_demand: 132770.77
+  paid_compensation: 91446.56
+comparable_cases:
+  reference:
+  - case_name: 陕西故意伤害案
+    injury_level: 致死/致残
+    sentence: 10年有期徒刑
+hallucination_rate: 0.177
+confidence_score: 0.67
+legal_arguments:
+- 定性辩护：指控罪名定性错误，应认定为较轻罪名
+- 程序辩护：侦查阶段存在超期羁押，程序违法
+aggravating_factors: []
+mitigating_factors:
+- 从犯
+- 取得谅解
+- 坦白

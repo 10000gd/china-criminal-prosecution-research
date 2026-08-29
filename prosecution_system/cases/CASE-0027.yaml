@@ -1,0 +1,48 @@
+meta:
+  case_id: CASE-0027
+  case_name: 新疆市盗窃案
+  status: active
+  province: 新疆
+  created_at: '2026-07-04'
+case_info:
+  crime_type: 盗窃罪
+  province: 新疆
+  amount: 552378.71
+  level: 数额特别巨大
+  description: 被告人罗锋在新疆市写字楼内，趁无人之机秘密窃取他人财物，涉案金额552379元。
+  arrest_date: '2026-07-24'
+  prosecution_date: '2026-08-06'
+charges:
+  primary:
+    article: 刑法第264条
+    name: 盗窃罪
+    amount: 552378.71
+    level: 数额特别巨大
+    recommended_sentence: 10年有期徒刑
+defendants_person:
+- 郭靖
+- 陈二
+- 赵六
+defendants_corp: []
+victims:
+- 被害人304
+- 被害人233
+evidence_gaps:
+- 证人证言之间存在矛盾，需进一步核实
+- 被告人口供反复，存在合理怀疑
+assets:
+  stolen_property_value: 552378.71
+  recovered_value: 7815.26
+  recovery_rate: 0.534
+comparable_cases:
+  reference:
+  - case_name: 新疆中院盗窃案
+    amount: 502512.0
+    sentence: 1年有期徒刑
+hallucination_rate: 0.161
+confidence_score: 0.82
+legal_arguments:
+- 定性辩护：指控罪名定性错误，应认定为较轻罪名
+aggravating_factors:
+- 流窜作案
+mitigating_factors: []

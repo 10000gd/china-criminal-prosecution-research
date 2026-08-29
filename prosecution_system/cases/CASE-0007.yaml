@@ -1,0 +1,50 @@
+meta:
+  case_id: CASE-0007
+  case_name: 重庆市盗窃案
+  status: draft
+  province: 重庆
+  created_at: '2026-07-17'
+case_info:
+  crime_type: 盗窃罪
+  province: 重庆
+  amount: 380645.68
+  level: 数额特别巨大
+  description: 被告人刘一在重庆市停车场内，趁无人之机秘密窃取他人财物，涉案金额380646元。
+  arrest_date: '2026-06-12'
+  prosecution_date: '2026-08-16'
+charges:
+  primary:
+    article: 刑法第264条
+    name: 盗窃罪
+    amount: 380645.68
+    level: 数额特别巨大
+    recommended_sentence: 4年有期徒刑
+defendants_person:
+- 罗锋
+- 高建
+- 吴九
+defendants_corp: []
+victims:
+- 被害人409
+- 被害人688
+- 被害人666
+evidence_gaps:
+- 伤情鉴定结论尚未正式送达
+- 毒品含量鉴定未完成，影响量刑档次认定
+assets:
+  stolen_property_value: 380645.68
+  recovered_value: 46059.72
+  recovery_rate: 0.225
+comparable_cases:
+  reference:
+  - case_name: 重庆中院盗窃案
+    amount: 355993.0
+    sentence: 5年有期徒刑
+hallucination_rate: 0.161
+confidence_score: 0.8
+legal_arguments:
+- 无罪辩护：指控证据链不完整，不能排除合理怀疑
+aggravating_factors:
+- 多次作案
+- 惯犯
+mitigating_factors: []

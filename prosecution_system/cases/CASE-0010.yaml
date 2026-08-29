@@ -1,0 +1,48 @@
+meta:
+  case_id: CASE-0010
+  case_name: 湖南市毒品犯罪案
+  status: draft
+  province: 湖南
+  created_at: '2026-04-26'
+case_info:
+  crime_type: 毒品犯罪
+  province: 湖南
+  drug_type: 麻古
+  weight_grams: 349.81
+  level: 情节特别严重
+  description: 被告人孙七在湖南市停车场被查获麻古，重量349.8克。
+  arrest_date: '2026-07-22'
+  prosecution_date: '2026-08-23'
+charges:
+  primary:
+    article: 刑法第347条
+    name: 走私/贩卖毒品罪
+    weight_grams: 349.81
+    drug_type: 麻古
+    level: 情节特别严重
+    recommended_sentence: 1年有期徒刑至死刑
+defendants_person:
+- 罗锋
+- 朱琳
+- 李四
+defendants_corp: []
+victims: []
+evidence_gaps:
+- 毒品含量鉴定尚未完成
+- 毒品来源尚未查清
+- 是否存在特情介入需核实
+assets:
+  drug_weight: 349.81
+  seized_cash: 37398.78
+comparable_cases:
+  reference:
+  - case_name: 湖南毒品案
+    weight: 287.8
+    sentence: 14年有期徒刑
+hallucination_rate: 0.087
+confidence_score: 0.93
+legal_arguments:
+- 无罪辩护：指控证据链不完整，不能排除合理怀疑
+aggravating_factors: []
+mitigating_factors:
+- 偶犯

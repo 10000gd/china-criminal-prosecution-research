@@ -1,0 +1,47 @@
+meta:
+  case_id: CASE-0032
+  case_name: 北京市毒品犯罪案
+  status: active
+  province: 北京
+  created_at: '2026-04-30'
+case_info:
+  crime_type: 毒品犯罪
+  province: 北京
+  drug_type: 大麻
+  weight_grams: 319.22
+  level: 情节特别严重
+  description: 被告人黄磊在北京市KTV被查获大麻，重量319.2克。
+  arrest_date: '2026-07-17'
+  prosecution_date: '2026-08-19'
+charges:
+  primary:
+    article: 刑法第347条
+    name: 走私/贩卖毒品罪
+    weight_grams: 319.22
+    drug_type: 大麻
+    level: 情节特别严重
+    recommended_sentence: 11年有期徒刑至死刑
+defendants_person:
+- 周八
+defendants_corp: []
+victims: []
+evidence_gaps:
+- 毒品含量鉴定尚未完成
+- 毒品来源尚未查清
+- 是否存在特情介入需核实
+assets:
+  drug_weight: 319.22
+  seized_cash: 16490.18
+comparable_cases:
+  reference:
+  - case_name: 北京毒品案
+    weight: 343.9
+    sentence: 9年有期徒刑
+hallucination_rate: 0.11
+confidence_score: 0.8
+legal_arguments:
+- 量刑辩护：已全额退赃，被害人出具谅解书，请求从轻处罚
+aggravating_factors: []
+mitigating_factors:
+- 认罪认罚
+- 退赃退赔

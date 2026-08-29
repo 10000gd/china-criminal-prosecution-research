@@ -1,0 +1,47 @@
+meta:
+  case_id: CASE-0013
+  case_name: 山东市盗窃案
+  status: completed
+  province: 山东
+  created_at: '2026-06-17'
+case_info:
+  crime_type: 盗窃罪
+  province: 山东
+  amount: 442936.33
+  level: 数额特别巨大
+  description: 被告人郭靖在山东市超市内，趁无人之机秘密窃取他人财物，涉案金额442936元。
+  arrest_date: '2026-07-16'
+  prosecution_date: '2026-08-23'
+charges:
+  primary:
+    article: 刑法第264条
+    name: 盗窃罪
+    amount: 442936.33
+    level: 数额特别巨大
+    recommended_sentence: 5年有期徒刑
+defendants_person:
+- 孙超
+- 刘一
+- 李四
+defendants_corp: []
+victims:
+- 被害人650
+evidence_gaps:
+- 被告人口供反复，存在合理怀疑
+- 现场监控录像不完整，关键时段存在盲区
+assets:
+  stolen_property_value: 442936.33
+  recovered_value: 1570.51
+  recovery_rate: 0.771
+comparable_cases:
+  reference:
+  - case_name: 山东中院盗窃案
+    amount: 467229.0
+    sentence: 3年有期徒刑
+hallucination_rate: 0.082
+confidence_score: 0.76
+legal_arguments:
+- 程序辩护：侦查阶段存在超期羁押，程序违法
+- 无罪辩护：指控证据链不完整，不能排除合理怀疑
+aggravating_factors: []
+mitigating_factors: []

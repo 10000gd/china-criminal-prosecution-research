@@ -1,0 +1,51 @@
+meta:
+  case_id: CASE-0024
+  case_name: 广西市盗窃案
+  status: draft
+  province: 广西
+  created_at: '2026-08-18'
+case_info:
+  crime_type: 盗窃罪
+  province: 广西
+  amount: 97547.21
+  level: 数额特别巨大
+  description: 被告人黄磊在广西市停车场内，趁无人之机秘密窃取他人财物，涉案金额97547元。
+  arrest_date: '2026-07-05'
+  prosecution_date: '2026-08-08'
+charges:
+  primary:
+    article: 刑法第264条
+    name: 盗窃罪
+    amount: 97547.21
+    level: 数额特别巨大
+    recommended_sentence: 6年有期徒刑
+defendants_person:
+- 马超
+defendants_corp: []
+victims:
+- 被害人13
+- 被害人870
+- 被害人431
+evidence_gaps:
+- 电子数据（微信记录/银行流水）尚未全面调取
+- 涉案资金流向追踪不完整，存在断点
+assets:
+  stolen_property_value: 97547.21
+  recovered_value: 93722.15
+  recovery_rate: 0.636
+comparable_cases:
+  reference:
+  - case_name: 广西中院盗窃案
+    amount: 110373.0
+    sentence: 2年有期徒刑
+hallucination_rate: 0.137
+confidence_score: 0.83
+legal_arguments:
+- 程序辩护：侦查阶段存在超期羁押，程序违法
+- 数额辩护：涉案金额认定有误，鉴定意见存在瑕疵
+aggravating_factors:
+- 威胁证人
+mitigating_factors:
+- 犯罪中止
+- 认罪认罚
+- 退赃退赔

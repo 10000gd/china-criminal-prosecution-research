@@ -1,0 +1,49 @@
+meta:
+  case_id: CASE-0050
+  case_name: 陕西市电信诈骗案
+  status: active
+  province: 陕西
+  created_at: '2026-07-24'
+case_info:
+  crime_type: 诈骗罪
+  province: 陕西
+  amount: 152805.42
+  level: 数额巨大
+  description: 被告人刘一伙同他人在陕西市通过电信网络实施诈骗犯罪，虚构事实骗取被害人信任，涉案金额152805元。
+  arrest_date: '2026-07-22'
+  prosecution_date: '2026-08-19'
+charges:
+  primary:
+    article: 刑法第266条
+    name: 诈骗罪
+    amount: 152805.42
+    level: 数额巨大
+    recommended_sentence: 4年有期徒刑
+defendants_person:
+- 孙超
+defendants_corp:
+- 金桥供应链管理有限公司
+- 宏达物流有限公司
+victims:
+- 被害人390
+- 被害人546
+- 被害人721
+evidence_gaps:
+- 毒品含量鉴定未完成，影响量刑档次认定
+assets:
+  defrauded_amount: 152805.42
+  recovered_amount: 51225.59
+  recovery_rate: 0.401
+comparable_cases:
+  reference:
+  - case_name: 陕西高院诈骗案
+    amount: 143892.0
+    sentence: 9年有期徒刑
+hallucination_rate: 0.27
+confidence_score: 0.61
+legal_arguments:
+- 量刑辩护：已全额退赃，被害人出具谅解书，请求从轻处罚
+aggravating_factors: []
+mitigating_factors:
+- 犯罪中止
+- 取得谅解

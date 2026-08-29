@@ -1,0 +1,50 @@
+meta:
+  case_id: CASE-0008
+  case_name: 四川市盗窃案
+  status: active
+  province: 四川
+  created_at: '2026-04-19'
+case_info:
+  crime_type: 盗窃罪
+  province: 四川
+  amount: 687820.61
+  level: 数额特别巨大
+  description: 被告人郑十在四川市居民小区内，趁无人之机秘密窃取他人财物，涉案金额687821元。
+  arrest_date: '2026-06-04'
+  prosecution_date: '2026-08-14'
+charges:
+  primary:
+    article: 刑法第264条
+    name: 盗窃罪
+    amount: 687820.61
+    level: 数额特别巨大
+    recommended_sentence: 4年有期徒刑
+defendants_person:
+- 孙七
+- 罗锋
+- 胡军
+defendants_corp: []
+victims:
+- 被害人249
+- 被害人804
+- 被害人485
+- 被害人827
+evidence_gaps:
+- 涉案物品价格鉴定意见尚未作出
+- 电子数据（微信记录/银行流水）尚未全面调取
+assets:
+  stolen_property_value: 687820.61
+  recovered_value: 66671.01
+  recovery_rate: 0.431
+comparable_cases:
+  reference:
+  - case_name: 四川中院盗窃案
+    amount: 666795.0
+    sentence: 4年有期徒刑
+hallucination_rate: 0.223
+confidence_score: 0.66
+legal_arguments:
+- 无罪辩护：指控证据链不完整，不能排除合理怀疑
+aggravating_factors:
+- 拒不认罪
+mitigating_factors: []

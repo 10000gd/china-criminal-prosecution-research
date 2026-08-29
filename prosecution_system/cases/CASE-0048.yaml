@@ -1,0 +1,51 @@
+meta:
+  case_id: CASE-0048
+  case_name: 黑龙江市盗窃案
+  status: draft
+  province: 黑龙江
+  created_at: '2026-03-22'
+case_info:
+  crime_type: 盗窃罪
+  province: 黑龙江
+  amount: 343746.64
+  level: 数额特别巨大
+  description: 被告人郭靖在黑龙江市停车场内，趁无人之机秘密窃取他人财物，涉案金额343747元。
+  arrest_date: '2026-08-25'
+  prosecution_date: '2026-08-10'
+charges:
+  primary:
+    article: 刑法第264条
+    name: 盗窃罪
+    amount: 343746.64
+    level: 数额特别巨大
+    recommended_sentence: 5年有期徒刑
+defendants_person:
+- 周八
+defendants_corp: []
+victims:
+- 被害人720
+- 被害人781
+- 被害人317
+evidence_gaps:
+- 指纹/DNA 比对结果未最终确认
+- 现场监控录像不完整，关键时段存在盲区
+assets:
+  stolen_property_value: 343746.64
+  recovered_value: 62357.55
+  recovery_rate: 0.143
+comparable_cases:
+  reference:
+  - case_name: 黑龙江中院盗窃案
+    amount: 365381.0
+    sentence: 1年有期徒刑
+hallucination_rate: 0.078
+confidence_score: 0.81
+legal_arguments:
+- 无罪辩护：指控证据链不完整，不能排除合理怀疑
+aggravating_factors:
+- 跨境犯罪
+- 惯犯
+mitigating_factors:
+- 取得谅解
+- 从犯
+- 退赃退赔

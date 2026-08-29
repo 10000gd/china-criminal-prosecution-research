@@ -1,0 +1,49 @@
+meta:
+  case_id: CASE-0026
+  case_name: 内蒙古市盗窃案
+  status: draft
+  province: 内蒙古
+  created_at: '2026-04-25'
+case_info:
+  crime_type: 盗窃罪
+  province: 内蒙古
+  amount: 381293.61
+  level: 数额特别巨大
+  description: 被告人徐鹏在内蒙古市商场内，趁无人之机秘密窃取他人财物，涉案金额381294元。
+  arrest_date: '2026-08-17'
+  prosecution_date: '2026-08-20'
+charges:
+  primary:
+    article: 刑法第264条
+    name: 盗窃罪
+    amount: 381293.61
+    level: 数额特别巨大
+    recommended_sentence: 4年有期徒刑
+defendants_person:
+- 高建
+- 郑十
+defendants_corp: []
+victims:
+- 被害人680
+- 被害人596
+- 被害人378
+evidence_gaps:
+- 毒品含量鉴定未完成，影响量刑档次认定
+- 指纹/DNA 比对结果未最终确认
+assets:
+  stolen_property_value: 381293.61
+  recovered_value: 162241.88
+  recovery_rate: 0.746
+comparable_cases:
+  reference:
+  - case_name: 内蒙古中院盗窃案
+    amount: 355486.0
+    sentence: 4年有期徒刑
+hallucination_rate: 0.104
+confidence_score: 0.71
+legal_arguments:
+- 定性辩护：指控罪名定性错误，应认定为较轻罪名
+aggravating_factors: []
+mitigating_factors:
+- 偶犯
+- 胁从犯

@@ -1,0 +1,49 @@
+meta:
+  case_id: CASE-0041
+  case_name: 湖北市盗窃案
+  status: draft
+  province: 湖北
+  created_at: '2026-05-19'
+case_info:
+  crime_type: 盗窃罪
+  province: 湖北
+  amount: 541317.92
+  level: 数额特别巨大
+  description: 被告人朱琳在湖北市居民小区内，趁无人之机秘密窃取他人财物，涉案金额541318元。
+  arrest_date: '2026-08-17'
+  prosecution_date: '2026-08-04'
+charges:
+  primary:
+    article: 刑法第264条
+    name: 盗窃罪
+    amount: 541317.92
+    level: 数额特别巨大
+    recommended_sentence: 7年有期徒刑
+defendants_person:
+- 刘一
+defendants_corp: []
+victims:
+- 被害人466
+evidence_gaps:
+- 被告人口供反复，存在合理怀疑
+- 涉案资金流向追踪不完整，存在断点
+assets:
+  stolen_property_value: 541317.92
+  recovered_value: 445189.22
+  recovery_rate: 0.94
+comparable_cases:
+  reference:
+  - case_name: 湖北中院盗窃案
+    amount: 456514.0
+    sentence: 2年有期徒刑
+hallucination_rate: 0.144
+confidence_score: 0.8
+legal_arguments:
+- 程序辩护：侦查阶段存在超期羁押，程序违法
+- 罪轻辩护：被告人系从犯，应从轻或减轻处罚
+aggravating_factors:
+- 流窜作案
+- 威胁证人
+mitigating_factors:
+- 未成年人
+- 取得谅解

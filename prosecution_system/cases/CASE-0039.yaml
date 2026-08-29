@@ -1,0 +1,52 @@
+meta:
+  case_id: CASE-0039
+  case_name: 重庆市毒品犯罪案
+  status: completed
+  province: 重庆
+  created_at: '2026-03-18'
+case_info:
+  crime_type: 毒品犯罪
+  province: 重庆
+  drug_type: 麻古
+  weight_grams: 472.89
+  level: 情节特别严重
+  description: 被告人吴昊在重庆市酒店房间被查获麻古，重量472.9克。
+  arrest_date: '2026-07-01'
+  prosecution_date: '2026-08-02'
+charges:
+  primary:
+    article: 刑法第347条
+    name: 走私/贩卖毒品罪
+    weight_grams: 472.89
+    drug_type: 麻古
+    level: 情节特别严重
+    recommended_sentence: 5年有期徒刑至死刑
+defendants_person:
+- 周杰
+defendants_corp: []
+victims: []
+evidence_gaps:
+- 毒品含量鉴定尚未完成
+- 毒品来源尚未查清
+- 是否存在特情介入需核实
+assets:
+  drug_weight: 472.89
+  seized_cash: 42666.77
+comparable_cases:
+  reference:
+  - case_name: 重庆毒品案
+    weight: 398.5
+    sentence: 11年有期徒刑
+hallucination_rate: 0.099
+confidence_score: 0.84
+legal_arguments:
+- 无罪辩护：指控证据链不完整，不能排除合理怀疑
+- 定性辩护：指控罪名定性错误，应认定为较轻罪名
+aggravating_factors:
+- 累犯
+- 多次作案
+- 跨境犯罪
+mitigating_factors:
+- 认罪认罚
+- 坦白
+- 退赃退赔

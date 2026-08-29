@@ -1,0 +1,49 @@
+meta:
+  case_id: CASE-0016
+  case_name: 黑龙江市盗窃案
+  status: completed
+  province: 黑龙江
+  created_at: '2026-07-14'
+case_info:
+  crime_type: 盗窃罪
+  province: 黑龙江
+  amount: 92981.13
+  level: 数额特别巨大
+  description: 被告人胡军在黑龙江市居民小区内，趁无人之机秘密窃取他人财物，涉案金额92981元。
+  arrest_date: '2026-08-24'
+  prosecution_date: '2026-08-26'
+charges:
+  primary:
+    article: 刑法第264条
+    name: 盗窃罪
+    amount: 92981.13
+    level: 数额特别巨大
+    recommended_sentence: 10年有期徒刑
+defendants_person:
+- 黄磊
+- 罗锋
+defendants_corp: []
+victims:
+- 被害人447
+- 被害人621
+- 被害人524
+evidence_gaps:
+- 涉案资金流向追踪不完整，存在断点
+assets:
+  stolen_property_value: 92981.13
+  recovered_value: 83636.97
+  recovery_rate: 0.19
+comparable_cases:
+  reference:
+  - case_name: 黑龙江中院盗窃案
+    amount: 76036.0
+    sentence: 4年有期徒刑
+hallucination_rate: 0.05
+confidence_score: 0.88
+legal_arguments:
+- 罪轻辩护：存在自首情节，依法可以从轻或减轻处罚
+aggravating_factors:
+- 流窜作案
+mitigating_factors:
+- 犯罪中止
+- 退赃退赔

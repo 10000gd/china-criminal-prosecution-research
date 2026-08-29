@@ -1,0 +1,47 @@
+meta:
+  case_id: CASE-0006
+  case_name: 天津市盗窃案
+  status: completed
+  province: 天津
+  created_at: '2026-03-18'
+case_info:
+  crime_type: 盗窃罪
+  province: 天津
+  amount: 696518.44
+  level: 数额特别巨大
+  description: 被告人马超在天津市停车场内，趁无人之机秘密窃取他人财物，涉案金额696518元。
+  arrest_date: '2026-08-03'
+  prosecution_date: '2026-08-25'
+charges:
+  primary:
+    article: 刑法第264条
+    name: 盗窃罪
+    amount: 696518.44
+    level: 数额特别巨大
+    recommended_sentence: 6年有期徒刑
+defendants_person:
+- 朱琳
+defendants_corp: []
+victims:
+- 被害人614
+evidence_gaps:
+- 伤情鉴定结论尚未正式送达
+- 现场监控录像不完整，关键时段存在盲区
+assets:
+  stolen_property_value: 696518.44
+  recovered_value: 77917.93
+  recovery_rate: 0.363
+comparable_cases:
+  reference:
+  - case_name: 天津中院盗窃案
+    amount: 831733.0
+    sentence: 3年有期徒刑
+hallucination_rate: 0.098
+confidence_score: 0.71
+legal_arguments:
+- 无罪辩护：指控证据链不完整，不能排除合理怀疑
+aggravating_factors:
+- 威胁证人
+- 流窜作案
+mitigating_factors:
+- 自首

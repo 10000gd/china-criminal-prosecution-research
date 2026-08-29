@@ -120,20 +120,49 @@ class StatsAggregator:
         return results
 
     def _compute_case_stat(self, case_id: str) -> Optional[HallucinationStat]:
-        """计算单个案件的统计"""
+        """计算单个案件的统计（同时支持官方格式和 seed data 格式）"""
         data = self.loader.load(case_id)
         if not data:
             return None
+
+        # ── 优先使用 seed data 自带的统计字段 ──────────────────
+        seed_hr = data.get("hallucination_rate")
+        seed_cs = data.get("confidence_score")
 
         charges = data.get("charges", {})
         judged = charges.get("charges_judged", {})
         missed = charges.get("charges_missed", {})
 
+        # ── 兼容 seed data schema: charges.primary ──────────────
+        if not judged and "primary" in charges:
+            primary = charges["primary"]
+            if isinstance(primary, dict) and primary.get("name"):
+                judged = {"primary": primary}
+
         total = len(judged) + len(missed)
+
+        # ── 如果有 seed 自带数据，直接用；否则按 ConfidenceScorer 计算 ──
+        if seed_hr is not None and seed_cs is not None:
+            # 使用 seed 数据的幻觉率和置信度
+            avg_score = float(seed_cs) * 100  # confidence_score 是 0~1，转为 0~100
+            if total == 0:
+                total = len(judged) or 1
+            return HallucinationStat(
+                case_id=case_id,
+                total_fields=total,
+                grade_a=0, grade_b=0, grade_c=0, grade_d=0, grade_e=0,
+                high_confidence=0, medium_confidence=0,
+                low_confidence=0, unreliable_confidence=0,
+                average_confidence=round(avg_score, 1),
+                hallucination_rate=round(float(seed_hr), 3),
+                unreliability_rate=round(float(seed_hr), 3),
+                timestamp=datetime.now().strftime("%Y-%m-%d %H:%M"),
+            )
+
         if total == 0:
             return None
 
-        # 各置信度级别计数
+        # ── 按 ConfidenceScorer 计算 ────────────────────────────
         grade_a = grade_b = grade_c = grade_d = grade_e = 0
         high = medium = low = unreliable = 0
         scores = []
@@ -153,8 +182,6 @@ class StatsAggregator:
                 low += 1
             else:
                 unreliable += 1
-            # 来源等级分布（从 fact_checker grade 映射）
-            # grade_a~e 需从 fact_checker 结果中提取，此处用置信度推断
             if cs.score >= 80:
                 grade_a += 1
             elif cs.score >= 60:
@@ -211,6 +238,7 @@ class StatsAggregator:
             unreliability_rate=round((low + unreliable) / total, 3),
             timestamp=datetime.now().strftime("%Y-%m-%d %H:%M"),
         )
+
 
     def get_all_stats(self) -> Dict[str, Any]:
         """全量统计摘要（用于首页仪表板）"""

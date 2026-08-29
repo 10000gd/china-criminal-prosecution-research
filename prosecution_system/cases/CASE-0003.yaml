@@ -1,0 +1,49 @@
+meta:
+  case_id: CASE-0003
+  case_name: 江苏市毒品犯罪案
+  status: active
+  province: 江苏
+  created_at: '2026-05-26'
+case_info:
+  crime_type: 毒品犯罪
+  province: 江苏
+  drug_type: 氯胺酮（K粉）
+  weight_grams: 142.6
+  level: 情节严重
+  description: 被告人黄磊在江苏市停车场被查获氯胺酮（K粉），重量142.6克。
+  arrest_date: '2026-06-04'
+  prosecution_date: '2026-08-21'
+charges:
+  primary:
+    article: 刑法第347条
+    name: 走私/贩卖毒品罪
+    weight_grams: 142.6
+    drug_type: 氯胺酮（K粉）
+    level: 情节严重
+    recommended_sentence: 12年有期徒刑至死刑
+defendants_person:
+- 林志
+- 王五
+- 郭靖
+defendants_corp: []
+victims: []
+evidence_gaps:
+- 毒品含量鉴定尚未完成
+- 毒品来源尚未查清
+- 是否存在特情介入需核实
+assets:
+  drug_weight: 142.6
+  seized_cash: 31748.91
+comparable_cases:
+  reference:
+  - case_name: 江苏毒品案
+    weight: 144.5
+    sentence: 8年有期徒刑
+hallucination_rate: 0.05
+confidence_score: 0.79
+legal_arguments:
+- 定性辩护：指控罪名定性错误，应认定为较轻罪名
+aggravating_factors:
+- 多次作案
+- 惯犯
+mitigating_factors: []

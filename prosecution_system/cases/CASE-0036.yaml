@@ -1,0 +1,49 @@
+meta:
+  case_id: CASE-0036
+  case_name: 广东市盗窃案
+  status: draft
+  province: 广东
+  created_at: '2026-06-05'
+case_info:
+  crime_type: 盗窃罪
+  province: 广东
+  amount: 101696.02
+  level: 数额特别巨大
+  description: 被告人赵六在广东市写字楼内，趁无人之机秘密窃取他人财物，涉案金额101696元。
+  arrest_date: '2026-08-16'
+  prosecution_date: '2026-08-13'
+charges:
+  primary:
+    article: 刑法第264条
+    name: 盗窃罪
+    amount: 101696.02
+    level: 数额特别巨大
+    recommended_sentence: 8年有期徒刑
+defendants_person:
+- 罗锋
+defendants_corp: []
+victims:
+- 被害人420
+- 被害人892
+evidence_gaps:
+- 证人证言之间存在矛盾，需进一步核实
+- 电子数据（微信记录/银行流水）尚未全面调取
+- 涉案物品价格鉴定意见尚未作出
+assets:
+  stolen_property_value: 101696.02
+  recovered_value: 79478.01
+  recovery_rate: 0.265
+comparable_cases:
+  reference:
+  - case_name: 广东中院盗窃案
+    amount: 106710.0
+    sentence: 4年有期徒刑
+hallucination_rate: 0.18
+confidence_score: 0.86
+legal_arguments:
+- 罪轻辩护：存在自首情节，依法可以从轻或减轻处罚
+- 定性辩护：指控罪名定性错误，应认定为较轻罪名
+aggravating_factors:
+- 威胁证人
+- 跨境犯罪
+mitigating_factors: []
