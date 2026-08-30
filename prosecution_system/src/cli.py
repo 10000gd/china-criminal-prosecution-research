@@ -139,7 +139,7 @@ def cmd_search(args):
     """搜索案件"""
     loader, _ = _load_system()
     _print_header(f"搜索结果：{args.query!r}")
-    results = loader.search_cases(args.query, top_k=args.top)
+    results = loader.search_cases(args.query)[:args.top]
     if not results:
         print("  （无结果）")
         return 0
@@ -196,7 +196,7 @@ def cmd_report(args):
     gaps = loader.get_evidence_gaps(case_id)
     if gaps:
         for g in gaps:
-            content.append(f"- {g.get('description', g)}")
+            content.append(f"- {g.get('description', g) if isinstance(g, dict) else g}")
     else:
         content.append("  （无记录）")
     content.extend([
