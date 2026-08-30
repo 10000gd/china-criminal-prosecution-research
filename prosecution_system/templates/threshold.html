@@ -103,6 +103,24 @@
     .threshold-value.level-4 { background: #d9f99d; color: #3f6212; padding: 2px 8px; border-radius: 6px; }
     .threshold-value.level-5 { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 6px; }
 
+    /* ── 金额判断器 ── */
+    .checker-card { background: #1e3a5f; border-radius: 12px; padding: 18px 22px; margin-bottom: 20px; }
+    .checker-title { color: rgba(255,255,255,0.6); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+    .checker-body { display: flex; flex-direction: column; gap: 10px; }
+    .checker-input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .checker-input-row label { color: rgba(255,255,255,0.7); font-size: 14px; white-space: nowrap; }
+    .checker-input-row input { padding: 9px 14px; border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; font-size: 14px; background: rgba(255,255,255,0.1); color: #fff; width: 140px; }
+    .checker-input-row input::placeholder { color: rgba(255,255,255,0.4); }
+    .checker-input-row input:focus { outline: none; border-color: #fbbf24; background: rgba(255,255,255,0.15); }
+    .checker-input-row .unit { color: rgba(255,255,255,0.5); font-size: 13px; }
+    .checker-input-row select { padding: 9px 14px; border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; font-size: 14px; background: rgba(255,255,255,0.1); color: #fff; }
+    .checker-input-row select option { background: #1e3a5f; }
+    #checker-result { color: rgba(255,255,255,0.8); font-size: 13px; min-height: 20px; }
+    .check-reached { color: #86efac; font-weight: 600; }
+    .check-not-reached { color: #fca5a5; }
+    .check-province { display: inline-block; background: rgba(255,255,255,0.15); border-radius: 4px; padding: 2px 8px; margin: 2px; font-size: 12px; }
+    .check-province.reached { background: rgba(134,239,172,0.3); color: #86efac; }
+
     /* ── 卡片 ── */
     .info-card { background: #fff; border-radius: 10px; padding: 16px 20px; margin-top: 20px; border: 1px solid #e5e7eb; font-size: 13px; color: #6b7280; }
     .info-card strong { color: #374151; }
@@ -227,12 +245,71 @@
   </div>
   {% endif %}
 
-  <div class="info-card">
+  <!-- 交互式金额判断器 -->
+  <div class="checker-card">
+    <div class="checker-title">🔍 快速判断</div>
+    <div class="checker-body">
+      <div class="checker-input-row">
+        <label>涉案金额：</label>
+        <input type="number" id="amount-input" placeholder="例如 5000" min="0" step="100">
+        <span class="unit">元</span>
+        <select id="crime-select">
+          <option value="盗窃罪">盗窃罪</option>
+          <option value="诈骗罪">诈骗罪</option>
+          <option value="抢夺罪">抢夺罪</option>
+          <option value="职务侵占罪">职务侵占罪</option>
+          <option value="故意伤害罪">故意伤害罪</option>
+          <option value="毒品犯罪">毒品犯罪</option>
+          <option value="开设赌场罪">开设赌场罪</option>
+        </select>
+        <button class="btn btn-primary" onclick="checkAmount()">判断</button>
+      </div>
+      <div id="checker-result"></div>
+    </div>
+  </div>
+
+  <!-- 颜色图例 -->
+  <div class="legend">
     <strong>⚠️ 免责声明：</strong>本工具展示的各省市入罪门槛数据基于公开司法解释整理，仅供参考。
     部分省市存在城区级别差异（如广州、深圳高于广东省级标准），实际案件处理请以当地高院最新实施细则
     和检察院具体规定为准。建议办案人员在引用前核实当地最新标准。
   </div>
 </div>
 
+<script>
+// ── 金额入罪判断 ──────────────────────────
+async function checkAmount() {
+  const amount = parseFloat(document.getElementById('amount-input').value);
+  const crime = document.getElementById('crime-select').value;
+  const resultEl = document.getElementById('checker-result');
+  if (!amount || amount <= 0) {
+    resultEl.innerHTML = '<span style="color:#fca5a5">请输入有效金额</span>';
+    return;
+  }
+  resultEl.innerHTML = '<span style="color:rgba(255,255,255,0.5)">查询中...</span>';
+  try {
+    const resp = await fetch(`/api/threshold?crime=${encodeURIComponent(crime)}&amount=${amount}`);
+    const data = await resp.json();
+    const reached = data.rows.filter(r => r.reached === true);
+    const notReached = data.rows.filter(r => r.reached === false);
+    const wan = (amount / 10000).toFixed(2);
+    if (reached.length === data.rows.length) {
+      resultEl.innerHTML = `<span class="check-reached">✅ ${amount.toLocaleString()}元 在全国${reached.length}个省份均达到${crime}入罪门槛</span>`;
+    } else if (reached.length === 0) {
+      resultEl.innerHTML = `<span class="check-not-reached">❌ ${amount.toLocaleString()}元 在全国任何省份均未达到${crime}入罪门槛（最低门槛：${data.rows[0].threshold_yuan}元）</span>`;
+    } else {
+      const provs = reached.slice(0, 6).map(p => `<span class="check-province reached">${p.province}</span>`).join('');
+      resultEl.innerHTML = `<span class="check-reached">✅ ${amount.toLocaleString()}元 (${wan}万) 在 ${reached.length} 个省份入罪：</span> ${provs}${reached.length > 6 ? '…' : ''}<br><span class="check-not-reached">❌ 其余 ${notReached.length} 个省份未达标</span>`;
+    }
+  } catch(e) {
+    resultEl.innerHTML = '<span style="color:#fca5a5">查询失败</span>';
+  }
+}
+document.getElementById('amount-input').addEventListener('keydown', e => { if (e.key === 'Enter') checkAmount(); });
+document.getElementById('crime-select').addEventListener('change', () => checkAmount());
+// Auto-trigger if pre-filled crime differs from page default
+const crimeDefault = "{{ crime }}";
+document.getElementById('crime-select').value = crimeDefault;
+</script>
 </body>
 </html>

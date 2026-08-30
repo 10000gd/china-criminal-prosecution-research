@@ -182,6 +182,49 @@ class CClaimTracer:
     def __init__(self):
         self._traces: List[CClaimTrace] = []
 
+    def trace(
+        self,
+        claim: str,
+        citations: List[str] = None,
+        attribution: str = "直接引用法条原文",
+        interpretation: str = None,
+        methodology: str = None,
+        grade: int = 1,
+        confidence_score: int = None,
+    ) -> CClaimTrace:
+        """
+        便捷入口：为单条法律结论建立溯源链
+
+        用法：
+            chain = tracer.trace(
+                claim="盗窃公私财物，数额较大",
+                citations=["刑法第264条"],
+                attribution="法条原文",
+            )
+            print(chain.to_markdown())
+        """
+        import hashlib
+        trace_id = hashlib.md5(f"manual:{claim}".encode()).hexdigest()[:8]
+        trace = CClaimTrace(
+            trace_id=trace_id,
+            field_path="manual",
+            claim=claim,
+            citation_laws=citations or [],
+            citation_keywords=[],
+            attribution_source=attribution,
+            attribution_grade=grade,
+            interpretation_chain=[interpretation] if interpretation else [self._infer_interpretation(claim, citations)],
+            methodology=methodology or "法条条文匹配",
+            confidence_score=confidence_score,
+        )
+        self._traces.append(trace)
+        return trace
+
+    def _infer_interpretation(self, claim: str, citations: List[str]) -> str:
+        if citations:
+            return f"根据{citations[0]}，{claim}"
+        return claim
+
     def load_from_fact_checker(self, fc) -> int:
         """
         从 FactChecker 实例加载溯源数据

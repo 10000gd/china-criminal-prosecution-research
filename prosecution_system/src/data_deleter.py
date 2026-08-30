@@ -27,6 +27,12 @@ from dataclasses import dataclass, field
 import re
 
 
+class DeletionLevel:
+    ANONYMIZE = "ANONYMIZE"   # 替换为占位符（报告用）
+    REDACT    = "REDACT"      # 删除内容但保留字段
+    DELETE    = "DELETE"      # 彻底删除字段
+
+
 # ===== 敏感字段配置 =====
 
 SENSITIVE_FIELDS = {

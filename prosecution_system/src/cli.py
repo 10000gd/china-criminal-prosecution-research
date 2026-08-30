@@ -349,14 +349,12 @@ def cmd_rag_search(args):
 
 def cmd_benchmark(args):
     """RAG benchmark"""
-    print("启动 RAG benchmark（使用内置工具）...")
-    import subprocess
-    result = subprocess.run(
-        [sys.executable, "-m", "src.rag_benchmark",
-         "--top-n", str(args.queries)],
-        cwd=Path(__file__).parent.parent,
-    )
-    return result.returncode
+    from rag_benchmark import run_benchmark, LEGAL_QUERIES
+    print("正在初始化 LawRAG（加载 78,240 个文本块）...")
+    rag = LawRAG(enable_vector=True)
+    queries = LEGAL_QUERIES[:args.queries]
+    results = run_benchmark(rag, queries=queries, top_n=5)
+    return 0
 
 
 # ═══════════════════════════════════════════════════════════════
