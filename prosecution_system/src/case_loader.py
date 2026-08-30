@@ -147,6 +147,7 @@ class CaseLoader:
         self.cases_dir = cases_dir
         self._local_cache: Dict[str, Dict] = {}  # 本地实例缓存（无 TTL）
         self._search_index: Optional[CaseSearchIndex] = None  # 倒排索引（惰性初始化）
+        self._lowercase_map: Optional[Dict[str, Path]] = None  # case_id→文件路径映射（惰性缓存）
 
     # ---- 搜索索引（惰性初始化）----
 
@@ -192,29 +193,31 @@ class CaseLoader:
         self._local_cache[case_id] = data
         return data
 
+    def _build_lowercase_map(self) -> Dict[str, Path]:
+        """惰性构建 case_id → 文件路径映射（一次性扫描，全局缓存）"""
+        m: Dict[str, Path] = {}
+        for f in self.cases_dir.glob("*.yaml"):
+            stem = f.stem.lower()
+            m[stem] = f          # CASE-0001.yaml → case-0001
+            if stem not in m:
+                m[stem] = f
+        return m
+
     def _resolve_file(self, case_id: str) -> Optional[Path]:
         """解析案件ID到文件路径"""
+        # 去掉 .yaml 后缀（如果有）
+        key = case_id.lower().removesuffix(".yaml")
+
         # 直接匹配
-        direct = self.cases_dir / f"{case_id}.yaml"
+        direct = self.cases_dir / f"{key}.yaml"
         if direct.exists():
             return direct
 
-        # 扫描一次，构建小写case_id映射
-        lowercase_map: Dict[str, Path] = {}
-        for f in self.cases_dir.glob("*.yaml"):
-            try:
-                with open(f, "r", encoding="utf-8") as fh:
-                    d = yaml.safe_load(fh)
-                    cid = d.get("meta", {}).get("case_id", "").lower() if d else ""
-                    stem_lower = f.stem.lower()
-                    if cid and cid not in lowercase_map:
-                        lowercase_map[cid] = f
-                    if stem_lower not in lowercase_map:
-                        lowercase_map[stem_lower] = f
-            except Exception:
-                pass
+        # 惰性加载映射表
+        if self._lowercase_map is None:
+            self._lowercase_map = self._build_lowercase_map()
 
-        return lowercase_map.get(case_id.lower())
+        return self._lowercase_map.get(key)
 
     # ---- 批量操作 ----
 

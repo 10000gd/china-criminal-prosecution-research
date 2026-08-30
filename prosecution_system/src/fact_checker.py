@@ -171,11 +171,14 @@ class FactChecker:
                             notes=notes)
 
     def _check_defendants(self):
-        """核查被告人信息"""
+        """核查被告人信息（兼容字符串姓名和字典对象两种格式）"""
         defendants = self.data.get("defendants_person", [])
         for d in defendants:
-            name = d.get("name", "")
-            punish = d.get("verdict_punishment", "")
+            if isinstance(d, str):
+                name, punish = d, ""
+            else:
+                name = d.get("name", "")
+                punish = d.get("verdict_punishment", "")
             # 判决结果 - 从新华社验证
             if punish:
                 # 无期徒刑等关键判决可验证
@@ -190,6 +193,8 @@ class FactChecker:
 
         corps = self.data.get("defendants_corp", [])
         for corp in corps:
+            if isinstance(corp, str):
+                continue
             fine = corp.get("verdict_fine")
             if fine:
                 self._add_field(
@@ -258,6 +263,9 @@ class FactChecker:
         """核查受害者数据"""
         victims = self.data.get("victims", [])
         for v in victims:
+            if isinstance(v, str):
+                self._add_field(f"victims.{v}", v, SourceGrade.B, notes="被害人名称")
+                continue
             cat = v.get("category", "")
             count = v.get("count_approx")
             loss = v.get("loss_approx", 0)
@@ -320,6 +328,8 @@ class FactChecker:
                 )
 
         for a in assets.get("main_assets", []):
+            if isinstance(a, str):
+                continue
             atype = a.get("type", "")
             val = a.get("value_approx", "")
             status = a.get("status", "")
@@ -340,6 +350,9 @@ class FactChecker:
             return
 
         for s in sources:
+            if isinstance(s, str):
+                self._add_field(f"sources.{s}", s, SourceGrade.B, notes="数据来源")
+                continue
             name = s.get("name", "")
             url = s.get("url", "")
             stype = s.get("type", "")
