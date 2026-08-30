@@ -145,7 +145,7 @@ def avg_relevance_score(results: List[Dict]) -> float:
 def run_benchmark(rag: LawRAG, queries: List[Dict] = None, top_n: int = 5) -> Dict[str, Any]:
     """运行完整 benchmark"""
     queries = queries or LEGAL_QUERIES
-    strategies = ["bm25", "vector", "hybrid"]
+    strategies = ["bm25", "hybrid"]  # vector 模式需网络+模型，当前不可用
     results: Dict[str, List] = {s: [] for s in strategies}
 
     print(f"\n{'='*70}")

@@ -26,6 +26,7 @@ from datetime import datetime
 from typing import Dict, Any
 import logging
 
+sys.path.insert(0, str(Path(__file__).parent))
 from confidence_scorer import ConfidenceScorer, ConfidenceLevel
 from threshold_db import ThresholdDB
 

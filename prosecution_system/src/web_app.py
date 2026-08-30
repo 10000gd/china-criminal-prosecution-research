@@ -580,6 +580,43 @@ def stats_page():
     )
 
 
+@app.route("/api/stats/overview")
+def api_stats_overview():
+    """案件统计概览 — 从真实案件数据聚合"""
+    cases = loader.list_cases()
+    provinces = {}
+    crime_types = {}
+    total_amount = 0
+    amount_count = 0
+
+    for c in cases:
+        cid = c.get("case_id", c) if isinstance(c, dict) else c
+        info = loader.get_case_info(cid)
+        charges = loader.get_charges(cid)
+        if info:
+            prov = info.get("province", "未知")
+            provinces[prov] = provinces.get(prov, 0) + 1
+            crime = info.get("crime_type") or (charges.get("primary", {}).get("name") if charges else None) or "未知"
+            crime_types[crime] = crime_types.get(crime, 0) + 1
+            amt = info.get("amount", 0) or 0
+            if amt > 0:
+                total_amount += amt
+                amount_count += 1
+        elif charges:
+            crime = charges.get("primary", {}).get("name", "未知")
+            crime_types[crime] = crime_types.get(crime, 0) + 1
+
+    avg_amount = total_amount / amount_count if amount_count else 0
+
+    return jsonify({
+        "total_cases": len(cases),
+        "provinces": dict(sorted(provinces.items(), key=lambda x: -x[1])),
+        "crime_types": dict(sorted(crime_types.items(), key=lambda x: -x[1])),
+        "avg_amount_wan": round(avg_amount / 10000, 2),
+        "total_amount_wan": round(total_amount / 10000, 2),
+    })
+
+
 @app.route("/api/stats/hallucination")
 def api_hallucination():
     """幻觉率统计 JSON API"""

@@ -364,6 +364,10 @@ class JudicialInterpBaseline:
     def all_interpretations(self) -> List[JudicialInterp]:
         return JUDICIAL_INTERPRETATIONS
 
+    def get_all_interpretations(self) -> List[JudicialInterp]:
+        """all_interpretations 的别名，保持 API 一致性"""
+        return self.all_interpretations()
+
     def get(self, name: str) -> Optional[JudicialInterp]:
         """精确查找司法解释"""
         return self._interps.get(name)
