@@ -93,10 +93,14 @@ def cmd_stats(args):
     loader, stats = _load_system()
     _print_header("统计概览")
     all_stats = stats.get_all_stats()
+    # 省份/罪名从 loader.list_cases() 读取（StatsAggregator 的 cases 是核查结果，非案件列表）
+    all_cases = loader.list_cases()
+    provinces = {c["province"] for c in all_cases if c.get("province")}
+    crimes = {c["crime_type"] for c in all_cases if c.get("crime_type")}
     print(f"\n📊 案件统计")
-    print(f"  总案件数: {all_stats.get('total_cases', 0)}")
-    print(f"  省份数:   {all_stats.get('provinces_count', 0)}")
-    print(f"  罪名类型: {all_stats.get('crime_types_count', 0)}")
+    print(f"  总案件数: {len(all_cases)}")
+    print(f"  省份数:   {len(provinces)}")
+    print(f"  罪名类型: {len(crimes)}")
     if "hallucination" in all_stats:
         h = all_stats["hallucination"]
         print(f"\n🧠 幻觉率统计")
