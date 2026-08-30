@@ -242,6 +242,8 @@ class CaseLoader:
                                 "status": meta.get("status", ""),
                                 "report_date": meta.get("report_date", ""),
                                 "confidentiality": meta.get("confidentiality", ""),
+                                "province": d.get("case_info", {}).get("province", ""),
+                                "crime_type": d.get("case_info", {}).get("crime_type", ""),
                             })
             except Exception as e:
                 logger.warning(f"加载案件 {f.name} 失败: {e}")
