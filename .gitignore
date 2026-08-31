@@ -1,6 +1,7 @@
 
 # === OpenClaw Agent Internal Files ===
 memory/
+.openclaw/
 HEARTBEAT.md
 AGENTS.md
 SOUL.md
