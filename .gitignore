@@ -11,3 +11,7 @@ TOOLS.md
 
 # Project build/generated files
 prosecution_system/data/
+
+# Build outputs (top-level)
+data/
+hengda_final_report/
