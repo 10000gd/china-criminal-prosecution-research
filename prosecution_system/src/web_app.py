@@ -682,7 +682,7 @@ def defense_page(case_id):
     # 获取主要辩护类型和罪名
     primary_defense = analysis.primary_defense.type.value if analysis.primary_defense else None
     charges = loader.get_charges(case_id)
-    crime = charges[0].get("name", "") if charges else ""
+    crime = (list(charges.values())[0].get("name", "") if charges else "")
     
     # 检索类似案例
     if primary_defense:
@@ -836,8 +836,8 @@ def sentencing_page():
         if stats.get("avg_sentence"):
             crime_stats.append({
                 "crime": crime,
-                "avg": stats["avg"],
-                "median": stats.get("median"),
+                "avg": stats["avg_sentence"],
+                "median": stats.get("median_sentence"),
                 "count": stats["sample_count"],
                 "probation_rate": stats.get("probation_rate", 0),
                 "distribution": stats.get("distribution", {}),
