@@ -78,3 +78,14 @@ package-lock.json
 # 数据文件（可选择忽略大型数据）
 # cases/legaldb/laws/           # 大型法律库
 # cases/legaldb/.rag_cache/     # RAG缓存
+
+# 音频文件
+music/
+
+# 环境配置
+.env
+
+# 数据库
+src/data/*.db
+src/data/*.db-journal
+
