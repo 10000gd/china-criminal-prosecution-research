@@ -89,3 +89,21 @@ music/
 src/data/*.db
 src/data/*.db-journal
 
+
+# RAG索引缓存（可重新生成）
+cases/legaldb/.rag_cache/
+
+# 工作区记忆和配置
+memory/
+
+# 根目录数据库文件
+*.db
+*.db-journal
+
+# OpenClaw 工作区泄露文件
+AGENTS.md
+SOUL.md
+IDENTITY.md
+USER.md
+TOOLS.md
+HEARTBEAT.md
