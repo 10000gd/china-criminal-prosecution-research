@@ -44,6 +44,25 @@ CRIME_LABELS = {
     "职务侵占罪": "职务侵占罪",
 }
 
+# 各罪名统一法律依据（供 API 返回）
+CRIME_LEGAL_BASIS = {
+    "盗窃罪": "最高法最高检《关于办理盗窃刑事案件适用法律若干问题的解释》(2013) 第1条",
+    "诈骗罪": "最高法《关于审理诈骗刑事案件具体应用法律若干问题的解释》(2022) 第1条",
+    "抢夺罪": "最高法最高检《关于办理抢夺刑事案件适用法律若干问题的解释》(2013) 第1条",
+    "开设赌场罪": "最高法最高检《关于办理赌博刑事案件具体应用法律若干问题的解释》(2010) 第1条",
+    "故意伤害罪": "《刑法》第234条 + 最高法《人身损害赔偿司法解释》(2022)",
+    "职务侵占罪": "最高检公安部《立案追诉标准(二)》(2022修订) 第76条",
+    "毒品犯罪": "最高法《毒品犯罪座谈会纪要》(2015) + 《刑法》第347条",
+}
+
+
+def _enrich(data: dict, crime: str) -> dict:
+    """给门槛条目注入 legal_basis（如果数据中没有则从映射取）"""
+    if "legal_basis" not in data or not data["legal_basis"]:
+        data = dict(data)
+        data["legal_basis"] = CRIME_LEGAL_BASIS.get(crime, "")
+    return data
+
 
 def list_thresholds(crime: str = None, amount: float = None):
     """列出门槛数据
@@ -66,7 +85,7 @@ def list_thresholds(crime: str = None, amount: float = None):
             if amount is not None and amount > 0:
                 reached = amount >= threshold
 
-            result["thresholds"].append({
+            result["thresholds"].append(_enrich({
                 "province": province,
                 "crime": c,
                 "crime_label": CRIME_LABELS.get(c, c),
@@ -74,8 +93,7 @@ def list_thresholds(crime: str = None, amount: float = None):
                 "threshold_wan": round(threshold / 10000, 2),
                 "standard": data.get("standard", ""),
                 "reached": reached,
-                "legal_basis": data.get("legal_basis", ""),
-            })
+            }, c))
 
     # 按门槛金额排序
     result["thresholds"].sort(key=lambda x: x["threshold_yuan"])
@@ -90,13 +108,12 @@ def compare_provinces(crime: str, provinces: list = None):
     for p in provinces:
         if p in thresholds:
             data = thresholds[p]
-            rows.append({
+            rows.append(_enrich({
                 "province": p,
                 "threshold_yuan": data.get("low", 0),
                 "threshold_wan": round(data.get("low", 0) / 10000, 2),
                 "standard": data.get("standard", ""),
-                "legal_basis": data.get("legal_basis", ""),
-            })
+            }, crime))
     rows.sort(key=lambda x: x["threshold_yuan"])
     return {"crime": crime, "crime_label": CRIME_LABELS.get(crime, crime), "rows": rows}
 

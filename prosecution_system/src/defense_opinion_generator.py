@@ -406,7 +406,9 @@ class DefenseOpinionGenerator:
         """生成综合结论"""
         defendant_name = self._extract_defendant_name(case_data)
         
-        if defense_type in ["正当防卫", "紧急避险", "精神病人无刑事责任", "不可抗力/意外事件"]:
+        court = case_data.get('court') or '所在辖区人民法院'
+        attorney = case_data.get('attorney_name') or '辩护人'
+        if defense_type in ("正当防卫", "紧急避险", "精神病人无刑事责任", "不可抗力/意外事件"):
             conclusion = f"""综上所述，辩护人认为：
 
 被告人{defendant_name}的行为依法不构成犯罪，恳请法庭依法宣告其无罪。
@@ -414,9 +416,9 @@ class DefenseOpinionGenerator:
 如法庭认为被告人的行为构成犯罪，请依据从轻、减轻处罚情节，在法定刑幅度内对其从轻或减轻处罚。
 
 此致
-{case_data.get('court', 'XXXX人民法院')}
+{court}
 
-辩护人：XXXX
+{attorney}：__________
 年  月  日"""
         else:
             conclusion = f"""综上所述，辩护人认为：
@@ -426,9 +428,9 @@ class DefenseOpinionGenerator:
 恳请法庭依法对其从轻或减轻处罚，给其一个改过自新的机会。
 
 此致
-{case_data.get('court', 'XXXX人民法院')}
+{court}
 
-辩护人：XXXX
+{attorney}：__________
 年  月  日"""
         
         return conclusion

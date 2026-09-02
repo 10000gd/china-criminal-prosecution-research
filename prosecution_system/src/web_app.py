@@ -965,8 +965,9 @@ def api_threshold():
     province = request.args.get("province", "").strip()
     amount = request.args.get("amount", type=float, default=0)
 
-    from threshold_api import CRIME_THRESHOLDS
+    from threshold_api import CRIME_THRESHOLDS, CRIME_LEGAL_BASIS
     thresholds = CRIME_THRESHOLDS.get(crime, {})
+    legal_basis = CRIME_LEGAL_BASIS.get(crime, "")
 
     if province:
         data = thresholds.get(province, {})
@@ -979,7 +980,7 @@ def api_threshold():
             "threshold_yuan": threshold,
             "threshold_wan": round(threshold / 10000, 2),
             "standard": data.get("standard", ""),
-            "legal_basis": data.get("legal_basis", ""),
+            "legal_basis": legal_basis,
             "reached": amount > 0 and amount >= threshold if amount else None,
         })
 
@@ -995,6 +996,7 @@ def api_threshold():
             "threshold_wan": round(threshold / 10000, 2),
             "standard": data.get("standard", ""),
             "reached": reached,
+            "legal_basis": legal_basis,
         })
     rows.sort(key=lambda x: x["threshold_yuan"])
     return jsonify({
