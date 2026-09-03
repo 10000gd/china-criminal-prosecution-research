@@ -927,8 +927,12 @@ def api_defense_report():
                     "case_id": case_id,
                     "case_name": meta_raw.get("case_name", case_id),
                     "case_summary": case_info_raw.get("description", ""),
+                    "facts": {
+                        "description": case_info_raw.get("description", ""),
+                        "detail": " ".join(str(f) for f in mitigating_raw + legal_args_raw),
+                    },
                     "charges": charges_raw,
-                    "defendants": defendants_raw,
+                    "defendants": [{"name": n} for n in defendants_raw] if defendants_raw else [],
                     "mitigating_factors": mitigating_raw,
                     "legal_arguments": legal_args_raw,
                 }
