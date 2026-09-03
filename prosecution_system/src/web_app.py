@@ -802,28 +802,87 @@ def api_defense_analyze():
 
 @app.route("/api/defense/opinion", methods=["POST"])
 def api_defense_opinion():
-    """辩护意见生成 API"""
-    data = request.get_json()
+    """辩护意见生成 API - 加载完整案件后生成辩护词"""
+    data = request.get_json() or {}
+    case_id = data.get("case_id", "")
     
-    if not data:
-        return jsonify({"error": "请提供案件数据"}), 400
+    # 从案件库加载完整数据
+    case_data = None
+    if case_id:
+        try:
+            from case_loader import CaseLoader
+            loader = CaseLoader()
+            full_case = loader.load(case_id)
+            if full_case:
+                case_info_raw = full_case.get("case_info", {})
+                if not isinstance(case_info_raw, dict):
+                    case_info_raw = {}
+                charges_raw = full_case.get("charges", {})
+                if not isinstance(charges_raw, dict):
+                    charges_raw = {}
+                defendants_raw = full_case.get("defendants_person", [])
+                if not isinstance(defendants_raw, list):
+                    defendants_raw = []
+                mitigating_raw = full_case.get("mitigating_factors", [])
+                if not isinstance(mitigating_raw, list):
+                    mitigating_raw = []
+                legal_args_raw = full_case.get("legal_arguments", [])
+                if not isinstance(legal_args_raw, list):
+                    legal_args_raw = []
+                meta_raw = full_case.get("meta", {})
+                if not isinstance(meta_raw, dict):
+                    meta_raw = {}
+                
+                case_data = {
+                    "case_id": case_id,
+                    "case_name": meta_raw.get("case_name", case_id),
+                    "case_summary": case_info_raw.get("description", ""),
+                    "facts": {
+                        "description": case_info_raw.get("description", ""),
+                        "detail": " ".join(str(f) for f in mitigating_raw + legal_args_raw),
+                    },
+                    "defendants": [{"name": n} for n in defendants_raw] if defendants_raw else [{"name": data.get("defendant_name", "被告")}],
+                    "charges": charges_raw,
+                    "mitigating_factors": mitigating_raw,
+                    "legal_arguments": legal_args_raw,
+                }
+        except Exception as e:
+            print(f"[辩护意见] 案件加载失败: {e}")
     
-    case_data = {
-        "case_id": data.get("case_id", "unknown"),
-        "case_name": data.get("case_name", "未知案件"),
-        "case_summary": data.get("facts", ""),
-        "defendants": [{"name": data.get("defendant_name", "被告")}],
-        "charges": [{"name": data.get("crime", "未知罪名")}],
-    }
+    # 兜底：至少保留请求参数
+    if not case_data or not case_data.get("case_summary"):
+        case_data = {
+            "case_id": case_id or "unknown",
+            "case_name": data.get("case_name", "未知案件"),
+            "case_summary": data.get("facts", ""),
+            "defendants": [{"name": data.get("defendant_name", "被告")}],
+            "charges": {"primary": {"name": data.get("crime", "未知罪名")}},
+        }
+    
+    # 运行辩护分析（获得 analysis 和 similar_cases）
+    from defense_enhancer import DefenseEnhancer
+    enhancer = DefenseEnhancer()
+    analysis = enhancer.analyze_case(case_data)
+    
+    from defense_case_db import DefenseCaseDatabase
+    db = DefenseCaseDatabase()
+    crime = (case_data.get("charges", {}).get("primary", {}).get("name") or
+              data.get("crime", ""))
+    similar = db.search_by_defense(
+        analysis.primary_defense.type.value if analysis.primary_defense else "",
+        crime, limit=5
+    )
     
     # 生成辩护意见
     from defense_opinion_generator import DefenseOpinionGenerator
-    generator = DefenseOpinionGenerator(data.get("analysis", {}), data.get("similar_cases", []))
+    generator = DefenseOpinionGenerator(analysis.to_dict(), [c.to_dict() for c in similar.cases])
     opinion = generator.generate_full_opinion(case_data)
     
     return jsonify({
         "opinion": opinion.to_dict(),
         "markdown": opinion.to_markdown(),
+        "analysis": analysis.to_dict(),
+        "similar_cases": [c.to_dict() for c in similar.cases],
     })
 
 
