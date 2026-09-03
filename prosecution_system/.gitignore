@@ -107,3 +107,9 @@ IDENTITY.md
 USER.md
 TOOLS.md
 HEARTBEAT.md
+output/defense_reports/
+output/reports/
+output/*.pdf
+output/*.html
+output/*.json
+output/
