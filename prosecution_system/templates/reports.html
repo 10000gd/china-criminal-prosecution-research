@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>报告列表 - 追诉系统</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f7fa; color: #2c3e50; font-size: 14px; }
+    .topbar { background: #2c3e50; color: #fff; padding: 0 24px; height: 52px; display: flex; align-items: center; gap: 24px; }
+    .topbar .brand { font-size: 16px; font-weight: 700; color: #fff; text-decoration: none; }
+    .topbar .brand span { color: #e67e22; }
+    .nav-links { display: flex; gap: 16px; }
+    .nav-links a { color: #bdc3c7; text-decoration: none; font-size: 14px; padding: 4px 8px; border-radius: 4px; }
+    .nav-links a:hover, .nav-links a.active { color: #fff; background: rgba(255,255,255,0.1); }
+
+    .container { max-width: 960px; margin: 0 auto; padding: 24px; }
+    h1 { font-size: 20px; margin-bottom: 20px; }
+
+    .card { background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 16px; overflow: hidden; }
+    .card-header { padding: 14px 20px; border-bottom: 1px solid #eee; font-weight: 600; font-size: 15px; color: #34495e; background: #fafafa; }
+    .card-body { padding: 16px 20px; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 10px 12px; background: #f8f9fa; color: #7f8c8d; font-weight: 500; font-size: 13px; border-bottom: 1px solid #eee; }
+    td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+    .badge-defense { background: #e8f5e9; color: #2e7d32; }
+    .badge-sentencing { background: #e3f2fd; color: #1565c0; }
+
+    .btn { display: inline-block; padding: 5px 14px; border-radius: 4px; font-size: 13px; text-decoration: none; cursor: pointer; border: none; }
+    .btn-primary { background: #3498db; color: #fff; }
+    .btn-primary:hover { background: #2980b9; }
+    .btn-download { background: #27ae60; color: #fff; }
+    .btn-download:hover { background: #1e8449; }
+    .btn-sm { padding: 3px 10px; font-size: 12px; }
+
+    .empty { text-align: center; padding: 48px; color: #95a5a6; }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-text { font-size: 15px; }
+
+    .meta { color: #95a5a6; font-size: 12px; }
+    .filename { font-family: monospace; font-size: 12px; color: #7f8c8d; }
+
+    .summary-bar { display: flex; gap: 24px; margin-bottom: 20px; }
+    .summary-item { background: #fff; border-radius: 8px; padding: 16px 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .summary-item .label { font-size: 12px; color: #7f8c8d; margin-bottom: 4px; }
+    .summary-item .value { font-size: 24px; font-weight: 700; color: #2c3e50; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="/" class="brand">⚖️ 追诉<span>系统</span></a>
+  <nav class="nav-links">
+    <a href="/">首页</a>
+    <a href="/search">案件搜索</a>
+    <a href="/compare">案件对比</a>
+    <a href="/defense/CASE-0001">辩护分析</a>
+    <a href="/stats">统计分析</a>
+    <a href="/reports" class="active">报告列表</a>
+  </nav>
+</div>
+
+<div class="container">
+  <h1>📋 已生成报告</h1>
+
+  <div class="summary-bar">
+    <div class="summary-item">
+      <div class="label">报告总数</div>
+      <div class="value">{{ reports|length }}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">辩护报告</div>
+      <div class="value">{{ reports|selectattr('type', 'equalto', '辩护报告')|list|length }}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">量刑报告</div>
+      <div class="value">{{ reports|selectattr('type', 'equalto', '量刑报告')|list|length }}</div>
+    </div>
+  </div>
+
+  {% if reports %}
+  <div class="card">
+    <div class="card-header">报告列表</div>
+    <div class="card-body" style="padding: 0;">
+      <table>
+        <thead>
+          <tr>
+            <th>类型</th>
+            <th>案件/罪名</th>
+            <th>文件名</th>
+            <th>大小</th>
+            <th>生成时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in reports %}
+          <tr>
+            <td>
+              {% if r.type == '辩护报告' %}
+              <span class="badge badge-defense">🛡️ 辩护报告</span>
+              {% else %}
+              <span class="badge badge-sentencing">📊 量刑报告</span>
+              {% endif %}
+            </td>
+            <td>
+              <strong>{{ r.case_id }}</strong>
+            </td>
+            <td class="filename">{{ r.filename }}</td>
+            <td class="meta">{{ r.size_kb }} KB</td>
+            <td class="meta">{{ r.time }}</td>
+            <td>
+              {% if r.type == '辩护报告' %}
+              <a href="/defense/{{ r.case_id }}" class="btn btn-primary btn-sm">查看</a>
+              {% endif %}
+              <a href="/output/{{ r.filename }}" class="btn btn-download btn-sm" target="_blank">下载</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="card">
+    <div class="empty">
+      <div class="empty-icon">📂</div>
+      <div class="empty-text">暂无生成报告</div>
+      <div style="margin-top: 12px;">
+        <a href="/defense/CASE-0001" class="btn btn-primary">生成辩护报告 →</a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card" style="margin-top: 16px;">
+    <div class="card-header">说明</div>
+    <div class="card-body" style="color: #7f8c8d; font-size: 13px; line-height: 1.8;">
+      <p>📁 报告文件存储在 <code>output/</code> 目录（已从 Git 排除，不会推送到远程仓库）。</p>
+      <p>🛡️ 辩护报告：由「辩护分析 → 生成辩护词 → 导出报告」流程生成，包含完整辩护分析、类案参考和量刑建议。</p>
+      <p>📊 量刑报告：由量刑分析页面生成，包含量刑偏离度、省市对比和案例参考。</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
