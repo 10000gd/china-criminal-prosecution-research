@@ -311,13 +311,18 @@ class DefenseEnhancer:
     def _extract_facts(self, case_data: Dict) -> str:
         """提取案件事实"""
         fact_fields = [
+            # CaseLoader 格式(当前使用的格式)
+            case_data.get("case_info", {}).get("description", ""),
+            case_data.get("case_info", {}).get("detail", ""),
+            case_data.get("case_summary", ""),
+            # 旧格式 / 直接字段
             case_data.get("facts", {}).get("description", ""),
             case_data.get("facts", {}).get("detail", ""),
-            case_data.get("case_summary", ""),
             case_data.get("fact_description", ""),
-            # 补充:从减轻情节和法律争议中提取事实要素
+            # 补充:从减轻情节、法律争议、指控中提取
             " ".join(str(f) for f in case_data.get("mitigating_factors", []) if f),
-            " ".join(str(a) for a in case_data.get("legal_arguments", [])),
+            " ".join(str(a) for a in case_data.get("legal_arguments", []) if a),
+            " ".join(str(a) for a in case_data.get("allegations", []) if a),
         ]
         return " ".join(f for f in fact_fields if f)
 
@@ -366,21 +371,6 @@ class DefenseEnhancer:
             matched_patterns = []
             evidence_points = []
 
-            # 每个 pattern → 对应的证据点
-            pattern_evidence_map = {
-                # 法定情节
-                r"自首": "被告人主动投案,如实供述罪行",
-                r"坦白": "被告人如实供述犯罪事实",
-                r"认罪认罚": "被告人自愿如实供述罪行并同意量刑建议",
-                r"退赃退赔|退赃|赔偿": "被告人已退还赃款并积极赔偿被害人损失",
-                r"赔偿谅解": "被告人已赔偿并取得被害人谅解",
-                # 数额/情节
-                r"数额.*认定|认定.*数额|鉴定意见.*瑕疵|数额.*有误": "涉案金额认定存在争议,鉴定意见有瑕疵",
-                # 证据
-                r"证据不足|证据.*不完整|合理怀疑|排除合理怀疑": "现有证据链不完整,关键事实存在合理怀疑",
-                r"证据链.*不完整|不能排除": "证据之间不能形成完整证据链",
-            }
-
             for pattern, description in patterns:
                 if re.search(pattern, facts_full):
                     matched_patterns.append(description)
@@ -393,13 +383,26 @@ class DefenseEnhancer:
                 # 计算置信度
                 confidence = min(95, 60 + len(matched_patterns) * 10)
 
+                # EVIDENCE_INSUFFICIENT 补充：从事实文本直接检查关键表述
+                extra_eps = []
+                if defense_type == DefenseType.EVIDENCE_INSUFFICIENT:
+                    extra_kw_map = {
+                        "指控证据链不完整": "指控证据链不完整,关键事实认定存疑",
+                        "证据链不完整": "证据之间不能形成完整证据链",
+                    }
+                    for kw, ep in extra_kw_map.items():
+                        if kw in facts_full and ep not in evidence_points:
+                            extra_eps.append(ep)
+
+                all_eps = evidence_points + extra_eps
+
                 # 获取法律依据
                 legal_refs = self._get_legal_references(defense_type)
 
                 defense = DefenseAngle(
                     type=defense_type,
                     confidence=confidence,
-                    evidence_points=evidence_points[:5],
+                    evidence_points=all_eps[:5],
                     legal_references=legal_refs,
                     risk_mitigation=self._get_risk_mitigation(defense_type),
                     counter_arguments=self._get_counter_arguments(defense_type, facts),
@@ -645,9 +648,9 @@ class DefenseEnhancer:
         """根据 defense_type 和 pattern description 生成结构化证据点"""
         ep_map = {
             DefenseType.VOLUNTARY_SURRENDER: {
-                "自首情节": "被告人主动投案，如实供述罪行",
-                "自首": "被告人主动投案，如实供述罪行",
-                "主动投案自首": "被告人主动投案，如实供述罪行",
+                "自首情节": "被告人主动投案,如实供述罪行",
+                "自首": "被告人主动投案,如实供述罪行",
+                "主动投案自首": "被告人主动投案,如实供述罪行",
                 "投案自首": "被告人主动到案并如实供述",
                 "坦白": "被告人如实供述犯罪事实",
             },
@@ -665,12 +668,14 @@ class DefenseEnhancer:
             },
             DefenseType.EVIDENCE_INSUFFICIENT: {
                 "证据不充分": "现有证据不足以证明犯罪构成全部要件",
-                "事实存疑": "案件事实存在争议，关键情节认定不清",
+                "事实存疑": "案件事实存在争议,关键情节认定不清",
                 "举证不能": "公诉机关未能充分举证",
                 "证据存在瑕疵": "关键证据存在形式或程序瑕疵",
                 "鉴定意见存在瑕疵": "鉴定意见存在程序瑕疵或结论存疑",
                 "存在合理怀疑": "现有证据不能排除合理怀疑",
                 "涉案数额认定有误": "涉案金额认定存在争议",
+                "指控证据链不完整": "指控证据链不完整,关键事实认定存疑",
+                "证据链不完整": "证据之间不能形成完整证据链",
             },
             DefenseType.CRIMINAL_MINOR: {
                 "数额特别巨大": "涉案金额刚过数额特别巨大门槛",
