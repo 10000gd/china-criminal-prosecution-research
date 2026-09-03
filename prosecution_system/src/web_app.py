@@ -14,8 +14,10 @@ Flask Web 应用
 """
 
 import os
+import re
 import sys
 from pathlib import Path
+from datetime import datetime
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -580,6 +582,59 @@ def stats_page():
     )
 
 
+@app.route("/output/<path:filename>")
+def serve_output(filename):
+    """提供 output 目录下文件的下载"""
+    safe_path = Path(OUTPUT_DIR) / filename
+    if not safe_path.exists() or not safe_path.is_file():
+        return "文件不存在", 404
+    return send_file(safe_path, as_attachment=True, download_name=filename)
+
+
+@app.route("/reports")
+def reports_page():
+    """已生成报告列表页面"""
+    reports = []
+    reports_dir = Path(OUTPUT_DIR)
+    
+    # 收集辩护报告
+    defense_dir = reports_dir / "defense_reports"
+    if defense_dir.exists():
+        for f in sorted(defense_dir.iterdir(), key=lambda x: -x.stat().st_mtime):
+            if f.suffix in (".html", ".json"):
+                case_match = re.search(r"CASE[-\w]+", f.stem)
+                case_id = case_match.group() if case_match else f.stem
+                reports.append({
+                    "type": "辩护报告",
+                    "case_id": case_id,
+                    "filename": f.name,
+                    "path": str(f),
+                    "size_kb": round(f.stat().st_size / 1024, 1),
+                    "time": datetime.fromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d %H:%M"),
+                })
+    
+    # 收集量刑报告
+    if reports_dir.exists():
+        for f in sorted(reports_dir.iterdir(), key=lambda x: -x.stat().st_mtime):
+            if f.suffix in (".html", ".json") and "sentencing" in f.stem.lower():
+                case_match = re.search(r"[\w]+罪", f.stem) or re.search(r"\w+-\d+", f.stem)
+                label = case_match.group() if case_match else f.stem
+                reports.append({
+                    "type": "量刑报告",
+                    "case_id": label,
+                    "filename": f.name,
+                    "path": str(f),
+                    "size_kb": round(f.stat().st_size / 1024, 1),
+                    "time": datetime.fromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d %H:%M"),
+                })
+    
+    return render_template(
+        "reports.html",
+        reports=reports,
+        username=session.get("username"),
+    )
+
+
 @app.route("/api/stats/overview")
 def api_stats_overview():
     """案件统计概览 — 从真实案件数据聚合"""
@@ -610,6 +665,7 @@ def api_stats_overview():
 
     return jsonify({
         "total_cases": len(cases),
+        "total_crimes": len(crime_types),
         "provinces": dict(sorted(provinces.items(), key=lambda x: -x[1])),
         "crime_types": dict(sorted(crime_types.items(), key=lambda x: -x[1])),
         "avg_amount_wan": round(avg_amount / 10000, 2),
@@ -1009,9 +1065,6 @@ def api_defense_search():
         "total": result.total,
         "summary": result.summary,
     })
-
-
-from datetime import datetime
 
 
 # ===== P5: 量刑一致性分析路由 =====
