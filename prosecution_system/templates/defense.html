@@ -408,13 +408,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        case_id: '{{ case_id }}',
-                        case_name: '{{ case_id }}',
-                        facts: '{{ case_data.case_summary if case_data else "" }}',
-                        defendant_name: '{{ analysis.primary_defense.type if analysis.primary_defense else "被告" }}',
-                        crime: '{{ analysis.primary_defense.type if analysis.primary_defense else "" }}',
-                        analysis: {{ analysis|tojson }},
-                        similar_cases: {{ similar_cases|tojson }}
+                        case_id: '{{ case_id }}'
                     })
                 });
                 
@@ -435,10 +429,6 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         case_id: '{{ case_id }}',
-                        case_data: {{ case_data|tojson }},
-                        analysis: {{ analysis|tojson }},
-                        similar_cases: {{ similar_cases|tojson }},
-                        opinion: currentOpinion || '辩护词生成中...',
                         format: 'html'
                     })
                 });
