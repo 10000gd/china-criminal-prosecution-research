@@ -347,8 +347,10 @@ class DefenseOpinionGenerator:
         case_texts = []
         for i, case in enumerate(self.similar_cases[:3], 1):
             outcome = case.get("outcome", "未知")
-            reasoning = case.get("reasoning", "")[:100]
-            case_texts.append(f"{i}. **{case.get('case_name', '类案')}**：{outcome}。{reasoning}...")
+            reasoning = case.get("reasoning", "")
+            case_texts.append(
+                f"{i}. **{case.get('case_name', '类案')}**：{outcome}。{reasoning}"
+            )
         
         cases_text = "\n\n".join(case_texts)
         
@@ -458,11 +460,13 @@ class DefenseOpinionGenerator:
         return "未知罪名"
     
     def _get_statutory_mitigation_text(self) -> str:
-        """获取法定从轻减轻情节文本"""
+        """获取法定从轻减轻情节文本（同时查 primary + secondary）"""
         primary = self.defense_analysis.get("primary_defense", {})
-        defense_type = primary.get("type", "")
+        primary_type = primary.get("type", "")
+        secondary = self.defense_analysis.get("secondary_defenses", [])
         
-        statutory_map = {
+        STATUTORY_MAP = {
+            # 法定情节（刑法典直接依据）
             "自首": "被告人主动投案，如实供述罪行，依据《刑法》第67条，可以从轻或减轻处罚。",
             "立功": "被告人揭发他人犯罪或提供重要线索，依据《刑法》第68条，可以从轻或减轻处罚。",
             "未成年人": "被告人系未成年人，依据《刑法》第17条，应当从轻或减轻处罚。",
@@ -471,25 +475,49 @@ class DefenseOpinionGenerator:
             "正当防卫": "被告人行为属于正当防卫，依据《刑法》第20条，不负刑事责任。",
             "防卫过当减免": "被告人行为属于防卫过当，依据《刑法》第20条第二款，应当减轻或免除处罚。",
             "紧急避险": "被告人行为属于紧急避险，依据《刑法》第21条，不负刑事责任。",
-            "赔偿谅解": "被告人积极赔偿被害人损失并取得谅解，可作为酌定从轻情节。",
+            # 量刑辩护（也是重要辩护角度，但放在法定情节下说明）
+            "坦白/认罪认罚": "被告人认罪认罚，依据《刑法》第67条第三款及《关于适用认罪认罚从宽制度的指导意见》，可以从宽处理。",
+            "赔偿谅解": "被告人积极赔偿被害人损失并取得谅解，可作为酌定从轻情节，建议法庭从轻处罚。",
+            "情节轻微": "涉案数额刚过入罪门槛，犯罪情节轻微，依据《刑法》第37条，可以免予刑事处罚。",
         }
         
-        return statutory_map.get(defense_type, "请法庭依法认定从轻、减轻情节。")
+        found = []
+        # 先查 primary
+        if primary_type and primary_type in STATUTORY_MAP:
+            found.append(STATUTORY_MAP[primary_type])
+        # 再查 secondary（去重）
+        for s in secondary:
+            dtype = s.get("type", "")
+            if dtype and dtype in STATUTORY_MAP and STATUTORY_MAP[dtype] not in found:
+                found.append(STATUTORY_MAP[dtype])
+        
+        if found:
+            return "\n".join(f"- {t}" for t in found)
+        return "请法庭依法认定从轻、减轻情节。"
     
     def _get_discretionary_mitigation_text(self) -> str:
-        """获取酌定从轻情节文本"""
+        """获取酌定从轻情节文本（排除已出现在法定情节中的）"""
         secondary = self.defense_analysis.get("secondary_defenses", [])
         
-        texts = []
-        for s in secondary[:3]:
-            defense_type = s.get("type", "")
-            mitigation = s.get("risk_mitigation", "")
-            if mitigation:
-                texts.append(f"- {defense_type}：{mitigation}")
+        # 已在法定情节中展示的，跳过避免重复
+        statutory_keys = {"自首", "立功", "正当防卫", "紧急避险",
+                          "防卫过当减免", "未成年人", "精神病人", "聋哑人/盲人",
+                          "坦白/认罪认罚", "赔偿谅解", "情节轻微"}
         
-        if texts:
-            return "\n".join(texts)
-        return "- 初犯、偶犯\n- 认罪态度良好\n- 有悔罪表现"
+        texts = []
+        for s in secondary[:5]:
+            dtype = s.get("type", "")
+            if dtype and dtype not in statutory_keys:
+                mitigation = s.get("risk_mitigation", "从轻处罚")
+                texts.append(f"- {dtype}：{mitigation}")
+        
+        # 补充常见的酌定情节
+        if not texts:
+            texts.append("- 初犯、偶犯：社会危害性较低")
+            texts.append("- 认罪态度良好：如实供述犯罪事实")
+            texts.append("- 有悔罪表现：积极改正错误")
+        
+        return "\n".join(texts)
 
 
 def generate_defense_opinion(case_data: Dict,
