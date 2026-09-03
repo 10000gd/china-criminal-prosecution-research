@@ -197,9 +197,12 @@ class DefenseEnhancer:
             (r"诱供", "诱供"),
         ],
         DefenseType.VOLUNTARY_SURRENDER: [
+            (r"自首", "自首情节"),
             (r"主动投案", "自首"),
             (r"自动投案", "自首"),
             (r"如实供述", "坦白"),
+            (r"主动.*投案", "主动投案自首"),
+            (r"投案自首", "投案自首"),
         ],
         DefenseType.MERITOUS_REPORTING: [
             (r"检举", "立功"),
@@ -208,8 +211,16 @@ class DefenseEnhancer:
         ],
         DefenseType.COMPENSATION: [
             (r"赔偿", "赔偿被害人"),
+            (r"退赔", "退赃退赔"),
+            (r"退赃", "退赃"),
             (r"谅解", "获得谅解"),
             (r"达成.*协议", "赔偿协议"),
+            (r"赔.*被害人", "赔偿被害人"),
+        ],
+        DefenseType.COOPERATION: [
+            (r"认罪认罚", "认罪认罚"),
+            (r"认罪", "认罪"),
+            (r"坦白", "坦白"),
         ],
         DefenseType.YOUTH: [
             (r"未满.*周", "未成年"),
@@ -219,6 +230,10 @@ class DefenseEnhancer:
             (r"证据不足", "证据不充分"),
             (r"事实不清", "事实存疑"),
             (r"无法证明", "举证不能"),
+            (r"证据.*瑕疵", "证据存在瑕疵"),
+            (r"鉴定意见.*瑕疵", "鉴定意见存在瑕疵"),
+            (r"合理怀疑", "存在合理怀疑"),
+            (r"数额认定有误", "涉案数额认定有误"),
         ],
     }
     
@@ -300,6 +315,9 @@ class DefenseEnhancer:
             case_data.get("facts", {}).get("detail", ""),
             case_data.get("case_summary", ""),
             case_data.get("fact_description", ""),
+            # 补充：从减轻情节和法律争议中提取事实要素
+            " ".join(str(f) for f in case_data.get("mitigating_factors", []) if f),
+            " ".join(str(a) for a in case_data.get("legal_arguments", [])),
         ]
         return " ".join(f for f in fact_fields if f)
     

@@ -708,13 +708,76 @@ def api_defense_analyze():
     if not data:
         return jsonify({"error": "请提供案件数据"}), 400
     
-    # 提取案件信息
-    case_data = {
-        "case_id": data.get("case_id", f"CASE-{datetime.now().strftime('%Y%m%d%H%M')}"),
-        "case_summary": data.get("facts", ""),
-        "defendants": [{"name": data.get("defendant_name", "被告")}],
-        "charges": [{"name": data.get("crime", "未知罪名")}],
-    }
+    case_id = data.get("case_id", f"CASE-{datetime.now().strftime('%Y%m%d%H%M')}")
+    
+    # 优先尝试从案件库加载完整数据
+    case_data = None
+    if case_id:
+        try:
+            from case_loader import CaseLoader
+            loader = CaseLoader()
+            full_case = loader.load(case_id)
+            if full_case:
+                # 解析 case_info
+                case_info_raw = full_case.get("case_info", "{}")
+                if isinstance(case_info_raw, str):
+                    import ast
+                    case_info_raw = ast.literal_eval(case_info_raw) if case_info_raw else {}
+                elif not isinstance(case_info_raw, dict):
+                    case_info_raw = {}
+                
+                # 解析 charges
+                charges_raw = full_case.get("charges", "{}")
+                if isinstance(charges_raw, str):
+                    charges_raw = ast.literal_eval(charges_raw) if charges_raw else {}
+                elif not isinstance(charges_raw, dict):
+                    charges_raw = {}
+                
+                # 解析 defendants_person
+                defendants_raw = full_case.get("defendants_person", "[]")
+                if isinstance(defendants_raw, str):
+                    defendants_raw = ast.literal_eval(defendants_raw) if defendants_raw else []
+                elif not isinstance(defendants_raw, list):
+                    defendants_raw = []
+                
+                # 解析 mitigating_factors
+                mitigating_raw = full_case.get("mitigating_factors", "[]")
+                if isinstance(mitigating_raw, str):
+                    mitigating_raw = ast.literal_eval(mitigating_raw) if mitigating_raw else []
+                elif not isinstance(mitigating_raw, list):
+                    mitigating_raw = []
+                
+                # 解析 legal_arguments
+                legal_args_raw = full_case.get("legal_arguments", "[]")
+                if isinstance(legal_args_raw, str):
+                    legal_args_raw = ast.literal_eval(legal_args_raw) if legal_args_raw else []
+                elif not isinstance(legal_args_raw, list):
+                    legal_args_raw = []
+                
+                case_data = {
+                    "case_id": case_id,
+                    "case_name": full_case.get("meta", {}).get("case_name", case_id) if isinstance(full_case.get("meta"), dict) else case_id,
+                    "case_summary": case_info_raw.get("description", ""),
+                    "facts": {
+                        "description": case_info_raw.get("description", ""),
+                        "detail": " ".join(str(f) for f in mitigating_raw + legal_args_raw if f),
+                    },
+                    "defendants": [{"name": name} for name in defendants_raw] if defendants_raw else [{"name": data.get("defendant_name", "被告")}],
+                    "charges": charges_raw if isinstance(charges_raw, dict) else {},
+                    "mitigating_factors": mitigating_raw,
+                    "legal_arguments": legal_args_raw,
+                }
+        except Exception as e:
+            print(f"[辩护分析] 案件加载失败: {e}")
+    
+    # 如果加载失败或数据不足，用请求数据兜底
+    if not case_data or not case_data.get("case_summary"):
+        case_data = {
+            "case_id": case_id,
+            "case_summary": data.get("facts", ""),
+            "defendants": [{"name": data.get("defendant_name", "被告")}],
+            "charges": {"primary": {"name": data.get("crime", "未知罪名")}},
+        }
     
     # 执行分析
     from defense_enhancer import DefenseEnhancer
@@ -724,8 +787,12 @@ def api_defense_analyze():
     # 检索类似案例
     from defense_case_db import DefenseCaseDatabase
     db = DefenseCaseDatabase()
-    crime = data.get("crime", "")
-    similar = db.search_by_defense(analysis.primary_defense.type.value if analysis.primary_defense else "", crime, limit=5)
+    crime = (case_data.get("charges", {}).get("primary", {}).get("name") or 
+             data.get("crime", ""))
+    similar = db.search_by_defense(
+        analysis.primary_defense.type.value if analysis.primary_defense else "", 
+        crime, limit=5
+    )
     
     return jsonify({
         "analysis": analysis.to_dict(),
