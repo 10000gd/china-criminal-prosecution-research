@@ -299,6 +299,37 @@ class LawRAG:
                 'size': entry.size
             }
 
+        # ===== 额外索引：刑法全文（不在 laws/ 子目录，需单独加载）=====
+        criminal_law_path = LEGALDB_DIR / "中华人民共和国刑法全文.txt"
+        if criminal_law_path.exists():
+            from china_law_db import LawEntry
+            text = criminal_law_path.read_text(encoding='utf-8')
+            criminal_entry = LawEntry(
+                name="中华人民共和国刑法",
+                category="法律",
+                date="20231229",
+                path=str(criminal_law_path),
+                text=text,
+                size=len(text)
+            )
+            criminal_chunks = self._chunk_law(criminal_entry)
+            for chunk in criminal_chunks:
+                chunk_idx = len(self.chunks)
+                self.chunks.append(chunk)
+                tokens = tokenize(chunk.content)
+                for token in set(tokens):
+                    if len(token) >= 2:
+                        if token not in self.inverted_index:
+                            self.inverted_index[token] = []
+                        self.inverted_index[token].append(chunk_idx)
+            self.law_index[criminal_entry.name] = {
+                'category': criminal_entry.category,
+                'date': criminal_entry.date,
+                'chunks_count': len(criminal_chunks),
+                'size': criminal_entry.size
+            }
+            print(f"  已索引刑法全文: {len(criminal_chunks)} 个文本块")
+
         self._indexed = True
         self._save_cache()
         print(f"  索引完成: {len(self.chunks)} 个文本块, {len(self.inverted_index)} 个索引词, {len(self.law_index)} 部法律")
