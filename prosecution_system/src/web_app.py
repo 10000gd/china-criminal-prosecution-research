@@ -888,20 +888,83 @@ def api_defense_opinion():
 
 @app.route("/api/defense/report", methods=["POST"])
 def api_defense_report():
-    """辩护报告生成 API"""
-    data = request.get_json()
+    """辩护报告生成 API - 支持只传 case_id"""
+    data = request.get_json() or {}
+    case_id = data.get("case_id", "")
     
-    if not data:
-        return jsonify({"error": "请提供数据"}), 400
+    # 如果只传了 case_id，则加载完整案件数据
+    case_data = data.get("case_data")
+    defense_analysis = data.get("analysis", {})
+    similar_cases = data.get("similar_cases", [])
+    opinion_text = data.get("opinion", "")
+    
+    if not case_data and case_id:
+        try:
+            from case_loader import CaseLoader
+            loader = CaseLoader()
+            full_case = loader.load(case_id)
+            if full_case:
+                case_info_raw = full_case.get("case_info", {})
+                if not isinstance(case_info_raw, dict):
+                    case_info_raw = {}
+                meta_raw = full_case.get("meta", {})
+                if not isinstance(meta_raw, dict):
+                    meta_raw = {}
+                charges_raw = full_case.get("charges", {})
+                if not isinstance(charges_raw, dict):
+                    charges_raw = {}
+                defendants_raw = full_case.get("defendants_person", [])
+                if not isinstance(defendants_raw, list):
+                    defendants_raw = []
+                mitigating_raw = full_case.get("mitigating_factors", [])
+                if not isinstance(mitigating_raw, list):
+                    mitigating_raw = []
+                legal_args_raw = full_case.get("legal_arguments", [])
+                if not isinstance(legal_args_raw, list):
+                    legal_args_raw = []
+                
+                case_data = {
+                    "case_id": case_id,
+                    "case_name": meta_raw.get("case_name", case_id),
+                    "case_summary": case_info_raw.get("description", ""),
+                    "charges": charges_raw,
+                    "defendants": defendants_raw,
+                    "mitigating_factors": mitigating_raw,
+                    "legal_arguments": legal_args_raw,
+                }
+                
+                # 如果没有传入 analysis/similar_cases/opinion，也自动生成
+                if not defense_analysis:
+                    from defense_enhancer import DefenseEnhancer
+                    enhancer = DefenseEnhancer()
+                    defense_analysis = enhancer.analyze_case(case_data).to_dict()
+                
+                if not similar_cases:
+                    from defense_case_db import DefenseCaseDatabase
+                    db = DefenseCaseDatabase()
+                    crime = (case_data.get("charges", {}).get("primary", {}).get("name") or "")
+                    primary_def = defense_analysis.get("primary_defense", {})
+                    similar = db.search_by_defense(primary_def.get("type", "") if primary_def else "", crime, limit=5)
+                    similar_cases = [c.to_dict() for c in similar.cases]
+                
+                if not opinion_text:
+                    from defense_opinion_generator import DefenseOpinionGenerator
+                    gen = DefenseOpinionGenerator(defense_analysis, similar_cases)
+                    opinion_text = gen.generate_full_opinion(case_data).to_markdown()
+        except Exception as e:
+            print(f"[辩护报告] 案件加载失败: {e}")
+    
+    if not case_data:
+        return jsonify({"error": "缺少案件数据"}), 400
     
     from defense_report_builder import DefenseReportBuilder
     builder = DefenseReportBuilder()
     
     report = builder.build(
-        case_data=data.get("case_data", {}),
-        defense_analysis=data.get("analysis", {}),
-        similar_cases=data.get("similar_cases", []),
-        opinion=data.get("opinion", ""),
+        case_data=case_data,
+        defense_analysis=defense_analysis,
+        similar_cases=similar_cases,
+        opinion=opinion_text,
     )
     
     # 保存报告
