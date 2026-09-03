@@ -488,9 +488,14 @@ class DefenseCaseDatabase:
             if defense_type not in [c.key_defense] + c.supporting_defenses:
                 continue
             
-            # 如果指定了罪名，需要匹配
-            if crime and crime not in c.crime and c.crime not in crime:
-                continue
+            # 如果指定了罪名，需要匹配（使用 related_crimes 映射）
+            if crime:
+                # 匹配逻辑：case罪名在 related_crimes 中，或 case罪名为"各类犯罪"（通用案例），
+                # 或双方罪名互含（如"盗窃罪" in "盗窃罪"）
+                if (c.crime not in related_crimes and
+                    c.crime != "各类犯罪" and
+                    crime not in c.crime and c.crime not in crime):
+                    continue
             
             matched_cases.append(c)
         
