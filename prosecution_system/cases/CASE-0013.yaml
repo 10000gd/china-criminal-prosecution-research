@@ -45,3 +45,8 @@ legal_arguments:
 - 无罪辩护：指控证据链不完整，不能排除合理怀疑
 aggravating_factors: []
 mitigating_factors: []
+
+sources:
+  primary: []
+  secondary: []
+  verification_status: pending

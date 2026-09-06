@@ -689,6 +689,60 @@ def api_hallucination():
     })
 
 
+@app.route("/api/fact-check/<case_id>")
+def api_fact_check(case_id):
+    """
+    真实性核查 API
+    
+    对案件 YAML 各字段逐条核查来源等级，返回：
+    - GRADE_A: 官方一手来源（判决原文/最高法官网）
+    - GRADE_B: 可推断来源（根据官方数据合理推断）
+    - GRADE_C: 推测来源（无官方依据，需警告）
+    - GRADE_D: 完全未知（无任何依据）
+    - GRADE_E: 已验证错误（必须修正）
+    
+    幻觉率 = (grade_c + grade_d + grade_e) / total_fields
+    """
+    from fact_checker import FactChecker
+    try:
+        fc = FactChecker(case_id)
+        result = fc.check()
+        total = result["total_fields"]
+        c_count = result["grade_c"]
+        d_count = result["grade_d"]
+        e_count = result["grade_e"]
+        hall_rate = round((c_count + d_count + e_count) / total, 4) if total else 0
+        avg_conf = round((result["grade_a"] * 1.0 + result["grade_b"] * 0.7 + result["grade_c"] * 0.4 + result["grade_d"] * 0.1) / total, 2) if total else 0
+        return jsonify({
+            "case_id": case_id,
+            "check_date": result["check_date"],
+            "summary": {
+                "total_fields": total,
+                "grade_a": result["grade_a"],
+                "grade_b": result["grade_b"],
+                "grade_c": result["grade_c"],
+                "grade_d": result["grade_d"],
+                "grade_e": result["grade_e"],
+                "hallucination_rate": hall_rate,
+                "hallucination_pct": round(hall_rate * 100, 1),
+                "average_confidence": avg_conf,
+            },
+            "fields": result["fields"],
+            "issues": result["issues"],
+            "grade_labels": FactChecker.__module__ and {
+                "GRADE_A": "✅ 官方一手来源（可引用）",
+                "GRADE_B": "🔶 可推断来源（建议注明推断依据）",
+                "GRADE_C": "⚠️ 推测来源（需在报告中标注）",
+                "GRADE_D": "❓ 完全未知（建议删除或标注存疑）",
+                "GRADE_E": "❌ 已验证错误（必须修正）",
+            },
+        })
+    except FileNotFoundError:
+        return jsonify({"error": f"案件不存在: {case_id}"}), 404
+    except Exception as e:
+        return jsonify({"error": f"核查失败: {e}"}), 500
+
+
 @app.route("/api/stats/provincial-diffs")
 def api_provincial_diffs():
     """省级差异数据 JSON API"""

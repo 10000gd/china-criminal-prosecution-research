@@ -44,3 +44,8 @@ aggravating_factors:
 - 毁灭证据
 - 威胁证人
 mitigating_factors: []
+
+sources:
+  primary: []
+  secondary: []
+  verification_status: pending
