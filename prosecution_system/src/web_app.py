@@ -1125,7 +1125,8 @@ def api_defense_report():
 @app.route("/api/defense/search", methods=["GET"])
 def api_defense_search():
     """辩护案例检索 API"""
-    crime = request.args.get("crime", "")
+    q = request.args.get("q", "").strip()
+    crime = request.args.get("crime", q).strip()  # 兼容 q= 参数
     defense_type = request.args.get("defense_type", "")
     limit = int(request.args.get("limit", 10))
     
