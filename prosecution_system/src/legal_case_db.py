@@ -33,7 +33,7 @@ from datetime import datetime
 logger = __import__('logging').getLogger(__name__)
 
 LEGALDB_DIR = Path(__file__).parent.parent / "cases" / "legaldb"
-CASES_DATA_DIR = LEGALDB_DIR.parent.parent / "prosecution_system" / "data"
+CASES_DATA_DIR = LEGALDB_DIR.parent.parent / "data"
 CASES_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -177,7 +177,7 @@ class LegalCaseDB:
         self._loaded = False
 
     def load(self):
-        """加载本地类案库"""
+        """加载本地类案库（空库时自动从案例文件填充）"""
         if self._loaded:
             return
         if self.db_path.exists():
@@ -190,7 +190,62 @@ class LegalCaseDB:
                     self._by_crime.setdefault(case.crime_name, []).append(case)
             logger.info(f"已加载 {len(self._cases)} 条类案")
             print(f"  已加载 {len(self._cases)} 条类案")
+        elif not self._cases:
+            # 空库 → 自动从 YAML 案例文件填充
+            self._seed_from_case_files()
         self._loaded = True
+
+    def _seed_from_case_files(self):
+        """从 YAML 案例文件自动填充类案库"""
+        import yaml
+        PROJECT_ROOT = Path(__file__).resolve().parent.parent
+        cases_dir = PROJECT_ROOT / "cases"
+        if not cases_dir.exists():
+            return
+        count = 0
+        for yaml_file in sorted(cases_dir.glob("CASE-*.yaml")):
+            try:
+                with open(yaml_file, encoding="utf-8") as f:
+                    data = yaml.safe_load(f)
+                meta = data.get("meta", {})
+                case_info = data.get("case_info", {})
+                charges = data.get("charges", {})
+                primary = charges.get("primary", {}) if isinstance(charges, dict) else {}
+                sentence_raw = primary.get("recommended_sentence", "")
+                # 解析刑期（年）
+                sentence_years = 0.0
+                if isinstance(sentence_raw, (int, float)):
+                    sentence_years = float(sentence_raw)
+                elif sentence_raw:
+                    import re
+                    m = re.search(r"(\d+(?:\.\d+)?)", str(sentence_raw))
+                    if m:
+                        sentence_years = float(m.group(1))
+                legal_case = LegalCase(
+                    case_id=meta.get("case_id", yaml_file.stem),
+                    case_num="",
+                    court="",
+                    judgment_date=meta.get("created_at", "2026-01-01"),
+                    crime_name=case_info.get("crime_type", primary.get("name", "")),
+                    crime_articles=[primary.get("article", "")],
+                    sentence=f"{sentence_years:.1f}年" if sentence_years else str(sentence_raw),
+                    sentence_months=int(sentence_years * 12),
+                    amount=float(case_info.get("amount", 0)),
+                    amount_level=case_info.get("level", ""),
+                    is_company=False,
+                    defendants=data.get("defendants_person", []),
+                    plaintiff="",
+                    key_facts=case_info.get("description", ""),
+                    source="案例文件导入",
+                )
+                self._cases[legal_case.case_id] = legal_case
+                self._by_crime.setdefault(legal_case.crime_name, []).append(legal_case)
+                count += 1
+            except Exception as e:
+                print(f"  加载案例失败 {yaml_file.name}: {e}")
+        if count:
+            self.save()
+            print(f"  自动填充 {count} 条类案（来自案例文件）")
 
     def save(self):
         """保存到本地"""
@@ -381,7 +436,7 @@ class LegalCaseDB:
         # 4. 时间新鲜度（15分）- 5年内满分，5年外线性衰减
         if case.judgment_date:
             try:
-                year = int(case.jredgment_date[:4])
+                year = int(case.judgment_date[:4])
                 current_year = datetime.now().year
                 age = current_year - year
                 time_score = max(0, 15 * (1 - age / 15))

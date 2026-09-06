@@ -20,6 +20,10 @@ from threshold_db import (
     DRUG_THRESHOLDS,
     GAMBLING_THRESHOLDS,
     EMBEZZLEMENT_THRESHOLDS,
+    EXTORTION_THRESHOLDS,
+    TRAFFIC_ACCIDENT_THRESHOLDS,
+    FRAUD_ABSORB_THRESHOLDS,
+    FUND_RAISING_FRAUD_THRESHOLDS,
 )
 
 CRIME_THRESHOLDS = {
@@ -30,21 +34,26 @@ CRIME_THRESHOLDS = {
     "毒品犯罪": DRUG_THRESHOLDS,
     "开设赌场罪": GAMBLING_THRESHOLDS,
     "职务侵占罪": EMBEZZLEMENT_THRESHOLDS,
+    "敲诈勒索罪": EXTORTION_THRESHOLDS,
+    "交通肇事罪": TRAFFIC_ACCIDENT_THRESHOLDS,
+    "非法吸收公众存款罪": FRAUD_ABSORB_THRESHOLDS,
+    "集资诈骗罪": FUND_RAISING_FRAUD_THRESHOLDS,
 }
 
 CRIME_LABELS = {
     "盗窃罪": "盗窃罪",
     "诈骗罪": "诈骗罪",
     "抢夺罪": "抢夺罪",
-    "行贿罪": "行贿罪",
-    "受贿罪": "受贿罪",
     "故意伤害罪": "故意伤害罪（致人重伤/死亡）",
     "毒品犯罪": "毒品犯罪",
     "开设赌场罪": "开设赌场罪",
     "职务侵占罪": "职务侵占罪",
+    "敲诈勒索罪": "敲诈勒索罪",
+    "交通肇事罪": "交通肇事罪",
+    "非法吸收公众存款罪": "非法吸收公众存款罪",
+    "集资诈骗罪": "集资诈骗罪",
 }
 
-# 各罪名统一法律依据（供 API 返回）
 CRIME_LEGAL_BASIS = {
     "盗窃罪": "最高法最高检《关于办理盗窃刑事案件适用法律若干问题的解释》(2013) 第1条",
     "诈骗罪": "最高法《关于审理诈骗刑事案件具体应用法律若干问题的解释》(2022) 第1条",
@@ -53,6 +62,10 @@ CRIME_LEGAL_BASIS = {
     "故意伤害罪": "《刑法》第234条 + 最高法《人身损害赔偿司法解释》(2022)",
     "职务侵占罪": "最高检公安部《立案追诉标准(二)》(2022修订) 第76条",
     "毒品犯罪": "最高法《毒品犯罪座谈会纪要》(2015) + 《刑法》第347条",
+    "敲诈勒索罪": "最高法《关于审理敲诈勒索刑事案件具体应用法律若干问题的解释》(2013) 第1条",
+    "交通肇事罪": "最高法《关于审理交通肇事刑事案件具体应用法律若干问题的解释》(2000)2022修订 第2条",
+    "非法吸收公众存款罪": "最高法《关于审理非法吸收公众存款刑事案件具体应用法律若干问题的解释》(2022) 第2条",
+    "集资诈骗罪": "最高法《关于审理非法集资刑事案件具体应用法律若干问题的解释》(2022) 第3条",
 }
 
 

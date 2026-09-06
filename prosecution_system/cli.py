@@ -41,7 +41,7 @@ def cmd_search(args):
     """法律检索命令"""
     db = LegalDB()
     
-    results = db.fulltext_search(args.query, top_n=args.limit)
+    results = db.fulltext_search(args.query, top_k=args.limit)
     
     if not results:
         print(f"未找到与 '{args.query}' 相关的法律条文")
@@ -50,10 +50,15 @@ def cmd_search(args):
     print(f"\n🔍 找到 {len(results)} 条相关结果:\n")
     
     for i, result in enumerate(results, 1):
-        title = result.get("title", result.get("article_no", ""))
-        text = result.get("text", result.get("content", ""))[:200]
-        print(f"{i}. 【{title}】")
-        print(f"   {text}...")
+        name = result.get("name", result.get("title", ""))
+        category = result.get("category", "")
+        snippet = result.get("snippet", result.get("content", ""))[:150]
+        date = result.get("date", "")
+        label = f"【{category}】{name}" if category else name
+        print(f"{i}. {label}")
+        if date:
+            print(f"   📅 {date[:4]}-{date[4:6]}-{date[6:8]}")
+        print(f"   {snippet}...")
         print()
     
     if args.format == "json":

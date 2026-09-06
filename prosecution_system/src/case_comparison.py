@@ -123,46 +123,67 @@ class CaseComparator:
         )
     
     def _extract_field_value(self, case_data: Dict, field: str):
-        """提取字段值"""
+        """提取字段值（支持 YAML 案例文件结构）"""
         # 直接字段
         if field in case_data:
             return case_data[field]
-        
-        # 嵌套字段
+
+        # ── meta 层 ──
+        meta = case_data.get("meta", {})
         if field == "court":
-            return case_data.get("meta", {}).get("court", "")
-        
+            return meta.get("court", "")
         if field == "case_name":
-            return case_data.get("meta", {}).get("name", case_data.get("case_id", ""))
-        
+            return meta.get("name", meta.get("case_name", case_data.get("case_id", "")))
         if field == "judgment_date":
             dates = case_data.get("procedure", {})
-            return dates.get("judgment_date", dates.get("trial_date", ""))
-        
-        if field in ["sentence_years", "sentence_months"]:
-            charges = case_data.get("charges", {}).get("charges_judged", {})
-            for charge in charges.values():
-                if field == "sentence_years":
-                    return charge.get("sentence_years")
-                else:
-                    return charge.get("sentence_months")
-        
-        if field == "amount":
-            charges = case_data.get("charges", {}).get("charges_judged", {})
-            for charge in charges.values():
-                amount = charge.get("amount")
-                if amount:
-                    return amount
-        
+            if dates:
+                return dates.get("judgment_date", dates.get("trial_date", ""))
+            return meta.get("created_at", "")
+
+        # ── case_info 层 ──
+        case_info = case_data.get("case_info", {})
         if field == "crime":
-            charges = case_data.get("charges", {}).get("charges_judged", {})
-            crimes = [c.get("name", "") for c in charges.values()]
-            return ", ".join(crimes) if crimes else ""
-        
-        # 量刑情节
+            charges = case_data.get("charges", {})
+            if isinstance(charges, dict) and "primary" in charges:
+                return charges["primary"].get("name", case_info.get("crime_type", ""))
+            if isinstance(charges, dict):
+                for k, v in charges.items():
+                    if isinstance(v, dict) and "name" in v:
+                        return v["name"]
+            return case_info.get("crime_type", "")
+
+        if field == "amount":
+            charges = case_data.get("charges", {})
+            if isinstance(charges, dict) and "primary" in charges:
+                return charges["primary"].get("amount", case_info.get("amount", 0))
+            return case_info.get("amount", 0)
+
+        if field in ["sentence_years", "sentence_months"]:
+            import re
+            charges = case_data.get("charges", {})
+            sentence_str = ""
+            if isinstance(charges, dict) and "primary" in charges:
+                sentence_str = charges["primary"].get("recommended_sentence", "")
+            if sentence_str:
+                m = re.search(r"(\d+(?:\.\d+)?)", str(sentence_str))
+                if m:
+                    years = float(m.group(1))
+                    return years if field == "sentence_years" else int(years * 12)
+            return 0
+
+        # ── 量刑情节 ──
         if field.startswith("is_"):
+            mitigating = case_data.get("mitigating_factors", [])
+            aggravating = case_data.get("aggravating_factors", [])
+            if field == "is_自首":   return "自首" in mitigating
+            if field == "is_立功":   return "立功" in mitigating
+            if field == "is_坦白":   return "坦白" in mitigating
+            if field == "is_赔偿":   return "赔偿" in mitigating or "退赃" in mitigating
+            if field == "is_谅解":   return "谅解" in mitigating
+            if field == "is_初犯":   return len(aggravating) == 0
+            if field == "is_累犯":   return "累犯" in aggravating
             return case_data.get(field, False)
-        
+
         return None
     
     def _format_value(self, value, field_type: str) -> str:

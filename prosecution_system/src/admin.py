@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 """管理后台"""
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
+
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
-from auth import login_required, admin_required, get_current_user
-from database import db
+from src.auth import login_required, admin_required, get_current_user
+from src.database import db
 import shutil
 from datetime import datetime
 from pathlib import Path

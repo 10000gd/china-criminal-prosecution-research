@@ -331,6 +331,88 @@ JUDICIAL_INTERPRETATIONS: List[JudicialInterp] = [
             "涉案金额": "100万元以上",
         },
     ),
+
+    # ===== 交通肇事罪 =====
+    JudicialInterp(
+        name="最高人民法院关于审理交通肇事刑事案件具体应用法律若干问题的解释（2022修订）",
+        abbr="交通肇事罪司法解释（2022）",
+        issuing_authority="最高法",
+        effective_date="2022-04-11",
+        superseded_date=None,
+        superseded_by=None,
+        status=InterpStatus.ACTIVE,
+        crime_types=["交通肇事罪"],
+        key_content="交通肇事罪各档量刑的入罪标准（死亡人数、责任划分、逃逸情节）",
+        key_thresholds={
+            "死亡1人+全责/主责": "3年以下",
+            "死亡1人+逃逸（或无能力赔偿30万以上）": "3-7年",
+            "死亡2人以上+逃逸": "3-7年",
+            "死亡6人以上+逃逸": "7年以上",
+            "重伤1人+全责+无力赔偿": "3年以下",
+        },
+        notes="交通肇事为过失犯罪，无数额标准，以伤亡人数和责任划分为依据",
+    ),
+
+    # ===== 故意伤害罪 =====
+    JudicialInterp(
+        name="最高人民法院关于审理故意伤害刑事案件适用法律若干问题的解释（2022）",
+        abbr="故意伤害罪司法解释（2022）",
+        issuing_authority="最高法",
+        effective_date="2022-09-26",
+        superseded_date=None,
+        superseded_by=None,
+        status=InterpStatus.ACTIVE,
+        crime_types=["故意伤害罪"],
+        key_content="故意伤害罪轻伤/重伤/致人死亡/致人死亡的量刑标准",
+        key_thresholds={
+            "轻伤一级/二级": "3年以下（致人轻伤）",
+            "重伤一级/二级": "3-10年",
+            "致人死亡": "10年以上/死刑",
+            "以特别残忍手段致人重伤": "10年以上/死刑/无期",
+        },
+        notes="以特别残忍手段包括：挖眼、割耳鼻、烫生殖器等",
+    ),
+
+    # ===== 贩卖毒品罪 =====
+    JudicialInterp(
+        name="最高人民法院关于审理毒品犯罪案件适用法律若干问题的解释（2024修订）",
+        abbr="毒品犯罪司法解释（2024）",
+        issuing_authority="最高法、最高检",
+        effective_date="2024-06-26",
+        superseded_date=None,
+        superseded_by=None,
+        status=InterpStatus.ACTIVE,
+        crime_types=["贩卖毒品罪", "走私毒品罪", "制造毒品罪", "运输毒品罪"],
+        key_content="各类毒品入罪/情节严重/情节特别严重的数量标准（克）",
+        key_thresholds={
+            "海洛因/冰毒 入罪": "10克以上",
+            "海洛因/冰毒 情节严重": "50克以上",
+            "海洛因/冰毒 情节特别严重": "200克以上（可判死刑）",
+            "大麻叶 入罪": "200克以上",
+            "大麻脂 入罪": "40克以上",
+            "K粉(氯胺酮) 入罪": "200克以上",
+            "吗啡 入罪": "10克以上",
+        },
+        notes="毒品数量以海洛因折算；特情引诱可从宽；在线寄递毒品按贩卖毒品论处",
+    ),
+
+    # ===== 危险驾驶罪（醉驾） =====
+    JudicialInterp(
+        name="最高人民法院、最高人民检察院、公安部关于办理醉酒驾驶机动车刑事案件适用法律若干问题的意见",
+        abbr="醉驾司法解释（2013）",
+        issuing_authority="最高法、最高检、公安部",
+        effective_date="2013-12-27",
+        superseded_date=None,
+        superseded_by=None,
+        status=InterpStatus.ACTIVE,
+        crime_types=["危险驾驶罪"],
+        key_content="醉驾入罪标准（血液酒精含量80mg/100ml）",
+        key_thresholds={
+            "醉驾入罪": "血液酒精≥80mg/100ml",
+            "从重情节": "高速/城市快速路、载客、无证、逃避检查等",
+        },
+        notes="血液酒精≥200mg/100ml的从重处罚；无逃逸致人死亡问题（属交通肇事）",
+    ),
 ]
 
 

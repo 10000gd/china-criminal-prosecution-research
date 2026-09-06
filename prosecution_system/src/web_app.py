@@ -41,7 +41,10 @@ from wenshu_updater import CaseTracker, ManualTracker
 # ---- Flask App ----
 # template_folder 指向项目根目录 (src/ 的上一层)，而不是 src/templates/
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-app = Flask(__name__, template_folder=str(PROJECT_ROOT / "templates"))
+app = Flask(__name__,
+                template_folder=str(PROJECT_ROOT / "templates"),
+                static_folder=str(PROJECT_ROOT / "static"),
+                static_url_path="/static")
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "prosecution-system-secret-key")
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB max
 
@@ -431,7 +434,6 @@ def compare_page():
                          case_ids=case_ids)
 
 @app.route("/api/compare", methods=["POST"])
-@login_required
 def api_compare():
     """案件对比 API"""
     data = request.get_json()
@@ -721,31 +723,54 @@ def _hall_label(rate: float) -> str:
 
 @app.route("/defense/<case_id>")
 def defense_page(case_id):
-    """辩护分析页面"""
-    case_data = loader.load(case_id)
-    if not case_data:
+    """辩护分析页面（支持文件案件和内置辩护案例）"""
+    # 优先尝试文件型案件（CASE- 前缀）
+    try:
+        case_data = loader.load(case_id)
+    except FileNotFoundError:
+        case_data = None
+
+    if case_data:
+        has_file_case = True
+    elif case_id.startswith("DEF-"):
+        # 内置辩护案例库
+        from defense_case_db import DefenseCaseDatabase
+        db = DefenseCaseDatabase()
+        bd = db.get_by_id(case_id)
+        if bd:
+            case_data = {
+                "case_id": bd.case_id,
+                "case_name": bd.case_name,
+                "crime": bd.crime,
+                "charges": {"charge1": {"name": bd.crime, "detail": bd.key_facts}},
+                "key_facts": bd.key_facts,
+                "summary": f"【{bd.outcome}】{bd.reasoning}",
+                "is_builtin_defense": True,
+            }
+            has_file_case = False
+        else:
+            return render_template("defense.html", error=f"案件不存在: {case_id}", case_id=case_id)
+    else:
         return render_template("defense.html", error=f"案件不存在: {case_id}", case_id=case_id)
-    
+
     # 执行辩护分析
     from defense_enhancer import DefenseEnhancer
     enhancer = DefenseEnhancer()
     analysis = enhancer.analyze_case(case_data)
-    
+
     # 检索类似案例
     from defense_case_db import DefenseCaseDatabase
     db = DefenseCaseDatabase()
-    
-    # 获取主要辩护类型和罪名
+
     primary_defense = analysis.primary_defense.type.value if analysis.primary_defense else None
-    charges = loader.get_charges(case_id)
-    crime = (list(charges.values())[0].get("name", "") if charges else "")
-    
-    # 检索类似案例
+    charges = loader.get_charges(case_id) if has_file_case else {}
+    crime = (list(charges.values())[0].get("name", "") if charges else case_data.get("crime", ""))
+
     if primary_defense:
         similar = db.search_by_defense(primary_defense, crime, limit=5)
     else:
         similar = db.search_by_crime(crime, "innocent", limit=5)
-    
+
     return render_template(
         "defense.html",
         case_id=case_id,
@@ -1215,11 +1240,34 @@ def api_threshold():
     thresholds = CRIME_THRESHOLDS.get(crime, {})
     legal_basis = CRIME_LEGAL_BASIS.get(crime, "")
 
+    def _get_threshold(data: dict):
+        """从数据字典中提取入罪门槛金额（新旧结构兼容）"""
+        if isinstance(data, dict):
+            return data.get("low") or data.get("amount_standard") or 0
+        return 0
+
+    def _is_text_data(data: dict):
+        """判断是否为文字描述类数据（如交通肇事罪）"""
+        if not isinstance(data, dict):
+            return False
+        return "death1_flee" in data or "death1_serious" in data
+
     if province:
         data = thresholds.get(province, {})
         if not data:
             return jsonify({"error": f"未找到省份: {province}"}), 404
-        threshold = data.get("low", 0)
+
+        if _is_text_data(data):
+            return jsonify({
+                "province": province,
+                "crime": crime,
+                "threshold_yuan": 0,
+                "is_text_based": True,
+                "description": data,
+                "legal_basis": legal_basis,
+            })
+
+        threshold = _get_threshold(data)
         return jsonify({
             "province": province,
             "crime": crime,
@@ -1232,7 +1280,18 @@ def api_threshold():
 
     rows = []
     for p, data in thresholds.items():
-        threshold = data.get("low", 0)
+        if _is_text_data(data):
+            rows.append({
+                "province": p,
+                "threshold_yuan": 0,
+                "threshold_wan": 0,
+                "is_text_based": True,
+                "description": data,
+                "legal_basis": legal_basis,
+            })
+            continue
+
+        threshold = _get_threshold(data)
         reached = None
         if amount > 0:
             reached = amount >= threshold
@@ -1244,12 +1303,16 @@ def api_threshold():
             "reached": reached,
             "legal_basis": legal_basis,
         })
-    rows.sort(key=lambda x: x["threshold_yuan"])
+
+    # 数值类按门槛排序，文字类放最后
+    text_rows = [r for r in rows if r.get("is_text_based")]
+    num_rows = sorted([r for r in rows if not r.get("is_text_based")],
+                      key=lambda x: x["threshold_yuan"])
     return jsonify({
         "crime": crime,
         "amount": amount,
         "count": len(rows),
-        "rows": rows,
+        "rows": num_rows + text_rows,
     })
 
 
