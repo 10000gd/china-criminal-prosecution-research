@@ -295,27 +295,30 @@ class StatsAggregator:
         }
         """
         # 省级标准（已在模块级预计算，避免重复 regex）
-        theft_provinces, fraud_provinces, robbery_provinces = _build_provincial_stats(
+        theft_provinces, fraud_provinces, robbery_provinces, embezzlement_provinces = _build_provincial_stats(
             self.threshold_db
         )
 
         all_amounts = (
             [v["amount"] for v in theft_provinces.values()] +
             [v["amount"] for v in fraud_provinces.values()] +
-            [v["amount"] for v in robbery_provinces.values()]
+            [v["amount"] for v in robbery_provinces.values()] +
+            [v["amount"] for v in embezzlement_provinces.values()]
         )
 
         return {
-            "crime_types": ["盗窃罪", "诈骗罪", "抢夺罪"],
+            "crime_types": ["盗窃罪", "诈骗罪", "抢夺罪", "职务侵占罪"],
             "provinces": sorted(set(
                 list(theft_provinces.keys()) +
                 list(fraud_provinces.keys()) +
-                list(robbery_provinces.keys())
+                list(robbery_provinces.keys()) +
+                list(embezzlement_provinces.keys())
             )),
             "data": {
                 "盗窃罪": theft_provinces,
                 "诈骗罪": fraud_provinces,
                 "抢夺罪": robbery_provinces,
+                "职务侵占罪": embezzlement_provinces,
             },
             "max_amount": max(all_amounts) if all_amounts else 100000,
         }
@@ -471,7 +474,15 @@ def _build_provincial_stats(tdb) -> tuple:
         std = f"{amount}元（数额较大）" if amount else ""
         robbery[prov] = {"standard": std, "amount": amount, "category": _province_category(prov)}
 
-    return theft, fraud, robbery
+    embezzlement = {}
+    for prov, data in tdb.embezzlement_thresholds.items():
+        if prov == "DEFAULT":
+            continue
+        std_num = data.get("amount_standard", 0)
+        std = f"{std_num}元（数额较大）" if std_num else ""
+        embezzlement[prov] = {"standard": std, "amount": std_num, "category": _province_category(prov)}
+
+    return theft, fraud, robbery, embezzlement
 
 # ===== CLI =====
 
