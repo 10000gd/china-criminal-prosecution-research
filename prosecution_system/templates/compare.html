@@ -25,24 +25,85 @@
     .topbar .brand span { color: #fbbf24; }
     .nav-links { display: flex; gap: 4px; }
     .nav-links a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px; padding: 6px 14px; border-radius: 6px; }
-    .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.12); }
+    .nav-links a:hover, .nav-links a.active { color: #fff; background: rgba(255,255,255,0.12); }
     .user-menu { margin-left: auto; display: flex; gap: 8px; }
     .user-link { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 13px; padding: 4px 10px; border-radius: 4px; }
     .user-link:hover { color: #fff; background: rgba(255,255,255,0.1); }
-    
+
     .container { max-width: 1200px; margin: 0 auto; padding: 28px 20px; }
-    
     h1 { font-size: 22px; font-weight: 800; margin-bottom: 20px; color: #111827; }
-    
-    .error-box {
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      color: #dc2626;
-      padding: 20px;
+
+    .card {
+      background: #fff;
       border-radius: 12px;
-      text-align: center;
+      padding: 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      margin-bottom: 20px;
     }
-    
+
+    /* 案件卡片网格 */
+    .case-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .case-card {
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .case-card:hover { border-color: #93c5fd; background: #f0f7ff; }
+    .case-card.selected { border-color: #3b82f6; background: #eff6ff; }
+    .case-card .case-id { font-weight: 700; font-size: 14px; color: #1e3a5f; }
+    .case-card .case-name { font-size: 12px; color: #6b7280; }
+    .case-card .case-crime { font-size: 11px; color: #9ca3af; }
+    .case-card .check-mark { display: none; color: #3b82f6; font-size: 16px; font-weight: bold; position: absolute; top: 8px; right: 10px; }
+    .case-card { position: relative; }
+    .case-card.selected .check-mark { display: block; }
+
+    /* 底部操作栏 */
+    .action-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 0 4px;
+      border-top: 1px solid #f3f4f6;
+      margin-top: 8px;
+    }
+    .selected-count {
+      font-size: 13px;
+      color: #6b7280;
+      margin-left: auto;
+    }
+    .selected-count strong { color: #3b82f6; }
+
+    .btn {
+      padding: 10px 22px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary { background: #3b82f6; color: white; }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
+    .btn-secondary { background: #6b7280; color: white; }
+    .btn-secondary:hover { background: #4b5563; }
+
+    /* 结果区 */
+    #results-section { display: none; }
+
     .summary-box {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
@@ -52,7 +113,7 @@
     }
     .summary-box h3 { margin-bottom: 10px; }
     .summary-box p { opacity: 0.95; line-height: 1.6; }
-    
+
     .insights-box {
       background: #fffbeb;
       border: 1px solid #fcd34d;
@@ -62,99 +123,63 @@
     }
     .insights-box h3 { color: #92400e; margin-bottom: 12px; }
     .insights-box ul { list-style: none; }
-    .insights-box li { 
-      padding: 8px 0; 
-      border-bottom: 1px dashed #fcd34d;
-      color: #78350f;
-    }
+    .insights-box li { padding: 8px 0; border-bottom: 1px dashed #fcd34d; color: #78350f; }
     .insights-box li:last-child { border-bottom: none; }
-    
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 24px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-      margin-bottom: 20px;
-    }
-    
-    .case-selector {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-      align-items: center;
-    }
-    .case-selector label { font-weight: 600; }
-    .case-checkbox {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 14px;
-      background: #f3f4f6;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .case-checkbox input { width: 16px; height: 16px; }
-    .case-checkbox.selected { background: #dbeafe; border: 2px solid #3b82f6; }
-    
-    .btn {
-      padding: 8px 18px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .btn-primary { background: #3b82f6; color: white; }
-    .btn-primary:hover { background: #2563eb; }
-    .btn-secondary { background: #6b7280; color: white; }
-    
+
     table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; }
-    th { background: #f9fafb; font-weight: 600; color: #374151; }
-    tr:hover { background: #f9fafb; }
-    
-    .highlight-row { background: #fffbeb !important; }
-    .highlight-row td { font-weight: 500; }
-    
-    .badge { 
-      padding: 3px 8px; 
-      border-radius: 4px; 
-      font-size: 12px; 
+    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+    th { background: #f9fafb; font-weight: 600; color: #374151; font-size: 13px; }
+    tr:hover td { background: #f9fafb; }
+
+    .highlight-row td { background: #fffbeb !important; font-weight: 500; }
+
+    .badge {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 12px;
       font-weight: 500;
     }
     .badge-better { background: #d1fae5; color: #065f46; }
     .badge-worse { background: #fee2e2; color: #991b1b; }
     .badge-neutral { background: #e5e7eb; color: #374151; }
-    
-    .case-header {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
+
     .case-chip {
-      padding: 8px 16px;
+      display: inline-block;
+      padding: 6px 14px;
       background: #1e3a5f;
       color: white;
       border-radius: 20px;
       font-weight: 600;
+      font-size: 13px;
     }
-    
-    .back-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      color: #6b7280;
-      text-decoration: none;
-      margin-bottom: 20px;
+
+    /* 加载动画 */
+    #loading { display: none; text-align: center; padding: 48px; color: #6b7280; }
+    #loading.visible { display: block; }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid #e5e7eb;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 12px;
     }
-    .back-link:hover { color: #1e3a5f; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* 错误 */
+    .error-box {
+      background: #fef2f2; border: 1px solid #fecaca;
+      color: #dc2626; padding: 16px 20px;
+      border-radius: 10px; margin-bottom: 16px;
+    }
+
+    /* 导出区 */
+    .export-bar {
+      text-align: center;
+      padding: 8px 0;
+    }
+    .export-bar p { color: #666; font-size: 12px; margin-top: 8px; }
   </style>
-  <link rel="stylesheet" href="/static/mobile.css">
 </head>
 <body>
   <div class="topbar">
@@ -168,106 +193,216 @@
       <a href="/search">搜索</a>
     </nav>
     <div class="user-menu">
-      {% if user_logged_in %}
-        <a href="/auth/profile" class="user-link">👤 {{ session.username }}</a>
-        <a href="/auth/logout" class="user-link">退出</a>
-      {% else %}
-        <a href="/auth/login" class="user-link">登录</a>
-        <a href="/auth/register" class="user-link">注册</a>
-      {% endif %}
+      <a href="/auth/login" class="user-link">登录</a>
     </div>
   </div>
-  
+
   <div class="container">
-    <a href="/" class="back-link">← 返回案件列表</a>
-    
     <h1>⚖️ 案件对比分析</h1>
-    
-    {% if error %}
-    <div class="error-box">
-      <p>{{ error }}</p>
-      <br>
-      <a href="/" class="btn btn-secondary">返回选择案件</a>
-    </div>
-    {% endif %}
-    
-    {% if comparison %}
-    <!-- 案件选择 -->
+
+    <!-- 选择案件 -->
     <div class="card">
-      <h3 style="margin-bottom: 16px;">📋 对比案件</h3>
-      <div class="case-selector">
-        {% for case_id in case_ids %}
-        <span class="case-chip">{{ case_id }}</span>
-        {% endfor %}
-        <a href="/" class="btn btn-secondary">← 更换案件</a>
+      <h3 style="margin-bottom: 14px;">📋 选择案件（至少选2个）</h3>
+      <div class="case-grid" id="case-grid">
+        <div style="color:#9ca3af;grid-column:1/-1;text-align:center;padding:20px;">加载中…</div>
+      </div>
+      <div class="action-bar">
+        <button class="btn btn-secondary" onclick="clearSelection()">清空选择</button>
+        <span class="selected-count">已选 <strong id="sel-count">0</strong> 个案件</span>
+        <button class="btn btn-primary" id="compare-btn" disabled onclick="doCompare()">
+          🔍 开始对比
+        </button>
+      </div>
+      <div id="sel-error" class="error-box" style="display:none;margin-top:12px;"></div>
+    </div>
+
+    <!-- 加载中 -->
+    <div id="loading">
+      <div class="spinner"></div>
+      <div>正在对比分析…</div>
+    </div>
+
+    <!-- 结果区 -->
+    <div id="results-section">
+      <!-- 选中案件标签 -->
+      <div id="selected-chips" style="margin-bottom:16px;"></div>
+
+      <!-- 摘要 -->
+      <div class="summary-box" id="summary-box">
+        <h3>📊 对比摘要</h3>
+        <p id="summary-text"></p>
+      </div>
+
+      <!-- 洞察 -->
+      <div class="insights-box" id="insights-box" style="display:none;">
+        <h3>💡 对比洞察</h3>
+        <ul id="insights-list"></ul>
+      </div>
+
+      <!-- 表格 -->
+      <div class="card" id="table-card" style="overflow-x:auto;">
+        <table id="compare-table">
+          <thead id="compare-thead"></thead>
+          <tbody id="compare-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- 导出 -->
+      <div class="card export-bar">
+        <a id="export-link" href="#" class="btn btn-primary" style="font-size:15px;padding:12px 28px;">
+          🖨️ 导出对比报告
+        </a>
+        <p>点击后在浏览器按 Ctrl+P 打印为PDF</p>
       </div>
     </div>
-    
-    <!-- 摘要 -->
-    <div class="summary-box">
-      <h3>📊 对比摘要</h3>
-      <p>{{ comparison.summary }}</p>
-    </div>
-    
-    <!-- 洞察 -->
-    {% if comparison.insights %}
-    <div class="insights-box">
-      <h3>💡 对比洞察</h3>
-      <ul>
-        {% for insight in comparison.insights %}
-        <li>{{ insight }}</li>
-        {% endfor %}
-      </ul>
-    </div>
-    {% endif %}
-    
-    <!-- 对比表格 -->
-    <div class="card">
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 150px;">对比项</th>
-            {% for case_id in case_ids %}
-            <th>{{ case_id }}</th>
-            {% endfor %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in comparison.comparison_items %}
-          <tr class="{% if item.highlight %}highlight-row{% endif %}">
-            <td><strong>{{ item.label }}</strong></td>
-            {% for case_id in case_ids %}
-            <td>
-              {% if item.highlight %}
-                {% if item.is_better == case_id %}
-                  <span class="badge badge-better">✓ 更优</span>
-                {% elif item.is_better not in ['both', 'none'] %}
-                  <span class="badge badge-worse">✗ 较差</span>
-                {% else %}
-                  {{ item.values[case_id] }}
-                {% endif %}
-              {% else %}
-                {{ item.values[case_id] }}
-              {% endif %}
-            </td>
-            {% endfor %}
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% endif %}
-    
-    <!-- 导出选项 -->
-    <div class="card" style="text-align: center;">
-      <h3 style="margin-bottom: 16px;">📥 导出报告</h3>
-      <a href="/export/comparison?case_id={{ case_ids|join('&case_id=') }}" class="btn btn-primary" style="font-size: 16px; padding: 12px 24px;">
-        🖨️ 导出为HTML/PDF
-      </a>
-      <p style="color: #666; font-size: 12px; margin-top: 10px;">
-        点击后在浏览器中按 Ctrl+P 可打印为PDF
-      </p>
-    </div>
   </div>
+
+<script>
+  // ── 加载案件列表 ──────────────────────────────────────────
+  let allCases = [];
+  let selectedIds = new Set();
+
+  async function loadCases() {
+    try {
+      const resp = await fetch('/api/cases');
+      const data = await resp.json();
+      allCases = data.cases || [];
+      renderGrid();
+    } catch (e) {
+      document.getElementById('case-grid').innerHTML =
+        '<div style="color:#dc2626;grid-column:1/-1;text-align:center;">加载失败: ' + e.message + '</div>';
+    }
+  }
+
+  function renderGrid() {
+    const grid = document.getElementById('case-grid');
+    if (!allCases.length) {
+      grid.innerHTML = '<div style="color:#9ca3af;grid-column:1/-1;text-align:center;">暂无案件数据</div>';
+      return;
+    }
+    grid.innerHTML = allCases.map(c => `
+      <div class="case-card${selectedIds.has(c.case_id) ? ' selected' : ''}"
+           onclick="toggleCase('${c.case_id}')" id="card-${c.case_id}">
+        <span class="check-mark">✓</span>
+        <span class="case-id">${c.case_id}</span>
+        <span class="case-name">${(c.case_name || '').substring(0, 20)}</span>
+        <span class="case-crime">${c.crime_type || ''}</span>
+      </div>
+    `).join('');
+    updateUI();
+  }
+
+  function toggleCase(id) {
+    if (selectedIds.has(id)) {
+      selectedIds.delete(id);
+    } else if (selectedIds.size < 5) {
+      selectedIds.add(id);
+    }
+    // 更新卡片样式
+    document.querySelectorAll('.case-card').forEach(el => {
+      el.classList.toggle('selected', selectedIds.has(el.id.replace('card-','')));
+    });
+    updateUI();
+  }
+
+  function clearSelection() {
+    selectedIds.clear();
+    document.querySelectorAll('.case-card').forEach(el => el.classList.remove('selected'));
+    updateUI();
+  }
+
+  function updateUI() {
+    const n = selectedIds.size;
+    document.getElementById('sel-count').textContent = n;
+    document.getElementById('compare-btn').disabled = n < 2;
+    document.getElementById('sel-error').style.display = n > 5 ? 'block' : 'none';
+    if (n > 5) {
+      document.getElementById('sel-error').textContent = '最多支持5个案件';
+    }
+  }
+
+  // ── 对比 ─────────────────────────────────────────────────
+  async function doCompare() {
+    if (selectedIds.size < 2) return;
+    const ids = Array.from(selectedIds);
+
+    document.getElementById('loading').classList.add('visible');
+    document.getElementById('results-section').style.display = 'none';
+    document.getElementById('sel-error').style.display = 'none';
+
+    try {
+      const resp = await fetch('/api/compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ case_ids: ids }),
+      });
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        alert('对比失败: ' + (data.error || resp.statusText));
+        return;
+      }
+
+      renderResults(data, ids);
+      document.getElementById('results-section').style.display = 'block';
+    } catch (e) {
+      alert('请求失败: ' + e.message);
+    } finally {
+      document.getElementById('loading').classList.remove('visible');
+    }
+  }
+
+  function renderResults(data, ids) {
+    // 选中案件标签
+    document.getElementById('selected-chips').innerHTML =
+      ids.map(id => `<span class="case-chip">${id}</span>`).join(' ');
+
+    // 摘要
+    document.getElementById('summary-text').textContent = data.summary || '暂无摘要';
+
+    // 洞察
+    const insightsBox = document.getElementById('insights-box');
+    if (data.insights && data.insights.length) {
+      insightsBox.style.display = 'block';
+      document.getElementById('insights-list').innerHTML =
+        data.insights.map(i => `<li>${i}</li>`).join('');
+    } else {
+      insightsBox.style.display = 'none';
+    }
+
+    // 表格
+    const thead = document.getElementById('compare-thead');
+    const tbody = document.getElementById('compare-tbody');
+
+    thead.innerHTML = `<tr><th style="width:150px">对比项</th>${ids.map(id => `<th>${id}</th>`).join('')}</tr>`;
+
+    if (data.comparison_items && data.comparison_items.length) {
+      tbody.innerHTML = data.comparison_items.map(item => {
+        const highlight = item.highlight;
+        let cells = ids.map(id => {
+          const val = item.values ? item.values[id] : '—';
+          if (!highlight) return `<td>${val ?? '—'}</td>`;
+          const better = item.is_better;
+          if (better === id) return `<td><span class="badge badge-better">✓ 更优</span> ${val}</td>`;
+          if (better && better !== 'both' && better !== 'none') return `<td><span class="badge badge-worse">✗ 较差</span></td>`;
+          return `<td>${val ?? '—'}</td>`;
+        }).join('');
+        return `<tr class="${highlight ? 'highlight-row' : ''}"><td><strong>${item.label}</strong></td>${cells}</tr>`;
+      }).join('');
+    } else {
+      tbody.innerHTML = '<tr><td colspan="99" style="text-align:center;color:#9ca3af;padding:24px;">暂无对比数据</td></tr>';
+    }
+
+    // 导出链接
+    document.getElementById('export-link').href =
+      '/export/comparison?' + ids.map(id => 'case_id=' + id).join('&');
+
+    // 滚动到结果
+    document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── 启动 ─────────────────────────────────────────────────
+  loadCases();
+</script>
 </body>
 </html>
