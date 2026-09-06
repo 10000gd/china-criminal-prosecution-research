@@ -627,6 +627,52 @@ class LawRAG:
                 scores[cid] += score
                 chunk_freq[cid] += 1
 
+        # ===== 概念优先召回（确保关键法条不被司法解释淹没）=====
+        # ===== 概念优先召回（精确子串匹配，确保关键法条不被司法解释淹没）=====
+        # law_name 使用 chunk.law_name（不是文件名）
+        CONCEPT_LAW_NAME = "中华人民共和国刑法"
+        CONCEPT_LAW_MAP = {
+            "数罪并罚":    (CONCEPT_LAW_NAME, "第六十九条"),
+            "正当防卫":    (CONCEPT_LAW_NAME, "第二十条"),
+            "假想防卫":    (CONCEPT_LAW_NAME, "第二十条"),
+            "紧急避险":    (CONCEPT_LAW_NAME, "第二十一条"),
+            "累犯":        (CONCEPT_LAW_NAME, "第六十五条"),
+            "自首":        (CONCEPT_LAW_NAME, "第六十七条"),
+            "立功":        (CONCEPT_LAW_NAME, "第六十八条"),
+            "缓刑":        (CONCEPT_LAW_NAME, "第七十二条"),
+            "假释":        (CONCEPT_LAW_NAME, "第八十一条"),
+            "没收财产":    (CONCEPT_LAW_NAME, "第五十九条"),
+            "刑事责任年龄":(CONCEPT_LAW_NAME, "第十七条"),
+            "管制":        (CONCEPT_LAW_NAME, "第三十八条"),
+            "拘役":        (CONCEPT_LAW_NAME, "第四十二条"),
+            "死刑":        (CONCEPT_LAW_NAME, "第四十八条"),
+            "罚金":        (CONCEPT_LAW_NAME, "第五十二条"),
+            "剥夺政治权利":(CONCEPT_LAW_NAME, "第五十四条"),
+            "减轻处罚":    (CONCEPT_LAW_NAME, "第六十三条"),
+            "从重处罚":    (CONCEPT_LAW_NAME, "第六十二条"),
+            "单位犯罪":    (CONCEPT_LAW_NAME, "第三十条"),
+            "共同犯罪":    (CONCEPT_LAW_NAME, "第二十五条"),
+            "犯罪未遂":    (CONCEPT_LAW_NAME, "第二十三条"),
+            "犯罪中止":    (CONCEPT_LAW_NAME, "第二十四条"),
+            "正当防卫明显超过必要限度": (CONCEPT_LAW_NAME, "第二十条"),
+            "特别累犯":    (CONCEPT_LAW_NAME, "第六十六条"),
+            "追诉时效":    (CONCEPT_LAW_NAME, "第八十七条"),
+            "告诉才处理":  (CONCEPT_LAW_NAME, "第九十八条"),
+        }
+        CONCEPT_BOOST = 3.0  # 概念命中后 score × 3.0
+        # 若 BM25 未命中目标 chunk（分词盲区），注入基础分
+        MIN_INJECT_SCORE = 100.0
+
+        for concept, (law_name, article_marker) in CONCEPT_LAW_MAP.items():
+            if concept not in query:
+                continue
+            for cid, chunk in enumerate(self.chunks):
+                if chunk.law_name == law_name and article_marker in chunk.content:
+                    if cid in scores:
+                        scores[cid] = scores[cid] * CONCEPT_BOOST
+                    else:
+                        scores[cid] = MIN_INJECT_SCORE  # 强制注入，使未BM25命中的chunk也能进入排序
+
         bm25_ranked = sorted(scores.items(), key=lambda x: (-x[1], -chunk_freq.get(x[0], 0)))
 
         # ===== 向量检索 =====
