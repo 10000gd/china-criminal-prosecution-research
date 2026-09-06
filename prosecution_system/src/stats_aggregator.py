@@ -18,6 +18,8 @@ API 端点（供 web_app 调用）：
 
 import json
 from pathlib import Path
+from datetime import datetime
+from typing import Dict, Any, List, Optional
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -125,26 +127,47 @@ class StatsAggregator:
         if not data:
             return None
 
-        # ── 优先使用 seed data 自带的统计字段 ──────────────────
         seed_hr = data.get("hallucination_rate")
         seed_cs = data.get("confidence_score")
-
         charges = data.get("charges", {})
         judged = charges.get("charges_judged", {})
         missed = charges.get("charges_missed", {})
-
         # ── 兼容 seed data schema: charges.primary ──────────────
         if not judged and "primary" in charges:
             primary = charges["primary"]
             if isinstance(primary, dict) and primary.get("name"):
                 judged = {"primary": primary}
-
         total = len(judged) + len(missed)
 
-        # ── 如果有 seed 自带数据，直接用；否则按 ConfidenceScorer 计算 ──
+        # ── 真实核查优先：调用 FactChecker ─────────────────────────
+        try:
+            from fact_checker import FactChecker
+            fc = FactChecker(case_id, self.loader)
+            result = fc.check()
+            a = result["grade_a"]; b = result["grade_b"]
+            c = result["grade_c"]; d_ = result["grade_d"]; e = result["grade_e"]
+            total_f = result["total_fields"] or 1
+            halluc_rate = round((c + d_ + e) / total_f, 3)
+            avg_conf = round((a * 1.0 + b * 0.7 + c * 0.4 + d_ * 0.1) / total_f, 2)
+            return HallucinationStat(
+                case_id=case_id,
+                total_fields=total_f,
+                grade_a=a, grade_b=b, grade_c=c, grade_d=d_, grade_e=e,
+                high_confidence=a, medium_confidence=b,
+                low_confidence=c, unreliable_confidence=d_ + e,
+                average_confidence=avg_conf,
+                hallucination_rate=halluc_rate,
+                unreliability_rate=round((d_ + e) / total_f, 3),
+                timestamp=result["check_date"],
+            )
+        except Exception:
+            pass
+
+        # ── 降级兜底：使用 seed data 自带统计字段 ──────────────────
+        seed_hr = data.get("hallucination_rate")
+        seed_cs = data.get("confidence_score")
         if seed_hr is not None and seed_cs is not None:
-            # 使用 seed 数据的幻觉率和置信度
-            avg_score = float(seed_cs) * 100  # confidence_score 是 0~1，转为 0~100
+            avg_score = float(seed_cs) * 100
             if total == 0:
                 total = len(judged) or 1
             return HallucinationStat(
@@ -159,14 +182,13 @@ class StatsAggregator:
                 timestamp=datetime.now().strftime("%Y-%m-%d %H:%M"),
             )
 
+        # ── 最后兜底：按 ConfidenceScorer 计算 ────────────────────
         if total == 0:
             return None
 
-        # ── 按 ConfidenceScorer 计算 ────────────────────────────
         grade_a = grade_b = grade_c = grade_d = grade_e = 0
         high = medium = low = unreliable = 0
         scores = []
-
         for cid, cdata in judged.items():
             cs = self.scorer.assess(
                 conclusion=f"构成{cdata.get('name','')}",
@@ -174,25 +196,15 @@ class StatsAggregator:
                 crime_type=cdata.get("name", ""),
             )
             scores.append(cs.score)
-            if cs.level == "HIGH":
-                high += 1
-            elif cs.level == "MEDIUM":
-                medium += 1
-            elif cs.level == "LOW":
-                low += 1
-            else:
-                unreliable += 1
-            if cs.score >= 80:
-                grade_a += 1
-            elif cs.score >= 60:
-                grade_b += 1
-            elif cs.score >= 40:
-                grade_c += 1
-            elif cs.score >= 20:
-                grade_d += 1
-            else:
-                grade_e += 1
-
+            if cs.level == "HIGH": high += 1
+            elif cs.level == "MEDIUM": medium += 1
+            elif cs.level == "LOW": low += 1
+            else: unreliable += 1
+            if cs.score >= 80: grade_a += 1
+            elif cs.score >= 60: grade_b += 1
+            elif cs.score >= 40: grade_c += 1
+            elif cs.score >= 20: grade_d += 1
+            else: grade_e += 1
         for cid, cdata in missed.items():
             cs = self.scorer.assess(
                 conclusion=f"遗漏{cdata.get('name','')}",
@@ -200,39 +212,22 @@ class StatsAggregator:
                 crime_type=cdata.get("name", ""),
             )
             scores.append(cs.score)
-            if cs.level == "HIGH":
-                high += 1
-            elif cs.level == "MEDIUM":
-                medium += 1
-            elif cs.level == "LOW":
-                low += 1
-            else:
-                unreliable += 1
-            if cs.score >= 80:
-                grade_a += 1
-            elif cs.score >= 60:
-                grade_b += 1
-            elif cs.score >= 40:
-                grade_c += 1
-            elif cs.score >= 20:
-                grade_d += 1
-            else:
-                grade_e += 1
-
+            if cs.level == "HIGH": high += 1
+            elif cs.level == "MEDIUM": medium += 1
+            elif cs.level == "LOW": low += 1
+            else: unreliable += 1
+            if cs.score >= 80: grade_a += 1
+            elif cs.score >= 60: grade_b += 1
+            elif cs.score >= 40: grade_c += 1
+            elif cs.score >= 20: grade_d += 1
+            else: grade_e += 1
         avg_score = sum(scores) / len(scores) if scores else 0
-
         return HallucinationStat(
             case_id=case_id,
             total_fields=total,
-            grade_a=grade_a,
-            grade_b=grade_b,
-            grade_c=grade_c,
-            grade_d=grade_d,
-            grade_e=grade_e,
-            high_confidence=high,
-            medium_confidence=medium,
-            low_confidence=low,
-            unreliable_confidence=unreliable,
+            grade_a=grade_a, grade_b=grade_b, grade_c=grade_c, grade_d=grade_d, grade_e=grade_e,
+            high_confidence=high, medium_confidence=medium,
+            low_confidence=low, unreliable_confidence=unreliable,
             average_confidence=round(avg_score, 1),
             hallucination_rate=round((low + unreliable) / total, 3),
             unreliability_rate=round((low + unreliable) / total, 3),
@@ -263,12 +258,18 @@ class StatsAggregator:
         return {
             "case_id": s.case_id,
             "total_fields": s.total_fields,
+            "grade_a": s.grade_a,
+            "grade_b": s.grade_b,
+            "grade_c": s.grade_c,
+            "grade_d": s.grade_d,
+            "grade_e": s.grade_e,
             "high": s.high_confidence,
             "medium": s.medium_confidence,
             "low": s.low_confidence,
             "unreliable": s.unreliable_confidence,
             "average_confidence": s.average_confidence,
             "hallucination_rate": s.hallucination_rate,
+            "hallucination_pct": round(s.hallucination_rate * 100, 1),
             "timestamp": s.timestamp,
         }
 
