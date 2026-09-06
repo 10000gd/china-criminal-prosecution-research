@@ -716,9 +716,13 @@ class LawRAG:
                 except Exception:
                     pass
 
+            article_match = re.search(r'第[一二三四五六七八九十百千零〇\d]+条', chunk.content)
+            article_str = article_match.group() if article_match else ''
+
             preview = self._get_preview(chunk.content, query, radius=100)
             results.append({
                 'law': chunk.law_name,
+                'article': article_str,
                 'category': chunk.category,
                 'chunk_id': chunk.chunk_id,
                 'bm25_score': round(bm25_score, 3),

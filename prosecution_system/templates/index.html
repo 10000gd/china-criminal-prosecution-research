@@ -39,7 +39,13 @@
       margin-bottom: 20px;
       box-shadow: 0 1px 4px rgba(0,0,0,0.07);
     }
-    .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
+    .filters {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 20px;
+    }
     .filters select, .filters input {
       padding: 8px 14px;
       border: 1px solid #d1d5db;
@@ -49,6 +55,19 @@
       color: #1f2937;
     }
     .filters input[type="text"] { width: 240px; }
+    .filter-btn {
+      padding: 8px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      background: #fff;
+      color: #374151;
+      transition: all 0.15s;
+    }
+    .filter-btn:hover { background: #f3f4f6; }
+    .filter-btn.active { background: #1e3a5f; color: #fff; border-color: #1e3a5f; }
     .btn {
       padding: 8px 18px;
       border: none;
@@ -77,6 +96,7 @@
       transition: all 0.15s;
     }
     .case-item:hover { border-color: #1e3a5f; background: #f0f4f8; box-shadow: 0 2px 8px rgba(30,58,95,0.08); }
+    .case-item.hidden { display: none; }
     .case-icon { font-size: 1.8rem; flex-shrink: 0; }
     .case-info { flex: 1; min-width: 0; }
     .case-name { font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -94,6 +114,8 @@
     .badge-judged   { background: #d1fae5; color: #065f46; }
     .badge-appealed { background: #ede9fe; color: #5b21b6; }
     .badge-closed   { background: #f3f4f6; color: #374151; }
+    .badge-active   { background: #dbeafe; color: #1d4ed8; }
+    .badge-completed { background: #d1fae5; color: #065f46; }
     .case-actions { display: flex; gap: 8px; flex-shrink: 0; }
     .case-actions .btn { font-size: 12px; padding: 5px 12px; }
     .empty { text-align: center; padding: 60px 20px; color: #9ca3af; }
@@ -108,6 +130,8 @@
     }
     .stat-box .num { font-size: 1.8rem; font-weight: 900; color: #1e3a5f; line-height: 1.2; }
     .stat-box .lbl { font-size: 12px; color: #6b7280; margin-top: 4px; }
+    .result-count { font-size: 13px; color: #6b7280; margin-bottom: 12px; }
+    .result-count strong { color: #1e3a5f; }
     @media (max-width: 640px) {
       .case-item { flex-wrap: wrap; }
       .case-actions { width: 100%; }
@@ -144,47 +168,51 @@
 
 <div class="container">
   <h1>📁 案件管理</h1>
-  <p class="subtitle">全部案件列表 · 状态：{{ active_status|default('全部') }}</p>
+  <p class="subtitle">全部案件列表 · 实时筛选</p>
 
   <!-- 统计卡片 -->
-  <div class="stats-row">
+  <div class="stats-row" id="stats-row">
     <div class="stat-box">
-      <div class="num">{{ cases|length }}</div>
+      <div class="num" id="total-count">{{ cases|length }}</div>
       <div class="lbl">案件总数</div>
     </div>
     {% for s in statuses %}
     <div class="stat-box">
-      <div class="num">{{ cases|selectattr('status','equalto',s)|list|length }}</div>
+      <div class="num" id="count-{{ s }}">{{ cases|selectattr('status','equalto',s)|list|length }}</div>
       <div class="lbl">{{ status_labels[s] }}</div>
     </div>
     {% endfor %}
   </div>
 
-  <!-- 筛选器 -->
+  <!-- 实时筛选器 -->
   <div class="filters">
-    <select onchange="window.location.href='/?status='+this.value">
+    <input type="text" id="search-input" placeholder="🔍 搜索案件名称、ID…" />
+    <select id="status-filter">
       <option value="">全部状态</option>
       {% for s, label in status_labels.items() %}
-      <option value="{{ s }}" {% if active_status == s %}selected{% endif %}>{{ label }}</option>
+      <option value="{{ s }}">{{ label }}</option>
       {% endfor %}
     </select>
-    <a href="/" class="btn btn-outline">全部</a>
-    <a href="/" class="btn btn-primary" style="margin-left:auto;">+ 新建案件</a>
+    <button class="filter-btn active" data-status="" onclick="setStatus('')">全部</button>
+    {% for s, label in status_labels.items() %}
+    <button class="filter-btn" data-status="{{ s }}" onclick="setStatus('{{ s }}')">{{ label }}</button>
+    {% endfor %}
   </div>
 
   <!-- 案件列表 -->
   <div class="card">
+    <div class="result-count" id="result-count">显示 <strong>{{ cases|length }}</strong> 个案件</div>
     {% if cases %}
-    <div class="case-list">
+    <div class="case-list" id="case-list">
       {% for case in cases %}
-      <div class="case-item">
+      <div class="case-item" data-status="{{ case.status }}" data-name="{{ case.case_name|lower }}" data-id="{{ case.case_id|lower }}">
         <div class="case-icon">📋</div>
         <div class="case-info">
           <div class="case-name">{{ case.case_name }}</div>
           <div class="case-meta">
             <span>ID: {{ case.case_id }}</span>
-            <span>类型: {{ case.case_type }}</span>
-            <span>判决: {{ case.judgment_date }}</span>
+            {% if case.case_type %}<span>类型: {{ case.case_type }}</span>{% endif %}
+            <span>判决: {{ case.judgment_date or '—' }}</span>
           </div>
         </div>
         <span class="case-badge badge-{{ case.status }}">{{ status_labels.get(case.status, case.status) }}</span>
@@ -203,6 +231,55 @@
     {% endif %}
   </div>
 </div>
+
+<script>
+  const searchInput = document.getElementById('search-input');
+  const statusFilter = document.getElementById('status-filter');
+  const caseList = document.getElementById('case-list');
+  const resultCount = document.getElementById('result-count');
+  let currentStatus = '';
+  let currentQuery = '';
+
+  function setStatus(status) {
+    currentStatus = status;
+    statusFilter.value = status;
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.status === status);
+    });
+    applyFilter();
+  }
+
+  function applyFilter() {
+    if (!caseList) return;
+    const items = caseList.querySelectorAll('.case-item');
+    let visible = 0;
+    items.forEach(item => {
+      const matchStatus = !currentStatus || item.dataset.status === currentStatus;
+      const q = currentQuery.toLowerCase();
+      const matchSearch = !q ||
+        item.dataset.name.includes(q) ||
+        item.dataset.id.includes(q);
+      const show = matchStatus && matchSearch;
+      item.classList.toggle('hidden', !show);
+      if (show) visible++;
+    });
+    resultCount.innerHTML = '显示 <strong>' + visible + '</strong> / {{ cases|length }} 个案件';
+  }
+
+  searchInput.addEventListener('input', () => {
+    currentQuery = searchInput.value.trim();
+    applyFilter();
+  });
+
+  statusFilter.addEventListener('change', () => {
+    setStatus(statusFilter.value);
+  });
+
+  // URL 参数同步（刷新后保持筛选状态）
+  const urlParams = new URLSearchParams(window.location.search);
+  const initStatus = urlParams.get('status') || '';
+  if (initStatus) setStatus(initStatus);
+</script>
 
 </body>
 </html>
