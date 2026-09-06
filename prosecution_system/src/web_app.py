@@ -413,10 +413,10 @@ from case_comparison import CaseComparator, compare_cases
 
 @app.route("/compare")
 def compare_page():
-    """案件对比页面"""
+    """案件对比页面（支持空访问，由前端JS动态加载案件列表）"""
     case_ids = request.args.getlist("case_id")
     if len(case_ids) < 2:
-        return render_template("compare.html", error="请选择至少2个案件进行对比", cases=[])
+        return render_template("compare.html", comparison=None, case_ids=[])  # 前端JS动态对比
     
     cases_data = []
     for case_id in case_ids:
