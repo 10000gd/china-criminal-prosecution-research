@@ -142,16 +142,42 @@ ROBBERY_THRESHOLDS: Dict[str, int] = {
 # 刑法第271条：数额较大（≥3万）/ 数额巨大（≥100万）
 # =============================================================================
 EMBEZZLEMENT_THRESHOLDS: Dict[str, Dict[str, int]] = {
-    # 全国统一标准（2022年修订后）
     "DEFAULT": {"amount_standard": 30000, "massive": 1000000},
     "北京": {"amount_standard": 20000, "massive": 1000000},
     "上海": {"amount_standard": 20000, "massive": 1000000},
     "浙江": {"amount_standard": 30000, "massive": 1000000},
     "广东": {"amount_standard": 30000, "massive": 1000000},
     "深圳": {"amount_standard": 30000, "massive": 1000000},
+    "广州": {"amount_standard": 30000, "massive": 1000000},
     "江苏": {"amount_standard": 30000, "massive": 1000000},
     "天津": {"amount_standard": 30000, "massive": 1000000},
     "重庆": {"amount_standard": 30000, "massive": 1000000},
+    "四川": {"amount_standard": 30000, "massive": 1000000},
+    "湖北": {"amount_standard": 30000, "massive": 1000000},
+    "湖南": {"amount_standard": 30000, "massive": 1000000},
+    "河南": {"amount_standard": 30000, "massive": 1000000},
+    "河北": {"amount_standard": 30000, "massive": 1000000},
+    "山东": {"amount_standard": 30000, "massive": 1000000},
+    "福建": {"amount_standard": 30000, "massive": 1000000},
+    "厦门": {"amount_standard": 30000, "massive": 1000000},
+    "安徽": {"amount_standard": 30000, "massive": 1000000},
+    "辽宁": {"amount_standard": 30000, "massive": 1000000},
+    "黑龙江": {"amount_standard": 30000, "massive": 1000000},
+    "吉林": {"amount_standard": 30000, "massive": 1000000},
+    "陕西": {"amount_standard": 30000, "massive": 1000000},
+    "云南": {"amount_standard": 30000, "massive": 1000000},
+    "贵州": {"amount_standard": 30000, "massive": 1000000},
+    "西藏": {"amount_standard": 30000, "massive": 1000000},
+    "内蒙古": {"amount_standard": 30000, "massive": 1000000},
+    "新疆": {"amount_standard": 30000, "massive": 1000000},
+    "甘肃": {"amount_standard": 30000, "massive": 1000000},
+    "青海": {"amount_standard": 30000, "massive": 1000000},
+    "宁夏": {"amount_standard": 30000, "massive": 1000000},
+    "海南": {"amount_standard": 30000, "massive": 1000000},
+    "江西": {"amount_standard": 30000, "massive": 1000000},
+    "山西": {"amount_standard": 30000, "massive": 1000000},
+    "广西": {"amount_standard": 30000, "massive": 1000000},
+    "成都": {"amount_standard": 30000, "massive": 1000000},
 }
 
 # =============================================================================
@@ -160,44 +186,42 @@ EMBEZZLEMENT_THRESHOLDS: Dict[str, Dict[str, int]] = {
 # 但司法实践中轻伤赔偿标准影响量刑，这里记录轻伤/重伤/致死的赔偿参考线
 # =============================================================================
 INJURY_THRESHOLDS: Dict[str, Dict[str, Any]] = {
-    # 故意伤害罪以伤情定罪，数额仅用于量刑参考
-    # level: slight=轻伤(入罪), serious=重伤, fatal=致人死亡/严重残疾
-    "DEFAULT": {
-        "slight_min": 1,       # 轻伤即入罪，无金额门槛
-        "serious_min": 30000,  # 重伤参考赔偿起点
-        "fatal_min": 100000,   # 致人死亡/严重残疾参考起点
-        "note": "故意伤害罪以伤情定罪（轻伤即可入罪），赔偿数额影响量刑",
-    },
-    "北京": {
-        "slight_min": 1,
-        "serious_min": 50000,
-        "fatal_min": 200000,
-        "note": "北京故意伤害罪重伤/致死赔偿参考标准",
-    },
-    "上海": {
-        "slight_min": 1,
-        "serious_min": 50000,
-        "fatal_min": 200000,
-        "note": "上海故意伤害罪重伤/致死赔偿参考标准",
-    },
-    "广东": {
-        "slight_min": 1,
-        "serious_min": 40000,
-        "fatal_min": 150000,
-        "note": "广东故意伤害罪重伤/致死赔偿参考标准",
-    },
-    "浙江": {
-        "slight_min": 1,
-        "serious_min": 40000,
-        "fatal_min": 150000,
-        "note": "浙江故意伤害罪重伤/致死赔偿参考标准",
-    },
-    "江苏": {
-        "slight_min": 1,
-        "serious_min": 30000,
-        "fatal_min": 100000,
-        "note": "江苏故意伤害罪重伤/致死赔偿参考标准",
-    },
+    "DEFAULT": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "故意伤害罪以伤情定罪（轻伤即可入罪），赔偿数额影响量刑"},
+    "北京": {"slight_min": 1, "serious_min": 50000, "fatal_min": 200000, "note": "北京重伤/致死赔偿参考"},
+    "上海": {"slight_min": 1, "serious_min": 50000, "fatal_min": 200000, "note": "上海重伤/致死赔偿参考"},
+    "浙江": {"slight_min": 1, "serious_min": 40000, "fatal_min": 150000, "note": "浙江重伤/致死赔偿参考"},
+    "广东": {"slight_min": 1, "serious_min": 40000, "fatal_min": 150000, "note": "广东重伤/致死赔偿参考"},
+    "江苏": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "江苏重伤/致死赔偿参考"},
+    "天津": {"slight_min": 1, "serious_min": 40000, "fatal_min": 150000, "note": "天津重伤/致死赔偿参考"},
+    "重庆": {"slight_min": 1, "serious_min": 40000, "fatal_min": 150000, "note": "重庆重伤/致死赔偿参考"},
+    "四川": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "四川重伤/致死赔偿参考"},
+    "湖北": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "湖北重伤/致死赔偿参考"},
+    "湖南": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "湖南重伤/致死赔偿参考"},
+    "河南": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "河南重伤/致死赔偿参考"},
+    "河北": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "河北重伤/致死赔偿参考"},
+    "山东": {"slight_min": 1, "serious_min": 40000, "fatal_min": 150000, "note": "山东重伤/致死赔偿参考"},
+    "福建": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "福建重伤/致死赔偿参考"},
+    "安徽": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "安徽重伤/致死赔偿参考"},
+    "辽宁": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "辽宁重伤/致死赔偿参考"},
+    "黑龙江": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "黑龙江重伤/致死赔偿参考"},
+    "吉林": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "吉林重伤/致死赔偿参考"},
+    "陕西": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "陕西重伤/致死赔偿参考"},
+    "云南": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "云南重伤/致死赔偿参考"},
+    "贵州": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "贵州重伤/致死赔偿参考"},
+    "广西": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "广西重伤/致死赔偿参考"},
+    "山西": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "山西重伤/致死赔偿参考"},
+    "江西": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "江西重伤/致死赔偿参考"},
+    "内蒙古": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "内蒙古重伤/致死赔偿参考"},
+    "新疆": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "新疆重伤/致死赔偿参考"},
+    "甘肃": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "甘肃重伤/致死赔偿参考"},
+    "青海": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "青海重伤/致死赔偿参考"},
+    "宁夏": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "宁夏重伤/致死赔偿参考"},
+    "海南": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "海南重伤/致死赔偿参考"},
+    "西藏": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "西藏重伤/致死赔偿参考"},
+    "深圳": {"slight_min": 1, "serious_min": 40000, "fatal_min": 150000, "note": "深圳重伤/致死赔偿参考"},
+    "广州": {"slight_min": 1, "serious_min": 40000, "fatal_min": 150000, "note": "广州重伤/致死赔偿参考"},
+    "厦门": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "厦门重伤/致死赔偿参考"},
+    "成都": {"slight_min": 1, "serious_min": 30000, "fatal_min": 100000, "note": "成都重伤/致死赔偿参考"},
 }
 
 # =============================================================================
@@ -276,6 +300,213 @@ GAMBLING_THRESHOLDS = {
     "DEFAULT": {
         "regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上/赌具数量10台以上",
     },
+    "北京": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "上海": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "浙江": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "广东": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "江苏": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "四川": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "河南": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "山东": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "湖北": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "湖南": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "河北": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "辽宁": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "黑龙江": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "福建": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "安徽": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "陕西": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "云南": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "贵州": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "广西": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "山西": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "江西": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "天津": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "重庆": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "吉林": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "内蒙古": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "新疆": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "甘肃": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "青海": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "宁夏": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "海南": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "西藏": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "深圳": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "广州": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "厦门": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+    "成都": {"regular": "抽头渔利5000元以上/赌资50000元以上/参赌人数20人以上"},
+}
+
+
+# =============================================================================
+# 敲诈勒索罪数额标准（元）
+# 刑法第274条：敲诈勒索公私财物，数额较大或多次敲诈勒索，处3年以下有期徒刑
+# =============================================================================
+EXTORTION_THRESHOLDS: Dict[str, Dict[str, int]] = {
+    "DEFAULT": {"amount_standard": 2000, "massive": 50000, "especially_massive": 500000},
+    "北京": {"amount_standard": 3000, "massive": 100000, "especially_massive": 500000},
+    "上海": {"amount_standard": 2000, "massive": 50000, "especially_massive": 500000},
+    "浙江": {"amount_standard": 4000, "massive": 80000, "especially_massive": 500000},
+    "江苏": {"amount_standard": 4000, "massive": 50000, "especially_massive": 500000},
+    "广东": {"amount_standard": 4000, "massive": 100000, "especially_massive": 500000},
+    "深圳": {"amount_standard": 4000, "massive": 100000, "especially_massive": 500000},
+    "广州": {"amount_standard": 4000, "massive": 100000, "especially_massive": 500000},
+    "天津": {"amount_standard": 3000, "massive": 60000, "especially_massive": 500000},
+    "重庆": {"amount_standard": 3000, "massive": 60000, "especially_massive": 500000},
+    "四川": {"amount_standard": 3000, "massive": 50000, "especially_massive": 500000},
+    "成都": {"amount_standard": 4000, "massive": 80000, "especially_massive": 500000},
+    "湖北": {"amount_standard": 3000, "massive": 50000, "especially_massive": 500000},
+    "湖南": {"amount_standard": 3000, "massive": 50000, "especially_massive": 500000},
+    "河南": {"amount_standard": 3000, "massive": 50000, "especially_massive": 500000},
+    "河北": {"amount_standard": 3000, "massive": 50000, "especially_massive": 500000},
+    "山东": {"amount_standard": 4000, "massive": 60000, "especially_massive": 500000},
+    "福建": {"amount_standard": 4000, "massive": 60000, "especially_massive": 500000},
+    "厦门": {"amount_standard": 4000, "massive": 60000, "especially_massive": 500000},
+    "安徽": {"amount_standard": 3000, "massive": 50000, "especially_massive": 500000},
+    "辽宁": {"amount_standard": 3000, "massive": 50000, "especially_massive": 500000},
+    "黑龙江": {"amount_standard": 2000, "massive": 30000, "especially_massive": 500000},
+    "吉林": {"amount_standard": 3000, "massive": 50000, "especially_massive": 500000},
+    "陕西": {"amount_standard": 3000, "massive": 50000, "especially_massive": 500000},
+    "云南": {"amount_standard": 3000, "massive": 50000, "especially_massive": 500000},
+    "贵州": {"amount_standard": 2000, "massive": 30000, "especially_massive": 500000},
+    "西藏": {"amount_standard": 2000, "massive": 30000, "especially_massive": 500000},
+    "内蒙古": {"amount_standard": 2000, "massive": 30000, "especially_massive": 500000},
+    "新疆": {"amount_standard": 2000, "massive": 30000, "especially_massive": 500000},
+    "甘肃": {"amount_standard": 2000, "massive": 30000, "especially_massive": 500000},
+    "青海": {"amount_standard": 2000, "massive": 30000, "especially_massive": 500000},
+    "宁夏": {"amount_standard": 2000, "massive": 30000, "especially_massive": 500000},
+    "海南": {"amount_standard": 2000, "massive": 30000, "especially_massive": 500000},
+    "江西": {"amount_standard": 3000, "massive": 50000, "especially_massive": 500000},
+    "山西": {"amount_standard": 3000, "massive": 50000, "especially_massive": 500000},
+    "广西": {"amount_standard": 2000, "massive": 30000, "especially_massive": 500000},
+}
+
+# =============================================================================
+# 交通肇事罪标准
+# 刑法第133条：根据事故后果和责任划分确定量刑档次
+# =============================================================================
+TRAFFIC_ACCIDENT_THRESHOLDS: Dict[str, Dict[str, Any]] = {
+    "DEFAULT": {
+        "death1_flee": "死亡1人负主责+逃逸 → 3-7年",
+        "death1_serious": "死亡1人负主责无逃逸/重伤3人负主责 → 3年以下",
+        "death2_flee": "死亡2人以上/重伤5人以上+逃逸/特别恶劣情节 → 3-7年",
+        "note": "以事故后果定罪，金额仅作赔偿参考",
+    },
+    "北京": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "北京"},
+    "上海": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "上海"},
+    "浙江": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "浙江"},
+    "广东": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "广东"},
+    "江苏": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "江苏"},
+    "四川": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "四川"},
+    "河南": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "河南"},
+    "山东": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "山东"},
+    "湖北": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "湖北"},
+    "湖南": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "湖南"},
+    "河北": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "河北"},
+    "辽宁": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "辽宁"},
+    "黑龙江": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "黑龙江"},
+    "福建": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "福建"},
+    "安徽": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "安徽"},
+    "陕西": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "陕西"},
+    "云南": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "云南"},
+    "贵州": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "贵州"},
+    "广西": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "广西"},
+    "山西": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "山西"},
+    "江西": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "江西"},
+    "天津": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "天津"},
+    "重庆": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "重庆"},
+    "吉林": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "吉林"},
+    "内蒙古": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "内蒙古"},
+    "新疆": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "新疆"},
+    "甘肃": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "甘肃"},
+    "青海": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "青海"},
+    "宁夏": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "宁夏"},
+    "海南": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "海南"},
+    "西藏": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "西藏"},
+    "深圳": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "深圳"},
+    "广州": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "广州"},
+    "厦门": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "厦门"},
+    "成都": {"death1_flee": "死亡1人+逃逸 → 3-7年", "death1_serious": "死亡1人无逃逸 → 3年以下", "death2_flee": "死亡2人+逃逸 → 3-7年", "note": "成都"},
+}
+
+# =============================================================================
+# 非法吸收公众存款罪数额标准（元）
+# 刑法第176条：2022年解释 数额较大≥100万，数额巨大≥1000万
+# =============================================================================
+FRAUD_ABSORB_THRESHOLDS: Dict[str, Dict[str, int]] = {
+    "DEFAULT": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "北京": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "上海": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "浙江": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "广东": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "江苏": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "深圳": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "天津": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "重庆": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "四川": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "湖北": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "湖南": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "河南": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "河北": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "山东": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "福建": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "安徽": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "辽宁": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "黑龙江": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "吉林": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "陕西": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "云南": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "贵州": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "广西": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "海南": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "江西": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "山西": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "内蒙古": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "新疆": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "甘肃": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "青海": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "宁夏": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+    "西藏": {"amount_standard": 1000000, "massive": 10000000, "especially_massive": 50000000},
+}
+
+# =============================================================================
+# 集资诈骗罪数额标准（元）
+# 刑法第192条：2022年解释 数额较大≥10万，数额巨大≥100万，数额特别巨大≥500万
+# =============================================================================
+FUND_RAISING_FRAUD_THRESHOLDS: Dict[str, Dict[str, int]] = {
+    "DEFAULT": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "北京": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "上海": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "浙江": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "广东": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "江苏": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "深圳": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "天津": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "重庆": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "四川": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "湖北": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "湖南": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "河南": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "河北": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "山东": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "福建": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "安徽": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "辽宁": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "黑龙江": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "吉林": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "陕西": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "云南": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "贵州": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "广西": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "海南": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "江西": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "山西": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "内蒙古": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "新疆": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "甘肃": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "青海": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "宁夏": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
+    "西藏": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
 }
 
 
@@ -316,6 +547,10 @@ class ThresholdDB:
         self.embezzlement_thresholds = EMBEZZLEMENT_THRESHOLDS
         self.injury_thresholds = INJURY_THRESHOLDS
         self.drug_thresholds = DRUG_THRESHOLDS
+        self.extortion_thresholds = EXTORTION_THRESHOLDS
+        self.traffic_accident_thresholds = TRAFFIC_ACCIDENT_THRESHOLDS
+        self.fraud_absorb_thresholds = FRAUD_ABSORB_THRESHOLDS
+        self.fund_raising_fraud_thresholds = FUND_RAISING_FRAUD_THRESHOLDS
 
     def get_threshold(self, crime_type: str, province: str = None) -> Dict[str, Any]:
         """获取某省份某罪名的入罪门槛"""
@@ -385,6 +620,55 @@ class ThresholdDB:
                 "fatal_min": data.get("fatal_min", 100000),
                 "standard_note": data.get("note", ""),
                 "legal_basis": "《刑法》第234条 + 最高法《人身损害赔偿司法解释》(2022)",
+            }
+
+        elif ct in ("敲诈勒索罪", "extortion", "敲诈勒索"):
+            data = self.extortion_thresholds.get(pk, self.extortion_thresholds["DEFAULT"])
+            return {
+                "crime_type": "敲诈勒索罪",
+                "province": pk if pk != "DEFAULT" else "（全国默认）",
+                "amount_large": data.get("amount_standard", 2000),
+                "amount_massive": data.get("massive", 50000),
+                "amount_especially_massive": data.get("especially_massive", 500000),
+                "standard_note": "数额较大≥2千元，数额巨大各省不同",
+                "legal_basis": "最高法《关于审理敲诈勒索刑事案件具体应用法律若干问题的解释》(2013) 第1条",
+            }
+
+        elif ct in ("交通肇事罪", "traffic", "交通肇事"):
+            data = self.traffic_accident_thresholds.get(pk, self.traffic_accident_thresholds["DEFAULT"])
+            return {
+                "crime_type": "交通肇事罪",
+                "province": pk if pk != "DEFAULT" else "（全国统一）",
+                "threshold_note": "以事故后果定罪，非金额门槛",
+                "death1_flee": data.get("death1_flee", ""),
+                "death1_serious": data.get("death1_serious", ""),
+                "death2_flee": data.get("death2_flee", ""),
+                "standard_note": data.get("note", ""),
+                "legal_basis": "最高法《关于审理交通肇事刑事案件具体应用法律若干问题的解释》(2000)2022修订 第2条",
+            }
+
+        elif ct in ("非法吸收公众存款罪", "非法吸存", "非法吸收公众存款"):
+            data = self.fraud_absorb_thresholds.get(pk, self.fraud_absorb_thresholds["DEFAULT"])
+            return {
+                "crime_type": "非法吸收公众存款罪",
+                "province": pk if pk != "DEFAULT" else "（全国统一标准）",
+                "amount_large": data.get("amount_standard", 1000000),
+                "amount_massive": data.get("massive", 10000000),
+                "amount_especially_massive": data.get("especially_massive", 50000000),
+                "standard_note": "数额较大≥100万，数额巨大≥1000万（2022年解释）",
+                "legal_basis": "最高法《关于审理非法吸收公众存款刑事案件具体应用法律若干问题的解释》(2022) 第2条",
+            }
+
+        elif ct in ("集资诈骗罪", "集资诈骗"):
+            data = self.fund_raising_fraud_thresholds.get(pk, self.fund_raising_fraud_thresholds["DEFAULT"])
+            return {
+                "crime_type": "集资诈骗罪",
+                "province": pk if pk != "DEFAULT" else "（全国统一标准）",
+                "amount_large": data.get("amount_standard", 100000),
+                "amount_massive": data.get("massive", 1000000),
+                "amount_especially_massive": data.get("especially_massive", 5000000),
+                "standard_note": "数额较大≥10万，数额巨大≥100万（2022年解释）",
+                "legal_basis": "最高法《关于审理非法集资刑事案件具体应用法律若干问题的解释》(2022) 第3条",
             }
 
         elif ct in ("毒品犯罪", "drug", "贩毒", "走私毒品", "制造毒品", "运输毒品"):
@@ -555,6 +839,142 @@ class ThresholdDB:
                     legal_basis=basis,
                 )
 
+        # ── 敲诈勒索罪 ──────────────────────────────────────────
+        elif ct in ("敲诈勒索罪", "extortion", "敲诈勒索"):
+            data = self.extortion_thresholds.get(pk, self.extortion_thresholds["DEFAULT"])
+            large = data.get("amount_standard", 2000)
+            massive = data.get("massive", 50000)
+            espe = data.get("especially_massive", 500000)
+            basis = "最高法《关于审理敲诈勒索刑事案件具体应用法律若干问题的解释》(2013) 第1条"
+
+            if amt < large:
+                return ThresholdResult(
+                    crime_type="敲诈勒索罪", province=province or pk,
+                    amount=amt, threshold=large,
+                    level="NOT_CRIME",
+                    verdict=f"金额{amt:.0f}元 < {large}元入罪门槛，❌ 不构成敲诈勒索罪",
+                    confidence="高", confidence_note="法条原文标准，明确无歧义",
+                    legal_basis=basis,
+                )
+            elif amt < massive:
+                return ThresholdResult(
+                    crime_type="敲诈勒索罪", province=province or pk,
+                    amount=amt, threshold=large,
+                    level="AMOUNT_LARGE",
+                    verdict=f"金额{amt:.0f}元，达到'数额较大'标准（≥{large}元），✅ 涉嫌敲诈勒索罪",
+                    confidence="高", confidence_note="法条原文标准，明确无歧义",
+                    legal_basis=basis,
+                )
+            elif amt < espe:
+                return ThresholdResult(
+                    crime_type="敲诈勒索罪", province=province or pk,
+                    amount=amt, threshold=large,
+                    level="MASSIVE",
+                    verdict=f"金额{amt:.0f}元，达到'数额巨大'标准（≥{massive}元），⚠️ 涉嫌敲诈勒索罪（数额巨大），法定刑3-10年",
+                    confidence="高", confidence_note="法条原文标准，明确无歧义",
+                    legal_basis=basis,
+                )
+            else:
+                return ThresholdResult(
+                    crime_type="敲诈勒索罪", province=province or pk,
+                    amount=amt, threshold=large,
+                    level="ESPECIALLY_MASSIVE",
+                    verdict=f"金额{amt:.0f}元，达到'数额特别巨大'标准（≥{espe}元），⚠️ 涉嫌敲诈勒索罪（数额特别巨大），法定刑10年以上",
+                    confidence="高", confidence_note="法条原文标准，明确无歧义",
+                    legal_basis=basis,
+                )
+
+        # ── 交通肇事罪 ──────────────────────────────────────────
+        elif ct in ("交通肇事罪", "traffic", "交通肇事"):
+            data = self.traffic_accident_thresholds.get(pk, self.traffic_accident_thresholds["DEFAULT"])
+            basis = "最高法《关于审理交通肇事刑事案件具体应用法律若干问题的解释》(2000)2022修订 第2条"
+            return ThresholdResult(
+                crime_type="交通肇事罪", province=pk if pk != "DEFAULT" else "全国统一",
+                amount=amt, threshold=0,
+                level="TRAFFIC_ACCIDENT",
+                verdict=f"交通肇事罪以事故后果定罪（非金额门槛）：\n  {data.get('death1_serious', '')}\n  {data.get('death1_flee', '')}\n  {data.get('death2_flee', '')}",
+                confidence="高", confidence_note=f"标准：{data.get('note', '')}",
+                legal_basis=basis,
+            )
+
+        # ── 非法吸收公众存款罪 ───────────────────────────────────
+        elif ct in ("非法吸收公众存款罪", "非法吸存", "非法吸收公众存款"):
+            data = self.fraud_absorb_thresholds.get(pk, self.fraud_absorb_thresholds["DEFAULT"])
+            large = data.get("amount_standard", 1000000)
+            massive = data.get("massive", 10000000)
+            espe = data.get("especially_massive", 50000000)
+            basis = "最高法《关于审理非法吸收公众存款刑事案件具体应用法律若干问题的解释》(2022) 第2条"
+
+            if amt < large:
+                return ThresholdResult(
+                    crime_type="非法吸收公众存款罪", province=province or pk,
+                    amount=amt, threshold=large,
+                    level="NOT_CRIME",
+                    verdict=f"金额{amt:.0f}元 < {large}元入罪门槛，❌ 不构成非法吸收公众存款罪",
+                    confidence="高", confidence_note="2022年解释标准",
+                    legal_basis=basis,
+                )
+            elif amt < massive:
+                return ThresholdResult(
+                    crime_type="非法吸收公众存款罪", province=province or pk,
+                    amount=amt, threshold=large,
+                    level="AMOUNT_LARGE",
+                    verdict=f"金额{amt:.0f}元，达到'数额较大'标准（≥{large}元），✅ 涉嫌非法吸收公众存款罪",
+                    confidence="高", confidence_note="2022年解释标准",
+                    legal_basis=basis,
+                )
+            else:
+                lvl = "MASSIVE" if amt < espe else "ESPECIALLY_MASSIVE"
+                name = "数额巨大" if amt < espe else "数额特别巨大"
+                th = massive if amt < espe else espe
+                return ThresholdResult(
+                    crime_type="非法吸收公众存款罪", province=province or pk,
+                    amount=amt, threshold=large,
+                    level=lvl,
+                    verdict=f"金额{amt:.0f}元，达到'{name}'标准（≥{th}元），⚠️ 涉嫌非法吸收公众存款罪（{name}）",
+                    confidence="高", confidence_note="2022年解释标准",
+                    legal_basis=basis,
+                )
+
+        # ── 集资诈骗罪 ───────────────────────────────────────────
+        elif ct in ("集资诈骗罪", "集资诈骗"):
+            data = self.fund_raising_fraud_thresholds.get(pk, self.fund_raising_fraud_thresholds["DEFAULT"])
+            large = data.get("amount_standard", 100000)
+            massive = data.get("massive", 1000000)
+            espe = data.get("especially_massive", 5000000)
+            basis = "最高法《关于审理非法集资刑事案件具体应用法律若干问题的解释》(2022) 第3条"
+
+            if amt < large:
+                return ThresholdResult(
+                    crime_type="集资诈骗罪", province=province or pk,
+                    amount=amt, threshold=large,
+                    level="NOT_CRIME",
+                    verdict=f"金额{amt:.0f}元 < {large}元入罪门槛，❌ 不构成集资诈骗罪",
+                    confidence="高", confidence_note="2022年解释标准",
+                    legal_basis=basis,
+                )
+            elif amt < massive:
+                return ThresholdResult(
+                    crime_type="集资诈骗罪", province=province or pk,
+                    amount=amt, threshold=large,
+                    level="AMOUNT_LARGE",
+                    verdict=f"金额{amt:.0f}元，达到'数额较大'标准（≥{large}元），✅ 涉嫌集资诈骗罪",
+                    confidence="高", confidence_note="2022年解释标准",
+                    legal_basis=basis,
+                )
+            else:
+                lvl = "MASSIVE" if amt < espe else "ESPECIALLY_MASSIVE"
+                name = "数额巨大" if amt < espe else "数额特别巨大"
+                th = massive if amt < espe else espe
+                return ThresholdResult(
+                    crime_type="集资诈骗罪", province=province or pk,
+                    amount=amt, threshold=large,
+                    level=lvl,
+                    verdict=f"金额{amt:.0f}元，达到'{name}'标准（≥{th}元），⚠️ 涉嫌集资诈骗罪（{name}）",
+                    confidence="高", confidence_note="2022年解释标准",
+                    legal_basis=basis,
+                )
+
         # ── 毒品犯罪 ────────────────────────────────────────────
         elif ct in ("毒品犯罪", "drug", "贩毒", "走私毒品", "制造毒品", "运输毒品"):
             # amount 参数在这里是毒品重量（克），不是金额
@@ -665,6 +1085,8 @@ class ThresholdDB:
         return [
             "盗窃罪", "诈骗罪", "抢夺罪", "职务侵占罪",
             "故意伤害罪", "毒品犯罪", "开设赌场罪",
+            "敲诈勒索罪", "交通肇事罪",
+            "非法吸收公众存款罪", "集资诈骗罪",
         ]
 
     def get_drug_types(self) -> List[str]:

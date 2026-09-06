@@ -178,7 +178,7 @@
     </div>
     <div class="summary-item">
       <div class="label">差距倍数</div>
-      <div class="value">{{ "%.0f"|format(rows[-1].threshold_yuan / rows[0].threshold_yuan) }}x</div>
+      <div class="value">{{ "%.0f"|format(rows[-1].threshold_yuan / rows[0].threshold_yuan) if rows[0].threshold_yuan > 0 else 'N/A' }}x</div>
       <div class="sub">最高/最低</div>
     </div>
   </div>
@@ -254,13 +254,9 @@
         <input type="number" id="amount-input" placeholder="例如 5000" min="0" step="100">
         <span class="unit">元</span>
         <select id="crime-select">
-          <option value="盗窃罪">盗窃罪</option>
-          <option value="诈骗罪">诈骗罪</option>
-          <option value="抢夺罪">抢夺罪</option>
-          <option value="职务侵占罪">职务侵占罪</option>
-          <option value="故意伤害罪">故意伤害罪</option>
-          <option value="毒品犯罪">毒品犯罪</option>
-          <option value="开设赌场罪">开设赌场罪</option>
+{% for c in available_crimes %}
+          <option value="{{ c }}"{% if c == crime %} selected{% endif %}>{{ c }}</option>
+{% endfor %}
         </select>
         <button class="btn btn-primary" onclick="checkAmount()">判断</button>
       </div>

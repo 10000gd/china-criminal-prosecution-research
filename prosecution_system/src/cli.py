@@ -169,10 +169,27 @@ def cmd_report(args):
         return 1
     info = loader.get_case_info(case_id)
     charges = loader.get_charges(case_id)
+    meta = loader.get_meta(case_id)
     output = Path(args.output or f"report_{case_id}.{args.format}")
     _print_header(f"报告生成：{case_id}")
     print(f"  格式: {args.format}")
     print(f"  输出: {output}")
+    # 案件金额（元）
+    amt = (info.get("amount") or 0) if info else 0
+    amt_wan = f"{amt/10000:.1f}万元" if amt else "未知"
+    # 罪名列表
+    primary = (charges.get("primary") or {}) if charges else {}
+    charge_name = primary.get("name", "未知")
+    charge_article = primary.get("article", "")
+    charge_amt = primary.get("amount", 0)
+    charge_level = primary.get("level", "")
+    charge_sentence = primary.get("recommended_sentence", "")
+    # 从 YAML 根级别取幻觉率/置信度
+    yaml_data = loader.load(case_id) if hasattr(loader, "load") else None
+    hallucination_rate = (yaml_data.get("hallucination_rate") if yaml_data else None)
+    confidence_score = (yaml_data.get("confidence_score") if yaml_data else None)
+    # 证据缺口
+    gaps = loader.get_evidence_gaps(case_id) or []
     # 简单文本报告
     content = [
         f"# 案件报告：{case_id}",
@@ -182,32 +199,30 @@ def cmd_report(args):
         f"## 案件概要",
         f"- 省份: {info.get('province', '未知') if info else '未知'}",
         f"- 案号: {info.get('case_number', '未知') if info else '未知'}",
-        f"- 涉案金额: {info.get('case_amount', 0)/10000:.1f}万元" if info and info.get("case_amount") else "- 涉案金额: 未知",
+        f"- 涉案金额: {amt_wan}",
         f"",
         f"## 罪名信息",
+        f"- **{charge_name}** {f'（{charge_article}）' if charge_article else ''}",
     ]
-    if charges:
-        for c in charges.get("charges", []):
-            content.append(f"- **{c.get('name', '?')}**")
-            if c.get("amount"):
-                content.append(f"  涉案金额: {c['amount']/10000:.1f}万元")
-            if c.get("sentencing_recommendation"):
-                content.append(f"  量刑建议: {c['sentencing_recommendation']}")
+    if charge_amt:
+        content.append(f"  涉案金额: {charge_amt/10000:.1f}万元")
+    if charge_level:
+        content.append(f"  数额档次: {charge_level}")
+    if charge_sentence:
+        content.append(f"  量刑建议: {charge_sentence}")
     content.extend([
         f"",
         f"## 证据缺口",
     ])
-    gaps = loader.get_evidence_gaps(case_id)
     if gaps:
         for g in gaps:
             content.append(f"- {g.get('description', g) if isinstance(g, dict) else g}")
     else:
         content.append("  （无记录）")
-    content.extend([
-        f"",
-        f"## 幻觉率: {meta.get('hallucination_rate', 'N/A')}",
-        f"## 置信度: {meta.get('confidence_score', 'N/A')}",
-    ])
+    if hallucination_rate is not None:
+        content.append(f"\n## 幻觉率: {hallucination_rate:.1%}")
+    if confidence_score is not None:
+        content.append(f"## 置信度: {confidence_score:.2f}")
     output.write_text("\n".join(content), encoding="utf-8")
     print(f"✅ 报告已保存: {output}")
     return 0

@@ -602,6 +602,17 @@ SENTENCING_CASES: List[Dict] = [
     {"case_id": "ZY-213", "case_name": "招摇撞骗案（重庆）", "crime": "招摇撞骗罪", "province": "重庆", "sentence_years": 0.5, "is_自首": True},
     {"case_id": "ZY-214", "case_name": "招摇撞骗案（天津）", "crime": "招摇撞骗罪", "province": "天津", "sentence_years": 0.8, "is_初犯": True},
     {"case_id": "ZY-215", "case_name": "招摇撞骗案（辽宁）", "crime": "招摇撞骗罪", "province": "辽宁", "sentence_years": 1.5, "is_坦白": True},
+    # ── 集资诈骗罪（新增10条） ────────────────────────────────────
+    {"case_id": "ZY-216", "case_name": "集资诈骗案（北京-初犯自首）", "crime": "集资诈骗罪", "province": "北京", "sentence_years": 1.5, "amount": 150000, "is_初犯": True, "is_自首": True},
+    {"case_id": "ZY-217", "case_name": "集资诈骗案（上海-数额较大）", "crime": "集资诈骗罪", "province": "上海", "sentence_years": 2.0, "amount": 200000, "is_初犯": True, "is_谅解": True},
+    {"case_id": "ZY-218", "case_name": "集资诈骗案（广东-数额较大）", "crime": "集资诈骗罪", "province": "广东", "sentence_years": 2.5, "amount": 300000, "is_初犯": True, "is_自首": True, "is_谅解": True},
+    {"case_id": "ZY-219", "case_name": "集资诈骗案（浙江-数额较大）", "crime": "集资诈骗罪", "province": "浙江", "sentence_years": 1.0, "amount": 120000, "is_初犯": True, "is_自首": True, "is_立功": True},
+    {"case_id": "ZY-220", "case_name": "集资诈骗案（江苏-数额巨大）", "crime": "集资诈骗罪", "province": "江苏", "sentence_years": 5.5, "amount": 2000000, "is_自首": False, "is_谅解": True},
+    {"case_id": "ZY-221", "case_name": "集资诈骗案（四川-数额巨大）", "crime": "集资诈骗罪", "province": "四川", "sentence_years": 7.0, "amount": 4000000, "is_自首": True, "is_坦白": True},
+    {"case_id": "ZY-222", "case_name": "集资诈骗案（湖北-数额巨大）", "crime": "集资诈骗罪", "province": "湖北", "sentence_years": 4.0, "amount": 1500000, "is_初犯": True, "is_自首": True, "is_谅解": True, "is_立功": True},
+    {"case_id": "ZY-223", "case_name": "集资诈骗案（山东-数额特别巨大）", "crime": "集资诈骗罪", "province": "山东", "sentence_years": 11.0, "amount": 8000000, "is_坦白": True},
+    {"case_id": "ZY-224", "case_name": "集资诈骗案（河南-数额特别巨大）", "crime": "集资诈骗罪", "province": "河南", "sentence_years": 10.0, "amount": 6000000, "is_自首": True, "is_谅解": True},
+    {"case_id": "ZY-225", "case_name": "集资诈骗案（辽宁-数额特别巨大）", "crime": "集资诈骗罪", "province": "辽宁", "sentence_years": 13.0, "amount": 15000000},
 ]
 
 

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 文档 - 刑事追诉智能辅助系统</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1923; color: #e0e0e0; min-height: 100vh; }
+        .container { max-width: 960px; margin: 0 auto; padding: 40px 20px; }
+        h1 { color: #f0c040; font-size: 28px; margin-bottom: 8px; }
+        .subtitle { color: #888; margin-bottom: 40px; font-size: 14px; }
+        .endpoint { background: #1a2636; border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
+        .endpoint-header { padding: 16px 20px; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+        .endpoint-header:hover { background: #1e2d3d; }
+        .method { font-weight: 700; font-size: 12px; padding: 4px 10px; border-radius: 4px; min-width: 56px; text-align: center; }
+        .method-get { background: #27ae60; color: white; }
+        .method-post { background: #2980b9; color: white; }
+        .method-delete { background: #c0392b; color: white; }
+        .method-put { background: #8e44ad; color: white; }
+        .endpoint-path { color: #f0c040; font-family: 'Courier New', monospace; font-size: 14px; flex: 1; }
+        .endpoint-tag { font-size: 11px; color: #888; background: #2a3a4a; padding: 3px 8px; border-radius: 3px; }
+        .endpoint-body { display: none; padding: 0 20px 20px; border-top: 1px solid #2a3a4a; }
+        .endpoint-body.open { display: block; }
+        .endpoint-summary { color: #aaa; font-size: 13px; margin: 12px 0; }
+        .props-title { color: #f0c040; font-size: 13px; margin: 12px 0 8px; }
+        .prop { display: flex; gap: 12px; padding: 6px 0; border-bottom: 1px solid #1e2d3d; font-size: 13px; }
+        .prop-name { color: #7fdbca; font-family: 'Courier New', monospace; min-width: 140px; }
+        .prop-type { color: #f39c12; font-family: 'Courier New', monospace; min-width: 80px; }
+        .prop-required { color: #e74c3c; font-size: 11px; }
+        .prop-desc { color: #888; }
+        pre { background: #0a1520; border-radius: 6px; padding: 14px; font-size: 12px; color: #a0d8ef; overflow-x: auto; margin-top: 10px; line-height: 1.6; }
+        .back { display: inline-block; margin-bottom: 20px; color: #888; text-decoration: none; font-size: 14px; }
+        .back:hover { color: #f0c040; }
+        .section-title { color: #f0c040; font-size: 16px; margin: 30px 0 15px; padding-bottom: 8px; border-bottom: 1px solid #2a3a4a; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a href="/" class="back">← 返回首页</a>
+    <h1>⚖️ API 文档</h1>
+    <p class="subtitle">刑事追诉智能辅助系统 v2.0 · OpenAPI 3.0</p>
+
+    <div class="section-title">📋 认证接口</div>
+    <div class="endpoint">
+        <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method method-get">GET</span>
+            <span class="endpoint-path">/auth/login</span>
+            <span class="endpoint-tag">认证</span>
+        </div>
+        <div class="endpoint-body">
+            <div class="endpoint-summary">登录页面 / 接口（支持 JSON 和表单）</div>
+            <div class="props-title">请求参数</div>
+            <div class="prop"><span class="prop-name">username</span><span class="prop-type">string</span><span class="prop-required">必填</span><span class="prop-desc">用户名</span></div>
+            <div class="prop"><span class="prop-name">password</span><span class="prop-type">string</span><span class="prop-required">必填</span><span class="prop-desc">密码</span></div>
+        </div>
+    </div>
+
+    <div class="section-title">⚖️ 案件管理</div>
+    <div class="endpoint">
+        <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method method-get">GET</span>
+            <span class="endpoint-path">/api/cases</span>
+            <span class="endpoint-tag">案件</span>
+        </div>
+        <div class="endpoint-body">
+            <div class="endpoint-summary">获取案件列表</div>
+            <div class="props-title">响应</div>
+            <pre>{
+  "cases": [...],
+  "total": 50,
+  "page": 1
+}</pre>
+        </div>
+    </div>
+    <div class="endpoint">
+        <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method method-get">GET</span>
+            <span class="endpoint-path">/api/case/{case_id}</span>
+            <span class="endpoint-tag">案件</span>
+        </div>
+        <div class="endpoint-body">
+            <div class="endpoint-summary">获取案件详情</div>
+            <div class="props-title">路径参数</div>
+            <div class="prop"><span class="prop-name">case_id</span><span class="prop-type">string</span><span class="prop-required">必填</span><span class="prop-desc">案件编号，如 CASE-0001</span></div>
+        </div>
+    </div>
+
+    <div class="section-title">🔍 法律检索</div>
+    <div class="endpoint">
+        <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method method-get">GET</span>
+            <span class="endpoint-path">/api/law/search?q={query}</span>
+            <span class="endpoint-tag">法律</span>
+        </div>
+        <div class="endpoint-body">
+            <div class="endpoint-summary">全文法律检索（BM25 + TF-IDF）</div>
+            <div class="props-title">查询参数</div>
+            <div class="prop"><span class="prop-name">q</span><span class="prop-type">string</span><span class="prop-required">必填</span><span class="prop-desc">检索关键词，如"正当防卫"</span></div>
+            <div class="prop"><span class="prop-name">limit</span><span class="prop-type">integer</span><span class="prop-desc">返回数量，默认10</span></div>
+        </div>
+    </div>
+
+    <div class="section-title">⚖️ 入罪门槛</div>
+    <div class="endpoint">
+        <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method method-get">GET</span>
+            <span class="endpoint-path">/api/threshold?crime={crime}&amp;province={province}&amp;amount={amount}</span>
+            <span class="endpoint-tag">门槛</span>
+        </div>
+        <div class="endpoint-body">
+            <div class="endpoint-summary">查询罪名入罪门槛（支持11个罪名，33-36省）</div>
+            <div class="props-title">查询参数</div>
+            <div class="prop"><span class="prop-name">crime</span><span class="prop-type">string</span><span class="prop-required">必填</span><span class="prop-desc">罪名：盗窃罪/诈骗罪/抢夺罪/敲诈勒索罪/职务侵占罪/故意伤害罪/交通肇事罪/非法吸收公众存款罪/集资诈骗罪/开设赌场罪/毒品犯罪</span></div>
+            <div class="prop"><span class="prop-name">province</span><span class="prop-type">string</span><span class="prop-desc">省份，如"广东"（可选，不填返回全国）</span></div>
+            <div class="prop"><span class="prop-name">amount</span><span class="prop-type">number</span><span class="prop-desc">金额（元），用于判断是否达到入罪门槛</span></div>
+            <div class="props-title">响应示例</div>
+            <pre>{
+  "crime": "盗窃罪",
+  "province": "广东",
+  "threshold_yuan": 3000,
+  "threshold_wan": 0.3,
+  "reached": true,
+  "legal_basis": "最高法最高检《关于办理盗窃刑事案件...》(2013)"
+}</pre>
+        </div>
+    </div>
+
+    <div class="section-title">🛡️ 辩护分析</div>
+    <div class="endpoint">
+        <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method method-post">POST</span>
+            <span class="endpoint-path">/api/defense/analyze</span>
+            <span class="endpoint-tag">辩护</span>
+        </div>
+        <div class="endpoint-body">
+            <div class="endpoint-summary">分析案件辩护角度</div>
+            <div class="props-title">请求体</div>
+            <div class="prop"><span class="prop-name">case_id</span><span class="prop-type">string</span><span class="prop-required">必填</span><span class="prop-desc">案件编号</span></div>
+            <pre>{
+  "case_id": "CASE-0001",
+  "facts": "入户盗窃，数额较大，有自首情节",
+  "charges": ["盗窃罪"]
+}</pre>
+        </div>
+    </div>
+    <div class="endpoint">
+        <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method method-post">POST</span>
+            <span class="endpoint-path">/api/defense/opinion</span>
+            <span class="endpoint-tag">辩护</span>
+        </div>
+        <div class="endpoint-body">
+            <div class="endpoint-summary">生成辩护意见书</div>
+            <div class="props-title">请求体</div>
+            <div class="prop"><span class="prop-name">case_id</span><span class="prop-type">string</span><span class="prop-required">必填</span><span class="prop-desc">案件编号</span></div>
+        </div>
+    </div>
+    <div class="endpoint">
+        <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method method-get">GET</span>
+            <span class="endpoint-path">/api/defense/search?crime={crime}&amp;defense_type={type}</span>
+            <span class="endpoint-tag">辩护</span>
+        </div>
+        <div class="endpoint-body">
+            <div class="endpoint-summary">检索相似辩护案例</div>
+        </div>
+    </div>
+
+    <div class="section-title">📊 量刑分析</div>
+    <div class="endpoint">
+        <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method method-get">GET</span>
+            <span class="endpoint-path">/api/sentencing/report?crime={crime}</span>
+            <span class="endpoint-tag">量刑</span>
+        </div>
+        <div class="endpoint-body">
+            <div class="endpoint-summary">获取罪名量刑统计报告</div>
+        </div>
+    </div>
+    <div class="endpoint">
+        <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method method-get">GET</span>
+            <span class="endpoint-path">/api/sentencing/provincial?crime={crime}</span>
+            <span class="endpoint-tag">量刑</span>
+        </div>
+        <div class="endpoint-body">
+            <div class="endpoint-summary">各省量刑对比分析</div>
+        </div>
+    </div>
+    <div class="endpoint">
+        <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method method-post">POST</span>
+            <span class="endpoint-path">/api/sentencing/deviation</span>
+            <span class="endpoint-tag">量刑</span>
+        </div>
+        <div class="endpoint-body">
+            <div class="endpoint-summary">个案量刑偏离度检测</div>
+            <pre>{
+  "crime": "盗窃罪",
+  "amount": 50000,
+  "province": "广东",
+  "is_自首": true,
+  "is_初犯": true,
+  "is_谅解": true
+}</pre>
+        </div>
+    </div>
+
+    <div class="section-title">📈 统计信息</div>
+    <div class="endpoint">
+        <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method method-get">GET</span>
+            <span class="endpoint-path">/api/stats/overview</span>
+            <span class="endpoint-tag">统计</span>
+        </div>
+        <div class="endpoint-body">
+            <div class="endpoint-summary">系统数据总览</div>
+        </div>
+    </div>
+    <div class="endpoint">
+        <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method method-get">GET</span>
+            <span class="endpoint-path">/api/stats/hallucination</span>
+            <span class="endpoint-tag">统计</span>
+        </div>
+        <div class="endpoint-body">
+            <div class="endpoint-summary">幻觉/置信度分析</div>
+        </div>
+    </div>
+    <div class="endpoint">
+        <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method method-get">GET</span>
+            <span class="endpoint-path">/api/stats/provincial-diffs</span>
+            <span class="endpoint-tag">统计</span>
+        </div>
+        <div class="endpoint-body">
+            <div class="endpoint-summary">省级差异统计</div>
+        </div>
+    </div>
+
+    <div class="section-title">🔄 案件对比</div>
+    <div class="endpoint">
+        <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method method-post">POST</span>
+            <span class="endpoint-path">/api/compare</span>
+            <span class="endpoint-tag">对比</span>
+        </div>
+        <div class="endpoint-body">
+            <div class="endpoint-summary">多案件并排对比</div>
+            <pre>{ "case_ids": ["CASE-0001", "CASE-0002"] }</pre>
+        </div>
+    </div>
+
+    <div style="height: 60px"></div>
+</div>
+<script>
+function toggle(header) {
+    const body = header.nextElementSibling;
+    body.classList.toggle('open');
+}
+</script>
+</body>
+</html>

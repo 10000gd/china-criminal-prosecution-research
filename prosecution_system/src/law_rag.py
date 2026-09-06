@@ -523,14 +523,16 @@ class LawRAG:
             nonzero = np.nonzero(q_vec)[0]
             scores_list = []
             if len(nonzero) > 0:
-                doc_scores = self._tfidf_matrix[:, nonzero].toarray()
-                q_norm = np.linalg.norm(q_vec)
+                # 只取查询词对应的列，避免维度不匹配
+                doc_slice = self._tfidf_matrix[:, nonzero].toarray()  # (num_docs, len(nonzero))
+                q_slice = q_vec[nonzero]                              # (len(nonzero),)
+                q_norm = np.linalg.norm(q_slice)
                 if q_norm > 0:
-                    for doc_idx in range(doc_scores.shape[0]):
-                        doc_vec = doc_scores[doc_idx]
+                    for doc_idx in range(doc_slice.shape[0]):
+                        doc_vec = doc_slice[doc_idx]
                         doc_norm = np.linalg.norm(doc_vec)
                         if doc_norm > 0:
-                            score = float(np.dot(doc_vec, q_vec) / (doc_norm * q_norm))
+                            score = float(np.dot(doc_vec, q_slice) / (doc_norm * q_norm))
                             if score > 0:
                                 scores_list.append((doc_idx, score))
         else:

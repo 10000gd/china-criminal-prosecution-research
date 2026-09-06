@@ -53,15 +53,16 @@ class CaseSearchIndex:
         self.rebuild()
 
     def _tokenize(self, text: str) -> List[str]:
-        """简单分词：中文按单字，英文按单词（均小写）"""
+        """分词：中文用 bigram（相邻两字为一词项），英文用单词"""
         if not text:
             return []
         text = text.lower()
-        # 中文字符（每个字作为一个词项）
+        # 中文字符 bigram
         chinese = re.findall(r'[\u4e00-\u9fff]', text)
+        chinese_bigrams = [text[i:i+2] for i in range(len(chinese) - 1)]
         # 英文单词和数字
         english = re.findall(r'[a-z0-9]+', text)
-        return chinese + english
+        return chinese_bigrams + english
 
     def _index_text(self, case_id: str, text: str):
         """将文本分词后加入倒排索引"""
@@ -131,7 +132,13 @@ class CaseSearchIndex:
 
         # 按命中数降序，取 top_n
         sorted_ids = sorted(scores, key=lambda x: scores[x], reverse=True)[:top_n]
-        return [self.case_meta[cid] for cid in sorted_ids if cid in self.case_meta]
+        results = []
+        for cid in sorted_ids:
+            if cid in self.case_meta:
+                r = dict(self.case_meta[cid])
+                r["score"] = scores[cid]
+                results.append(r)
+        return results
 
     def rebuild(self):
         """重新构建索引（外部调用入口）"""
