@@ -198,6 +198,59 @@ class ReportBuilder:
 
         self.content = []
 
+        # ---- 数据标准化：消除 case_loader 返回格式与 ReportBuilder 期望格式的差异 ----
+        # charges: case_loader 返回 {primary: [...]}，ReportBuilder 期望 {charges_judged: {...}, charges_missed: {...}}
+        raw_charges = self.charges
+        self.charges = {
+            "charges_judged": {},
+            "charges_missed": {},
+        }
+        if isinstance(raw_charges, dict):
+            for section in ("charges_judged", "charges_missed"):
+                if section in raw_charges and isinstance(raw_charges[section], dict):
+                    self.charges[section] = raw_charges[section]
+            # 兜底：如果 charge_loader 只有 primary，规范化到 charges_judged
+            if not self.charges["charges_judged"]:
+                for key in ("primary", "judged", "main"):
+                    if key in raw_charges and isinstance(raw_charges[key], list):
+                        self.charges["charges_judged"] = {
+                            f"C{i+1}": c for i, c in enumerate(raw_charges[key])
+                        }
+                        break
+
+        # sources: case_loader 返回 dict{primary:[], secondary:[]}，ReportBuilder 期望 list
+        raw_sources = self.sources
+        self.sources = []
+        if isinstance(raw_sources, dict):
+            for src in raw_sources.get("primary", []):
+                if isinstance(src, dict):
+                    src["type"] = "primary"
+                    self.sources.append(src)
+            for src in raw_sources.get("secondary", []):
+                if isinstance(src, dict):
+                    src["type"] = "secondary"
+                    self.sources.append(src)
+
+        # evidence_gaps: case_loader 可能返回字符串列表，ReportBuilder 期望 [{gap_id,...},...]
+        self.evidence_gaps = [
+            {"gap_id": i+1, "description": g} if isinstance(g, str) else g
+            for i, g in enumerate(self.evidence_gaps or [])
+        ]
+
+        # policy: None → []
+        if self.policy is None:
+            self.policy = []
+
+        # victims: case_loader 返回字符串列表，ReportBuilder 期望 [{count_approx,...},...]
+        self.victims = [
+            {"count_approx": 1, "category": str(v)} if isinstance(v, str) else v
+            for v in (self.victims or [])
+        ]
+
+        # comparable: None → []
+        if self.comparable is None:
+            self.comparable = []
+
     def p(self, text: str):
         """追加文本到内容"""
         self.content.append(text)
@@ -260,8 +313,8 @@ class ReportBuilder:
             case_num += "（需从判决文书网核实案号）"
         source = self.case_info.get("source_media", "")
 
-        defendants_corp_str = "、".join([d["name"] for d in self.defendants.get("corp", [])])
-        defendants_person_str = "、".join([d["name"] for d in self.defendants.get("person", [])])
+        defendants_corp_str = "、".join([d["name"] if isinstance(d, dict) else str(d) for d in self.defendants.get("corp", [])])
+        defendants_person_str = "、".join([d["name"] if isinstance(d, dict) else str(d) for d in self.defendants.get("person", [])])
 
         self.p(fr"""\thispagestyle{{empty}}
 \vspace*{{1cm}}
@@ -344,14 +397,18 @@ class ReportBuilder:
         if corp_defs:
             self.p(r"""\\\textbf{被告单位：}""")
             for d in corp_defs:
-                fine_str = fmt_yuan(d.get("verdict_fine")) if d.get("verdict_fine") else "未处罚"
-                self.p(f"{d['name']}（{d.get('role', '')}），罚金{fine_str}。")
+                name = d["name"] if isinstance(d, dict) else str(d)
+                role = d.get("role", "") if isinstance(d, dict) else ""
+                fine_str = fmt_yuan(d.get("verdict_fine")) if isinstance(d, dict) and d.get("verdict_fine") else "未处罚"
+                self.p(f"{name}（{role}），罚金{fine_str}。")
 
         if person_defs:
             self.p(r"""\\\textbf{被告自然人：}""")
             for d in person_defs:
-                punish = d.get("verdict_punishment", "待定")
-                self.p(f"{d['name']}（{d.get('role', '')}），{punish}。")
+                name = d["name"] if isinstance(d, dict) else str(d)
+                role = d.get("role", "") if isinstance(d, dict) else ""
+                punish = d.get("verdict_punishment", "待定") if isinstance(d, dict) else "待定"
+                self.p(f"{name}（{role}），{punish}。")
 
         # 已认定罪名
         charges_judged = self.charges.get("charges_judged", {})
@@ -638,7 +695,7 @@ class ReportBuilder:
                 print(result.stderr[-1000:])
                 break
 
-        pdf_path = tex_path.with_suffix(".pdf")
+        pdf_path = Path(tex_path).with_suffix(".pdf")
         if pdf_path.exists():
             logger.info(f"PDF 编译成功: {pdf_path}")
             print(f"✅ PDF 编译成功: {pdf_path}")
