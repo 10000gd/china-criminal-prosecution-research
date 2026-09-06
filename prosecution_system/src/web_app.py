@@ -179,6 +179,49 @@ def case_detail(case_id):
 # ---- 搜索 ----
 
 @app.route("/search")
+@app.route("/api/search")
+def api_search():
+    """全局搜索 API（案件+法律条文混合）"""
+    query = request.args.get("q", "").strip()
+    if not query:
+        return jsonify({"error": "缺少查询参数 q"}), 400
+
+    # 搜索案件
+    case_results = loader.search_cases(query)
+    all_cases = loader.list_cases()
+    name_matches = [
+        {"case_id": c["case_id"], "case_name": c.get("case_name", ""),
+         "case_type": c.get("case_type", ""), "status": c.get("status", ""),
+         "judgment_date": c.get("judgment_date", "")}
+        for c in all_cases
+        if query.lower() in c.get("case_name", "").lower()
+        or query.lower() in c.get("case_name_full", "").lower()
+    ]
+
+    # 搜索法律条文
+    try:
+        rag = get_rag()
+        law_results = rag.search(query, top_k=5, hybrid=True)
+        law_hits = [{
+            "law": h.get("law", ""),
+            "article": h.get("article", ""),
+            "category": h.get("category", ""),
+            "score": round(h.get("score", 0), 1),
+            "preview": h.get("preview", "")[:120],
+        } for h in law_results]
+    except Exception:
+        law_hits = []
+
+    return jsonify({
+        "query": query,
+        "case_results": case_results,
+        "name_matches": name_matches,
+        "law_results": law_hits,
+        "total_cases": len(case_results),
+        "total_laws": len(law_hits),
+    })
+
+
 def search():
     """全局搜索"""
     query = request.args.get("q", "").strip()
@@ -574,6 +617,33 @@ def serve_output(filename):
     if not safe_path.exists() or not safe_path.is_file():
         return "文件不存在", 404
     return send_file(safe_path, as_attachment=True, download_name=filename)
+
+
+@app.route("/api/reports")
+def api_reports():
+    """报告列表 API（JSON）"""
+    reports = []
+    reports_dir = Path(OUTPUT_DIR)
+    for subdir in (reports_dir / "defense_reports", reports_dir):
+        if not subdir.exists():
+            continue
+        for f in sorted(subdir.iterdir(), key=lambda x: -x.stat().st_mtime):
+            if f.suffix not in (".html", ".json"):
+                continue
+            is_defense = subdir.name == "defense_reports" or "defense" in f.stem.lower()
+            case_match = re.search(r"CASE[-\w]+", f.stem)
+            if not case_match:
+                case_match = re.search(r"[\w]+罪", f.stem)
+            label = case_match.group() if case_match else f.stem
+            reports.append({
+                "type": "辩护报告" if is_defense else "量刑报告",
+                "case_id": label,
+                "filename": f.name,
+                "path": str(f),
+                "size_kb": round(f.stat().st_size / 1024, 1),
+                "time": datetime.fromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d %H:%M"),
+            })
+    return jsonify({"reports": reports, "total": len(reports)})
 
 
 @app.route("/reports")

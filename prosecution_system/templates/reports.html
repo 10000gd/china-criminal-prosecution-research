@@ -15,10 +15,10 @@
     .nav-links a:hover, .nav-links a.active { color: #fff; background: rgba(255,255,255,0.1); }
 
     .container { max-width: 960px; margin: 0 auto; padding: 24px; }
-    h1 { font-size: 20px; margin-bottom: 20px; }
+    h1 { font-size: 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
 
     .card { background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 16px; overflow: hidden; }
-    .card-header { padding: 14px 20px; border-bottom: 1px solid #eee; font-weight: 600; font-size: 15px; color: #34495e; background: #fafafa; }
+    .card-header { padding: 14px 20px; border-bottom: 1px solid #eee; font-weight: 600; font-size: 15px; color: #34495e; background: #fafafa; display: flex; align-items: center; justify-content: space-between; }
     .card-body { padding: 16px 20px; }
 
     table { width: 100%; border-collapse: collapse; }
@@ -37,6 +37,9 @@
     .btn-download { background: #27ae60; color: #fff; }
     .btn-download:hover { background: #1e8449; }
     .btn-sm { padding: 3px 10px; font-size: 12px; }
+    .btn-refresh { background: #f39c12; color: #fff; padding: 5px 12px; font-size: 12px; }
+    .btn-refresh:hover { background: #d68910; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
     .empty { text-align: center; padding: 48px; color: #95a5a6; }
     .empty-icon { font-size: 48px; margin-bottom: 12px; }
@@ -49,6 +52,10 @@
     .summary-item { background: #fff; border-radius: 8px; padding: 16px 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
     .summary-item .label { font-size: 12px; color: #7f8c8d; margin-bottom: 4px; }
     .summary-item .value { font-size: 24px; font-weight: 700; color: #2c3e50; }
+
+    .spin { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 4px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .auto-badge { font-size: 10px; background: #ecf0f1; color: #7f8c8d; padding: 2px 6px; border-radius: 10px; font-weight: 400; vertical-align: middle; }
   </style>
 </head>
 <body>
@@ -66,77 +73,81 @@
 </div>
 
 <div class="container">
-  <h1>📋 已生成报告</h1>
+  <h1>
+    📋 已生成报告
+    <span class="auto-badge" id="auto-badge">30s</span>
+    <button class="btn btn-refresh" id="refresh-btn" onclick="refreshReports()">🔄 刷新</button>
+  </h1>
 
   <div class="summary-bar">
     <div class="summary-item">
       <div class="label">报告总数</div>
-      <div class="value">{{ reports|length }}</div>
+      <div class="value" id="total-count">{{ reports|length }}</div>
     </div>
     <div class="summary-item">
       <div class="label">辩护报告</div>
-      <div class="value">{{ reports|selectattr('type', 'equalto', '辩护报告')|list|length }}</div>
+      <div class="value" id="defense-count">{{ reports|selectattr('type', 'equalto', '辩护报告')|list|length }}</div>
     </div>
     <div class="summary-item">
       <div class="label">量刑报告</div>
-      <div class="value">{{ reports|selectattr('type', 'equalto', '量刑报告')|list|length }}</div>
+      <div class="value" id="sentencing-count">{{ reports|selectattr('type', 'equalto', '量刑报告')|list|length }}</div>
     </div>
   </div>
 
-  {% if reports %}
-  <div class="card">
-    <div class="card-header">报告列表</div>
-    <div class="card-body" style="padding: 0;">
-      <table>
-        <thead>
-          <tr>
-            <th>类型</th>
-            <th>案件/罪名</th>
-            <th>文件名</th>
-            <th>大小</th>
-            <th>生成时间</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for r in reports %}
-          <tr>
-            <td>
-              {% if r.type == '辩护报告' %}
-              <span class="badge badge-defense">🛡️ 辩护报告</span>
-              {% else %}
-              <span class="badge badge-sentencing">📊 量刑报告</span>
-              {% endif %}
-            </td>
-            <td>
-              <strong>{{ r.case_id }}</strong>
-            </td>
-            <td class="filename">{{ r.filename }}</td>
-            <td class="meta">{{ r.size_kb }} KB</td>
-            <td class="meta">{{ r.time }}</td>
-            <td>
-              {% if r.type == '辩护报告' %}
-              <a href="/defense/{{ r.case_id }}" class="btn btn-primary btn-sm">查看</a>
-              {% endif %}
-              <a href="/output/{{ r.filename }}" class="btn btn-download btn-sm" target="_blank">下载</a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-  {% else %}
-  <div class="card">
-    <div class="empty">
-      <div class="empty-icon">📂</div>
-      <div class="empty-text">暂无生成报告</div>
-      <div style="margin-top: 12px;">
-        <a href="/defense/CASE-0001" class="btn btn-primary">生成辩护报告 →</a>
+  <div id="table-wrapper">
+    {% if reports %}
+    <div class="card">
+      <div class="card-header">报告列表 <span id="table-meta" style="font-size:12px;font-weight:400;color:#95a5a6;"></span></div>
+      <div class="card-body" style="padding: 0;">
+        <table>
+          <thead>
+            <tr>
+              <th>类型</th>
+              <th>案件/罪名</th>
+              <th>文件名</th>
+              <th>大小</th>
+              <th>生成时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="reports-tbody">
+            {% for r in reports %}
+            <tr>
+              <td>
+                {% if r.type == '辩护报告' %}
+                <span class="badge badge-defense">🛡️ 辩护报告</span>
+                {% else %}
+                <span class="badge badge-sentencing">📊 量刑报告</span>
+                {% endif %}
+              </td>
+              <td><strong>{{ r.case_id }}</strong></td>
+              <td class="filename">{{ r.filename }}</td>
+              <td class="meta">{{ r.size_kb }} KB</td>
+              <td class="meta">{{ r.time }}</td>
+              <td>
+                {% if r.type == '辩护报告' %}
+                <a href="/defense/{{ r.case_id }}" class="btn btn-primary btn-sm">查看</a>
+                {% endif %}
+                <a href="/output/{{ r.filename }}" class="btn btn-download btn-sm" target="_blank">下载</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     </div>
+    {% else %}
+    <div class="card">
+      <div class="empty">
+        <div class="empty-icon">📂</div>
+        <div class="empty-text">暂无生成报告</div>
+        <div style="margin-top: 12px;">
+          <a href="/defense/CASE-0001" class="btn btn-primary">生成辩护报告 →</a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
   </div>
-  {% endif %}
 
   <div class="card" style="margin-top: 16px;">
     <div class="card-header">说明</div>
@@ -147,6 +158,87 @@
     </div>
   </div>
 </div>
+
+<script>
+  var refreshBtn = document.getElementById('refresh-btn');
+  var autoBadge = document.getElementById('auto-badge');
+  var autoInterval = null;
+  var countdown = 30;
+
+  function startCountdown() {
+    clearInterval(autoInterval);
+    countdown = 30;
+    autoInterval = setInterval(function() {
+      countdown--;
+      if (countdown <= 0) {
+        countdown = 30;
+        refreshReports();
+      }
+      autoBadge.textContent = countdown + 's';
+    }, 1000);
+  }
+
+  function escHtml(s) {
+    s = String(s == null ? '' : s);
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function refreshReports() {
+    refreshBtn.disabled = true;
+    refreshBtn.innerHTML = '<span class="spin"></span>刷新中…';
+
+    fetch('/api/reports')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var reports = data.reports || [];
+        var defense = 0, sentencing = 0;
+        for (var i = 0; i < reports.length; i++) {
+          if (reports[i].type === '辩护报告') defense++;
+          else sentencing++;
+        }
+        document.getElementById('total-count').textContent = reports.length;
+        document.getElementById('defense-count').textContent = defense;
+        document.getElementById('sentencing-count').textContent = sentencing;
+
+        var tbody = document.getElementById('reports-tbody');
+        if (tbody) {
+          if (reports.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:#95a5a6;">暂无生成报告</td></tr>';
+          } else {
+            var html = '';
+            for (var i = 0; i < reports.length; i++) {
+              var r = reports[i];
+              var isDefense = r.type === '辩护报告';
+              html += '<tr>' +
+                '<td><span class="badge ' + (isDefense ? 'badge-defense' : 'badge-sentencing') + '">' +
+                (isDefense ? '🛡️ 辩护报告' : '📊 量刑报告') + '</span></td>' +
+                '<td><strong>' + escHtml(r.case_id) + '</strong></td>' +
+                '<td class="filename">' + escHtml(r.filename) + '</td>' +
+                '<td class="meta">' + r.size_kb + ' KB</td>' +
+                '<td class="meta">' + escHtml(r.time) + '</td>' +
+                '<td>' +
+                  (isDefense ? '<a href="/defense/' + escHtml(r.case_id) + '" class="btn btn-primary btn-sm">查看</a> ' : '') +
+                  '<a href="/output/' + escHtml(r.filename) + '" class="btn btn-download btn-sm" target="_blank">下载</a>' +
+                '</td></tr>';
+            }
+            tbody.innerHTML = html;
+          }
+          var meta = document.getElementById('table-meta');
+          if (meta) meta.textContent = '（自动刷新中）';
+        }
+      })
+      .catch(function() {
+        console.warn('刷新失败');
+      })
+      .finally(function() {
+        refreshBtn.disabled = false;
+        refreshBtn.innerHTML = '🔄 刷新';
+        startCountdown();
+      });
+  }
+
+  startCountdown();
+</script>
 
 </body>
 </html>

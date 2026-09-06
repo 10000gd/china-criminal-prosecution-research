@@ -15,27 +15,29 @@
     .nav-links a:hover, .nav-links a.active { color: #fff; background: rgba(255,255,255,0.12); }
     .container { max-width: 860px; margin: 0 auto; padding: 28px 20px; }
     h1 { font-size: 20px; font-weight: 800; margin-bottom: 16px; color: #111827; }
-    .search-box { display: flex; gap: 10px; margin-bottom: 24px; }
+    .search-box { display: flex; gap: 10px; margin-bottom: 24px; position: relative; }
     .search-box input { flex: 1; padding: 11px 16px; border: 2px solid #d1d5db; border-radius: 10px; font-size: 15px; }
     .search-box input:focus { outline: none; border-color: #1e3a5f; }
+    .search-box .spinner {
+      position: absolute; right: 90px; top: 50%; transform: translateY(-50%);
+      width: 16px; height: 16px; border: 2px solid #d1d5db;
+      border-top-color: #1e3a5f; border-radius: 50%;
+      animation: spin 0.6s linear infinite; display: none;
+    }
+    @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
     .btn { padding: 9px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; }
     .btn-primary { background: #1e3a5f; color: #fff; }
     .btn-primary:hover { background: #2d4f7a; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
     .results-meta { font-size: 13px; color: #6b7280; margin-bottom: 16px; }
     .results-meta strong { color: #111827; }
-    .result-item {
-      background: #fff; border-radius: 10px; padding: 18px 20px; margin-bottom: 12px;
-      border: 1px solid #e5e7eb; transition: all 0.15s;
-    }
+    .result-item { background: #fff; border-radius: 10px; padding: 18px 20px; margin-bottom: 12px; border: 1px solid #e5e7eb; transition: all 0.15s; }
     .result-item:hover { border-color: #1e3a5f; box-shadow: 0 2px 10px rgba(30,58,95,0.1); }
     .result-title { font-size: 14px; font-weight: 700; color: #1e3a5f; margin-bottom: 6px; }
     .result-snippet { font-size: 13px; color: #4b5563; line-height: 1.6; margin-bottom: 8px; }
-    .result-snippet mark { background: #fef9c3; color: #854d0e; padding: 0 2px; border-radius: 2px; }
     .result-meta { display: flex; gap: 14px; font-size: 12px; color: #9ca3af; flex-wrap: wrap; }
     .result-badge { padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-    .badge-law    { background: #dbeafe; color: #1d4ed8; }
-    .badge-interp { background: #fef3c7; color: #92400e; }
-    .badge-case   { background: #f3e8ff; color: #7c3aed; }
+    .badge-law { background: #dbeafe; color: #1d4ed8; }
     .empty-search { text-align: center; padding: 50px 20px; color: #9ca3af; }
     .empty-search-icon { font-size: 2.5rem; margin-bottom: 10px; }
     .tabs { display: flex; gap: 4px; border-bottom: 2px solid #e5e7eb; margin-bottom: 18px; }
@@ -45,7 +47,8 @@
     .tab-content.active { display: block; }
     .case-match { padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
     .case-match:last-child { border-bottom: none; }
-    .case-match-name { font-weight: 700; font-size: 14px; color: #1e3a5f; margin-bottom: 3px; }
+    .case-match-name { font-weight: 700; font-size: 14px; color: #1e3a5f; margin-bottom: 3px; text-decoration: none; display: block; }
+    .case-match-name:hover { text-decoration: underline; }
     .case-match-meta { font-size: 12px; color: #6b7280; }
   </style>
 </head>
@@ -64,76 +67,205 @@
 <div class="container">
   <h1>🔍 全局搜索</h1>
 
-  <form action="/search" method="get">
+  <form id="search-form">
     <div class="search-box">
-      <input type="text" name="q" value="{{ query }}" placeholder="搜索法律条文、罪名、司法解释…">
-      <button type="submit" class="btn btn-primary">搜索</button>
+      <input type="text" id="search-input" value="{{ query }}" placeholder="搜索法律条文、罪名、司法解释…" autocomplete="off">
+      <div class="spinner" id="search-spinner"></div>
+      <button type="button" id="search-btn" class="btn btn-primary">搜索</button>
     </div>
   </form>
 
-  {% if query %}
-  <div class="tabs">
-    <button class="tab active" onclick="showTab('laws', event)">法律条文</button>
-    <button class="tab" onclick="showTab('cases', event)">案件</button>
-  </div>
-
-  <!-- 法律结果 -->
-  <div id="tab-laws" class="tab-content active">
-    {% if results %}
-    <p class="results-meta">找到 <strong>{{ results|length }}</strong> 条相关法律条文</p>
-    {% for r in results %}
-    <div class="result-item">
-      <div class="result-title">{{ r.name }}</div>
-      <div class="result-snippet">…{{ r.snippet }}…</div>
-      <div class="result-meta">
-        <span class="result-badge badge-law">{{ r.category }}</span>
-        <span>📄 命中 {{ r.size }} 字</span>
+  <div id="search-results">
+    {% if query %}
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('laws', event)">法律条文 <span>({{ results|length }})</span></button>
+      <button class="tab" onclick="showTab('cases', event)">案件 <span>({{ name_matches|length }})</span></button>
+    </div>
+    <div id="tab-laws" class="tab-content active">
+      {% if results %}
+      <p class="results-meta">找到 <strong>{{ results|length }}</strong> 条相关法律条文</p>
+      {% for r in results %}
+      <div class="result-item">
+        <div class="result-title">{{ r.name }}</div>
+        <div class="result-snippet">…{{ r.snippet }}…</div>
+        <div class="result-meta">
+          <span class="result-badge badge-law">{{ r.category }}</span>
+          <span>📄 命中 {{ r.size }} 字</span>
+        </div>
       </div>
+      {% endfor %}
+      {% else %}
+      <div class="empty-search"><div class="empty-search-icon">📭</div><p>未找到与「{{ query }}」相关的法律条文</p></div>
+      {% endif %}
     </div>
-    {% endfor %}
+    <div id="tab-cases" class="tab-content">
+      {% if name_matches %}
+      <p class="results-meta">找到 <strong>{{ name_matches|length }}</strong> 个相关案件</p>
+      {% for c in name_matches %}
+      <div class="case-match">
+        <a href="/case/{{ c.case_id }}" class="case-match-name">{{ c.case_name }}</a>
+        <div class="case-match-meta">{{ c.case_type }} · {{ c.judgment_date }} · {{ c.status }}</div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="empty-search"><div class="empty-search-icon">📂</div><p>未找到相关案件</p></div>
+      {% endif %}
+    </div>
     {% else %}
-    <div class="empty-search">
-      <div class="empty-search-icon">📭</div>
-      <p>未找到与「{{ query }}」相关的法律条文</p>
-      <p style="font-size:12px;margin-top:6px;">试试其他关键词，或浏览案件列表</p>
-    </div>
+    <div class="empty-search"><div class="empty-search-icon">🔎</div><p>输入关键词开始搜索</p><p style="font-size:12px;margin-top:6px;">可搜索法律条文、司法解释、案件名称等</p></div>
     {% endif %}
   </div>
-
-  <!-- 案件结果 -->
-  <div id="tab-cases" class="tab-content">
-    {% if name_matches %}
-    <p class="results-meta">找到 <strong>{{ name_matches|length }}</strong> 个相关案件</p>
-    {% for c in name_matches %}
-    <div class="case-match">
-      <a href="/case/{{ c.case_id }}" class="case-match-name">{{ c.case_name }}</a>
-      <div class="case-match-meta">{{ c.case_type }} · {{ c.judgment_date }} · {{ c.status }}</div>
-    </div>
-    {% endfor %}
-    {% else %}
-    <div class="empty-search">
-      <div class="empty-search-icon">📂</div>
-      <p>未找到相关案件</p>
-    </div>
-    {% endif %}
-  </div>
-
-  {% else %}
-  <div class="empty-search">
-    <div class="empty-search-icon">🔎</div>
-    <p>输入关键词开始搜索</p>
-    <p style="font-size:12px;margin-top:6px;">可搜索法律条文、司法解释、案件名称等</p>
-  </div>
-  {% endif %}
 </div>
 
 <script>
-  function showTab(name, e) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-    document.getElementById('tab-' + name).classList.add('active');
-    e.target.classList.add('active');
+  var searchForm = document.getElementById('search-form');
+  var searchInput = document.getElementById('search-input');
+  var searchBtn = document.getElementById('search-btn');
+  var searchSpinner = document.getElementById('search-spinner');
+  var resultsDiv = document.getElementById('search-results');
+
+  function escHtml(s) {
+    s = String(s == null ? '' : s);
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
+
+  async function doSearch() {
+    var q = searchInput.value.trim();
+    if (!q) return;
+    searchBtn.disabled = true;
+    searchSpinner.style.display = 'block';
+
+    try {
+      var res = await fetch('/api/search?q=' + encodeURIComponent(q));
+      var data = await res.json();
+      renderResults(data);
+      history.replaceState(null, '', '?q=' + encodeURIComponent(q));
+    } catch (e) {
+      resultsDiv.innerHTML = '<div class="empty-search"><div class="empty-search-icon">⚠️</div><p>搜索失败，请重试</p></div>';
+    } finally {
+      searchBtn.disabled = false;
+      searchSpinner.style.display = 'none';
+    }
+  }
+
+  function renderResults(data) {
+    var laws = data.law_results || [];
+    var cases = data.name_matches || [];
+    var lawCount = laws.length;
+    var caseCount = cases.length;
+
+    resultsDiv.innerHTML = '';
+
+    // Tabs
+    var tabsDiv = document.createElement('div');
+    tabsDiv.className = 'tabs';
+    var lawTab = document.createElement('button');
+    lawTab.className = 'tab active';
+    lawTab.innerHTML = '法律条文 <span>(' + lawCount + ')</span>';
+    lawTab.onclick = function(e) { showTab('laws', e); };
+    var caseTab = document.createElement('button');
+    caseTab.className = 'tab';
+    caseTab.innerHTML = '案件 <span>(' + caseCount + ')</span>';
+    caseTab.onclick = function(e) { showTab('cases', e); };
+    tabsDiv.appendChild(lawTab);
+    tabsDiv.appendChild(caseTab);
+    resultsDiv.appendChild(tabsDiv);
+
+    // 法律结果
+    var lawContent = document.createElement('div');
+    lawContent.id = 'tab-laws';
+    lawContent.className = 'tab-content active';
+    if (lawCount > 0) {
+      var meta = document.createElement('p');
+      meta.className = 'results-meta';
+      meta.innerHTML = '找到 <strong>' + lawCount + '</strong> 条相关法律条文';
+      lawContent.appendChild(meta);
+      for (var i = 0; i < laws.length; i++) {
+        var r = laws[i];
+        var item = document.createElement('div');
+        item.className = 'result-item';
+        var title = document.createElement('div');
+        title.className = 'result-title';
+        title.textContent = r.law || '';
+        var artSpan = document.createElement('span');
+        artSpan.style.color = '#6b7280';
+        artSpan.style.fontWeight = '400';
+        artSpan.style.marginLeft = '6px';
+        artSpan.textContent = r.article || '';
+        title.appendChild(artSpan);
+        var snippet = document.createElement('div');
+        snippet.className = 'result-snippet';
+        var previewText = r.preview || '';
+        snippet.textContent = '\u2026' + previewText.slice(0, 120) + '\u2026';
+        var meta2 = document.createElement('div');
+        meta2.className = 'result-meta';
+        var badge = document.createElement('span');
+        badge.className = 'result-badge badge-law';
+        badge.textContent = r.category || '法律';
+        var score = document.createElement('span');
+        score.textContent = '\uD83D\uDCCA 得分 ' + (r.score || 0);
+        meta2.appendChild(badge);
+        meta2.appendChild(score);
+        item.appendChild(title);
+        item.appendChild(snippet);
+        item.appendChild(meta2);
+        lawContent.appendChild(item);
+      }
+    } else {
+      var empty = document.createElement('div');
+      empty.className = 'empty-search';
+      empty.innerHTML = '<div class="empty-search-icon">\uD83D\uDDED</div><p>未找到相关法律条文</p>';
+      lawContent.appendChild(empty);
+    }
+    resultsDiv.appendChild(lawContent);
+
+    // 案件结果
+    var caseContent = document.createElement('div');
+    caseContent.id = 'tab-cases';
+    caseContent.className = 'tab-content';
+    if (caseCount > 0) {
+      var meta3 = document.createElement('p');
+      meta3.className = 'results-meta';
+      meta3.innerHTML = '找到 <strong>' + caseCount + '</strong> 个相关案件';
+      caseContent.appendChild(meta3);
+      for (var j = 0; j < cases.length; j++) {
+        var c = cases[j];
+        var row = document.createElement('div');
+        row.className = 'case-match';
+        var link = document.createElement('a');
+        link.href = '/case/' + escHtml(c.case_id || '');
+        link.className = 'case-match-name';
+        link.textContent = c.case_name || '';
+        var meta4 = document.createElement('div');
+        meta4.className = 'case-match-meta';
+        meta4.textContent = (c.case_type || '') + ' \u00B7 ' + (c.judgment_date || '\u2014') + ' \u00B7 ' + (c.status || '');
+        row.appendChild(link);
+        row.appendChild(meta4);
+        caseContent.appendChild(row);
+      }
+    } else {
+      var empty2 = document.createElement('div');
+      empty2.className = 'empty-search';
+      empty2.innerHTML = '<div class="empty-search-icon">\uD83D\uDCC2</div><p>未找到相关案件</p>';
+      caseContent.appendChild(empty2);
+    }
+    resultsDiv.appendChild(caseContent);
+  }
+
+  function showTab(name, e) {
+    var tabs = document.querySelectorAll('.tab-content');
+    for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+    tabs = document.querySelectorAll('.tab');
+    for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+    var targetTab = document.getElementById('tab-' + name);
+    if (targetTab) targetTab.classList.add('active');
+    if (e && e.target) e.target.classList.add('active');
+  }
+
+  searchBtn.onclick = doSearch;
+  searchInput.onkeydown = function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); doSearch(); }
+  };
 </script>
 
 </body>
