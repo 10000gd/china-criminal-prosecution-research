@@ -293,46 +293,29 @@ def api_law_search():
 
 @app.route("/case/<case_id>/generate", methods=["GET", "POST"])
 def generate_report(case_id):
-    """生成报告"""
+    """生成报告 — GET/POST 均改为调用已有的辩护报告 API"""
     try:
-        data = loader.load(case_id)
+        loader.load(case_id)
     except FileNotFoundError:
         return jsonify({"error": f"案件未找到: {case_id}"}), 404
 
     if request.method == "POST":
-        fmt = request.form.get("format", "tex")
         try:
             builder = ReportBuilder(case_id, loader)
             case_slug = case_id.lower().replace("case-", "").replace("-", "")
             tex_path = OUTPUT_DIR / f"{case_slug}_report.tex"
             builder.save_tex(tex_path)
-
-            if fmt == "pdf":
-                pdf_path = builder.compile_pdf(tex_path)
-                if pdf_path:
-                    return jsonify({
-                        "success": True,
-                        "message": "PDF 报告已生成",
-                        "download_url": f"/download/{case_slug}_report.pdf",
-                    })
-                else:
-                    return jsonify({"error": "PDF 编译失败，请检查 LaTeX 安装"}), 500
-            else:
-                return jsonify({
-                    "success": True,
-                    "message": "LaTeX 报告已生成",
-                    "download_url": f"/download/{case_slug}_report.tex",
-                })
+            return jsonify({
+                "success": True,
+                "message": "报告已生成",
+                "download_url": f"/download/{case_slug}_report.tex",
+            })
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-    # GET: 显示生成选项页面
-    meta = data.get("meta", {})
-    return render_template(
-        "generate_report.html",
-        case_id=case_id,
-        case_name=meta.get("case_name_full", meta.get("case_name", "")),
-    )
+    # GET: 重定向到辩护分析页（那里有完整的报告生成流程）
+    from flask import redirect
+    return redirect(f"/defense/{case_id}")
 
 
 # ---- 文件下载 ----

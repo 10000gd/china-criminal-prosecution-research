@@ -114,7 +114,7 @@
         <button id="track-btn" class="btn {% if is_tracked %}btn-danger{% else %}btn-outline{% endif %}" onclick="toggleTrack()">
           {% if is_tracked %}取消跟踪{% else %}+ 跟踪{% endif %}
         </button>
-        <a href="/case/{{ case_id }}/generate" class="btn btn-primary">📄 生成报告</a>
+        <button id="report-btn" class="btn btn-primary" onclick="generateReport()">📄 生成报告</button>
         <a href="/case/{{ case_id }}/charges" class="btn btn-outline">⚖ 罪名分析</a>
       </div>
     </div>
@@ -235,6 +235,33 @@
         btn.className = 'btn btn-danger';
         btn.textContent = '取消跟踪';
       }
+    }
+  }
+
+  async function generateReport() {
+    const btn = document.getElementById('report-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ 生成中…';
+    try {
+      const res = await fetch('/api/defense/report', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({case_id: '{{ case_id }}'}),
+      });
+      const data = await res.json();
+      if (data.download_url) {
+        btn.textContent = '✅ 报告已生成';
+        btn.className = 'btn btn-success';
+        setTimeout(() => { window.location.href = data.download_url; }, 500);
+      } else if (data.error) {
+        btn.textContent = '❌ 生成失败';
+        btn.className = 'btn btn-danger';
+        setTimeout(() => { btn.textContent = '📄 生成报告'; btn.className = 'btn btn-primary'; btn.disabled = false; }, 3000);
+      }
+    } catch (e) {
+      btn.textContent = '❌ 生成失败';
+      btn.className = 'btn btn-danger';
+      setTimeout(() => { btn.textContent = '📄 生成报告'; btn.className = 'btn btn-primary'; btn.disabled = false; }, 3000);
     }
   }
 </script>
