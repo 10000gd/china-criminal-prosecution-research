@@ -721,6 +721,7 @@ class LawRAG:
 
             preview = self._get_preview(chunk.content, query, radius=100)
             results.append({
+                'title': (chunk.law_name + chunk.content[:40]).strip(),
                 'law': chunk.law_name,
                 'article': article_str,
                 'category': chunk.category,
