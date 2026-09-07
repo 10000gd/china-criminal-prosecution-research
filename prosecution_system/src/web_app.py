@@ -1165,6 +1165,9 @@ def api_defense_report():
         filepath = builder.save_html(report)
     elif format_type == "json":
         filepath = builder.save_json(report)
+    elif format_type == "pdf":
+        from defense_report_builder import save_defense_report_pdf
+        filepath = save_defense_report_pdf(report)
     else:
         filepath = builder.save_markdown(report)
     
@@ -1731,3 +1734,83 @@ def api_case_analyze_get(case_id):
         "初犯": ci.get("is_初犯", True),
     }
     return jsonify(_do_case_analyze(fake_data, case_full))
+
+
+# ── PDF 辩护意见书导出 ──────────────────────────────────────
+
+@app.route("/api/case-analyze/<case_id>/pdf")
+def api_case_analyze_pdf(case_id):
+    """从联合分析结果直接生成辩护 PDF"""
+    # 先执行联合分析
+    try:
+        loader = CaseLoader()
+        case_full = loader.load(case_id)
+    except Exception:
+        return jsonify({"error": f"案件不存在: {case_id}"}), 404
+
+    ci = (case_full or {}).get("case_info", {}) or {}
+    fake_data = {
+        "case_id": case_id,
+        "crime_type": ci.get("crime_type", ""),
+        "amount": ci.get("amount") or ci.get("涉案金额", 0),
+        "province": ci.get("province", "全国"),
+        "sentencing_years": ci.get("sentence_years") or ci.get("sentencing_years", 0),
+        "is_company": ci.get("is_company", False),
+        "自首": ci.get("is_自首", False),
+        "立功": ci.get("is_立功", False),
+        "坦白": ci.get("is_坦白", False),
+        "赔偿": ci.get("is_赔偿", False),
+        "谅解": ci.get("is_谅解", False),
+        "累犯": ci.get("is_累犯", False),
+        "初犯": ci.get("is_初犯", True),
+    }
+    analysis = _do_case_analyze(fake_data, case_full)
+
+    # 生成辩护角度 dict（用于 DefenseReportBuilder）
+    defense_data = analysis.get("defense", {})
+    primary = defense_data.get("primary_defense", {})
+    secondary = defense_data.get("secondary_defenses", [])
+    defense_angles = [primary] + secondary
+
+    # 生成意见文本
+    opinion_parts = []
+    pd = primary.get("recommendation", "")
+    if pd:
+        opinion_parts.append(f"主要辩护策略：{pd}")
+    sp = analysis.get("sentencing_prediction", {})
+    if sp.get("prediction_note"):
+        opinion_parts.append(f"量刑预测：{sp['prediction_note']}")
+    dev = analysis.get("deviation", {})
+    if dev:
+        opinion_parts.append(f"量刑偏离分析：{dev.get('deviation_type','?')}（偏离分{dev.get('deviation_score','?')}），"
+                             f"合理区间{dev.get('expected_sentence','?')}")
+    sc_list = analysis.get("similar_cases", [])
+    if sc_list:
+        opinion_parts.append(f"参考类案{len(sc_list)}件，最高量刑{sc_list[0].get('sentence','?')}，"
+                             f"最低量刑{sc_list[-1].get('sentence','?')}。")
+    opinion_text = "\n\n".join(opinion_parts)
+
+    # 构建 report
+    from defense_report_builder import DefenseReportBuilderPDF, DefenseReport
+    meta = (case_full or {}).get("meta", {}) or {}
+    output_dir = Path(__file__).parent.parent / "output" / "defense_reports"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report = DefenseReport(
+        case_id=case_id,
+        case_name=meta.get("case_name", ci.get("case_name", case_id)),
+        generated_at=datetime.now().strftime("%Y-%m-%d %H:%M"),
+        analysis_summary=(
+            f"罪名：{analysis['crime_type']}；涉案金额：{analysis['amount']:.0f}元（{analysis['province']}）；"
+            f"入罪判定：{'已达到入罪标准' if analysis.get('threshold',{}).get('reached') else '未达入罪标准'}；"
+            f"辩护强度：{defense_data.get('overall_strength','?')}/100"
+        ),
+        defense_angles=defense_angles,
+        similar_cases=sc_list,
+        opinion_text=opinion_text,
+        overall_strength=defense_data.get("overall_strength", 50),
+        recommendation=defense_data.get("recommended_strategy", ""),
+    )
+
+    pdf_path = DefenseReportBuilderPDF(output_dir=output_dir).save_pdf(report)
+    return send_file(pdf_path, as_attachment=True,
+                     download_name=f"辩护意见书_{case_id}_{datetime.now().strftime('%Y%m%d')}.pdf")

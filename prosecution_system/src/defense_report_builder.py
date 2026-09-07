@@ -42,7 +42,7 @@ class DefenseReportBuilder:
         Args:
             output_dir: 输出目录
         """
-        self.output_dir = output_dir or Path("output/defense_reports")
+        self.output_dir = output_dir or (Path(__file__).parent.parent / "output" / "defense_reports")
         self.output_dir.mkdir(parents=True, exist_ok=True)
     
     def build(self, case_data: Dict,
@@ -436,3 +436,220 @@ if __name__ == "__main__":
     
     filepath = build_defense_report(test_data, test_analysis, test_cases, test_opinion, "html")
     print(f"报告已生成: {filepath}")
+
+
+def _escape_pdf(text: str) -> str:
+    """转义 PDF 特殊字符"""
+    if not text:
+        return ""
+    return (text
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;"))
+
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import cm
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
+    HRFlowable, KeepTogether
+)
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_JUSTIFY
+
+
+
+
+class DefenseReportBuilderPDF(DefenseReportBuilder):
+    """辩护报告 PDF 生成器（基于 fpdf2 + NotoSansCJK）"""
+
+    CJK_FONT_PATH = "/root/.fonts/NotoSansCJK_1.ttf"
+    CJK_FONT_NAME = "NotoSansCJK"
+
+    def save_pdf(self, report, filename=None):
+        """保存为 PDF（中文支持）"""
+        if not filename:
+            filename = "defense_report_{}_{}.pdf".format(
+                report.case_id, datetime.now().strftime("%Y%m%d"))
+        filepath = self.output_dir / filename
+
+        try:
+            from fpdf import FPDF
+        except ImportError:
+            return self._save_pdf_fallback(report, filename)
+
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=15)
+
+        # 注册中文字体
+        try:
+            pdf.add_font(self.CJK_FONT_NAME, fname=self.CJK_FONT_PATH)
+            pdf.set_font(self.CJK_FONT_NAME, size=12)
+            def font(pdf, size): pdf.set_font(self.CJK_FONT_NAME, size=size)
+        except Exception:
+            def font(pdf, size): pdf.set_font("helvetica", size=size)
+
+        pdf.add_page()
+
+        # 标题
+        font(pdf, 16)
+        pdf.cell(0, 12, "辩护意见书（系统生成稿）", new_x="LMARGIN", new_y="NEXT", align="C")
+        font(pdf, 9)
+        pdf.cell(0, 6, "案件编号：{}".format(report.case_id), new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(0, 6, "案件名称：{}".format(report.case_name), new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(0, 6, "生成时间：{}".format(report.generated_at), new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(3)
+        pdf.set_draw_color(26, 58, 92)
+        pdf.set_line_width(0.5)
+        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+        pdf.ln(6)
+
+        def section_title(pdf, text):
+            font(pdf, 13)
+            pdf.set_text_color(26, 58, 92)
+            pdf.cell(0, 8, text, new_x="LMARGIN", new_y="NEXT")
+            pdf.set_text_color(0, 0, 0)
+
+        def body(pdf, text, indent=0):
+            font(pdf, 10)
+            pdf.set_x(pdf.l_margin + indent)
+            pdf.multi_cell(0, 6, text)
+            pdf.ln(1)
+
+        # 一、分析摘要
+        section_title(pdf, "一、案件分析摘要")
+        for line in report.analysis_summary.strip().split("\n"):
+            if line.strip():
+                body(pdf, line.strip())
+        pdf.ln(3)
+
+        # 二、辩护要点
+        section_title(pdf, "二、辩护要点")
+        angles = report.defense_angles
+        if isinstance(angles, dict):
+            angles = [angles]
+        if angles:
+            for i, angle in enumerate(angles, 1):
+                atype = angle.get("type", angle.get("type_cn", "待定"))
+                conf = angle.get("confidence", "?")
+                rec = angle.get("recommendation", "")
+                refs = angle.get("legal_references", [])
+                if isinstance(refs, list):
+                    refs = "；".join(str(r) for r in refs if r)
+                font(pdf, 11)
+                pdf.cell(0, 7, "{}. {}（匹配度 {}%）".format(i, atype, conf),
+                         new_x="LMARGIN", new_y="NEXT")
+                if rec:
+                    body(pdf, "  建议：{}".format(rec), indent=5)
+                if refs:
+                    body(pdf, "  法律依据：{}".format(refs[:100]), indent=5)
+                pdf.ln(1)
+        else:
+            body(pdf, "（无辩护要点数据）")
+        pdf.ln(3)
+
+        # 三、类案参考
+        if report.similar_cases:
+            section_title(pdf, "三、类案参考")
+            cases = report.similar_cases[:8]
+            font(pdf, 9)
+            col_w = [60, 35, 30, 30, 25]
+            for h, w in zip(["法院", "罪名", "金额", "量刑", "相似度"], col_w):
+                pdf.cell(w, 7, h, border=1, align="C")
+            pdf.ln()
+            fill = False
+            for sc in cases:
+                if isinstance(sc, dict):
+                    row = [
+                        str(sc.get("court", ""))[:12],
+                        str(sc.get("crime_type", ""))[:6],
+                        str(sc.get("amount", "-"))[:8],
+                        str(sc.get("sentence", ""))[:6],
+                        "{:.1f}".format(sc.get("similarity_score", 0)),
+                    ]
+                else:
+                    row = ["?", "?", "?", "?", "?"]
+                if fill:
+                    pdf.set_fill_color(240, 244, 248)
+                else:
+                    pdf.set_fill_color(255, 255, 255)
+                for val, w in zip(row, col_w):
+                    pdf.cell(w, 6, val, border=1, align="C")
+                pdf.ln()
+                fill = not fill
+            pdf.ln(3)
+
+        # 四、辩护意见正文
+        if report.opinion_text:
+            section_title(pdf, "四、辩护意见")
+            for line in report.opinion_text.strip().split("\n")[:25]:
+                if line.strip():
+                    body(pdf, line.strip())
+            pdf.ln(3)
+
+        # 五、结论
+        section_title(pdf, "五、结论与建议")
+        font(pdf, 11)
+        pdf.cell(0, 7, "整体辩护强度：{:.0f}/100".format(report.overall_strength),
+                 new_x="LMARGIN", new_y="NEXT")
+        if report.recommendation:
+            body(pdf, "综合建议：{}".format(report.recommendation))
+
+        # 页脚
+        pdf.ln(10)
+        pdf.set_draw_color(200, 200, 200)
+        pdf.set_line_width(0.3)
+        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+        pdf.ln(2)
+        font(pdf, 8)
+        pdf.set_text_color(100, 100, 100)
+        pdf.cell(0, 5, "本报告由追诉系统辅助生成，仅供参考，不构成正式法律意见。",
+                 new_x="LMARGIN", new_y="NEXT", align="C")
+
+        pdf.output(str(filepath))
+        return filepath
+
+    def _save_pdf_fallback(self, report, filename):
+        """纯文本降级方案（无中文）"""
+        filepath = self.output_dir / filename
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import cm
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, HRFlowable
+        doc = SimpleDocTemplate(str(filepath), pagesize=A4,
+                                leftMargin=2*cm, rightMargin=2*cm,
+                                topMargin=2*cm, bottomMargin=2*cm)
+        styles = getSampleStyleSheet()
+        body = ParagraphStyle("body", parent=styles["Normal"], fontSize=10, leading=14)
+        story = [
+            Paragraph("Defense Opinion Report (System Generated)", styles["Title"]),
+            Paragraph("Case: {} | {}".format(report.case_id, report.case_name), body),
+            Paragraph("Generated: {}".format(report.generated_at), body),
+            HRFlowable(width="100%", thickness=1),
+            Paragraph("Summary", styles["Heading2"]),
+            *[Paragraph(l, body) for l in report.analysis_summary.strip().split("\n") if l.strip()],
+            Paragraph("Recommendation", styles["Heading2"]),
+            Paragraph(report.recommendation or "(See system analysis)", body),
+            Paragraph("Overall Strength: {:.0f}/100".format(report.overall_strength), body),
+        ]
+        doc.build(story)
+        return filepath
+
+
+
+def save_defense_report_pdf(report, output_dir=None):
+    """便捷函数：直接生成辩护 PDF"""
+    builder = DefenseReportBuilderPDF(output_dir=output_dir)
+    return builder.save_pdf(report)
+
+def save_defense_report_pdf(report: DefenseReport, output_dir: Path = None) -> Path:
+    """便捷函数：直接生成辩护 PDF"""
+    builder = DefenseReportBuilderPDF(output_dir=output_dir)
+    return builder.save_pdf(report)
+
+def save_defense_report_pdf(report: DefenseReport, output_dir: Path = None) -> Path:
+    """便捷函数：直接生成辩护 PDF"""
+    builder = DefenseReportBuilderPDF(output_dir=output_dir)
+    return builder.save_pdf(report)
