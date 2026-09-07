@@ -1502,3 +1502,232 @@ def metrics():
         f"prosecution_uptime_seconds {m['uptime_seconds']}",
     ]
     return '\n'.join(lines), 200, {"Content-Type": "text/plain"}
+
+# ── 联合案件分析 API ────────────────────────────────────────
+
+def _do_case_analyze(data: dict, case_full: dict = None) -> dict:
+    """
+    联合案件分析核心逻辑（供 POST 和 GET 共同调用）
+    """
+    crime = data.get("crime_type") or data.get("crime")
+    if not crime:
+        raise ValueError("缺少 crime_type 字段")
+
+    # 合并：外部参数优先，其次从完整案件提取
+    def _v(key, default=None):
+        return data.get(key) if data.get(key) is not None else (
+            (case_full or {}).get("case_info", {}).get(key, default)
+            if case_full else default
+        )
+
+    amount = float(_v("amount") or 0)
+    province = _v("province", "全国")
+    is_company = _v("is_company", False)
+    court_level = _v("court_level", "")
+    keyword = _v("keyword", "")
+    sent_years = float(_v("sentencing_years") or _v("sentence_years") or 0)
+
+    # 1. 入罪门槛判定
+    from threshold_api import list_thresholds
+    thresh_result = None
+    if amount > 0:
+        thresh_list = list_thresholds(crime=crime, amount=amount)
+        if thresh_list.get("thresholds"):
+            matched = [t for t in thresh_list["thresholds"]
+                       if t.get("province") == province or t.get("province") == "DEFAULT"]
+            thresh_result = matched[0] if matched else thresh_list["thresholds"][0]
+
+    # 2. 量刑预测（基于类案统计）
+    from sentencing_consistency import SentencingConsistencyAnalyzer
+    sca = SentencingConsistencyAnalyzer()
+    legal_comp = sca.get_legal_comparison(crime)
+    legal_range = legal_comp.get("legal_range", {})
+    actual_stats = legal_comp.get("actual_stats", {})
+
+    # 3. 量刑偏离分析（若提供了实际量刑）
+    deviation_result = None
+    if sent_years > 0 and case_full:
+        dev_data = {
+            "crime": crime,
+            "sentence_years": sent_years,
+            "province": province,
+            "case_id": data.get("case_id", "unknown"),
+            "is_自首": _v("自首", False),
+            "is_立功": _v("立功", False),
+            "is_坦白": _v("坦白", False),
+            "is_赔偿": _v("赔偿", False),
+            "is_谅解": _v("谅解", False),
+            "is_累犯": _v("累犯", False),
+            "is_初犯": _v("初犯", True),
+        }
+        dev = sca.analyze_deviation(dev_data)
+        deviation_result = {
+            "deviation_score": dev.deviation_score,
+            "deviation_type": dev.deviation_type,
+            "expected_sentence": dev.expected_sentence,
+            "actual_sentence": dev.actual_sentence,
+            "factors": dev.factors,
+            "reasons": dev.deviation_reasons,
+        }
+
+    # 4. 类案搜索
+    from legal_case_db import LegalCaseDB
+    lcdb = LegalCaseDB()
+    similar_raw = lcdb.search_similar(
+        crime_name=crime,
+        amount=amount,
+        is_company=is_company,
+        court_level=court_level,
+        keyword=keyword,
+        top_k=5,
+    )
+    similar_cases = []
+    for sc in similar_raw:
+        case = sc.case
+        similar_cases.append({
+            "case_id": case.case_id,
+            "court": case.court,
+            "judgment_date": case.judgment_date,
+            "crime_type": case.crime_name,
+            "amount": case.amount,
+            "sentence": case.sentence,
+            "sentence_months": case.sentence_months,
+            "similarity_score": round(sc.similarity_score, 2),
+            "match_reasons": sc.match_reasons,
+            "amount_comparison": sc.amount_comparison,
+            "sentence_comparison": sc.sentence_comparison,
+            "key_facts": case.key_facts[:100],
+        })
+
+    # 5. 辩护分析
+    from defense_enhancer import DefenseEnhancer
+    de = DefenseEnhancer()
+    defense_result = None
+    if case_full:
+        da = de.analyze_case(case_full)
+        defense_result = {
+            "primary_defense": {
+                "type": da.primary_defense.type.value,
+                "confidence": da.primary_defense.confidence,
+                "legal_references": da.primary_defense.legal_references,
+                "evidence_points": da.primary_defense.evidence_points,
+                "risk_mitigation": da.primary_defense.risk_mitigation,
+                "recommendation": da.primary_defense.recommendation,
+            },
+            "secondary_defenses": [
+                {
+                    "type": s.type.value,
+                    "confidence": s.confidence,
+                    "legal_references": s.legal_references,
+                    "evidence_points": s.evidence_points,
+                    "risk_mitigation": s.risk_mitigation,
+                    "recommendation": s.recommendation,
+                }
+                for s in da.secondary_defenses
+            ],
+            "overall_strength": da.overall_strength,
+            "recommended_strategy": da.recommended_strategy,
+            "estimated_outcome": da.estimated_outcome,
+        }
+    else:
+        factors = []
+        if _v("自首", False): factors.append("自首")
+        if _v("立功", False): factors.append("立功")
+        if _v("坦白", False): factors.append("坦白/认罪认罚")
+        if _v("赔偿", False) or _v("谅解", False): factors.append("赔偿谅解")
+        if _v("初犯", False): factors.append("初犯/偶犯")
+        if _v("累犯", False): factors.append("累犯（从重）")
+        defense_result = {
+            "primary_defense": {"type": "依参数构造", "confidence": "中",
+                                "description": f"有利因素: {', '.join(factors) or '无明显有利因素'}"},
+            "secondary_defenses": [],
+            "overall_strength": 50 + (10 * len(factors)) if factors else 50,
+            "recommended_strategy": "建议争取从轻情节，参考类似案件量刑",
+            "estimated_outcome": "量刑区间内从轻处理",
+        }
+
+    # 6. 法律依据检索
+    from law_rag import LawRAG
+    rag = LawRAG()
+    law_results = rag.search(crime, top_k=3)
+    legal_basis = [
+        {
+            "title": r.get("title", "")[:80],
+            "law": r.get("law", ""),
+            "article": r.get("article", ""),
+            "preview": r.get("preview", "")[:120],
+            "bm25_score": r.get("bm25_score", 0),
+        }
+        for r in law_results
+    ]
+
+    return {
+        "case_id": data.get("case_id", "new"),
+        "crime_type": crime,
+        "amount": amount,
+        "province": province,
+        "is_company": is_company,
+        "threshold": thresh_result,
+        "sentencing_prediction": {
+            "legal_range": legal_range,
+            "actual_stats": actual_stats,
+            "sample_count": legal_comp.get("sample_count", 0),
+            "prediction_note": f"法条量刑区间 {legal_range.get('min',0)}-{legal_range.get('max',0)} "
+                               f"{legal_range.get('unit','年')}；类案均值 {actual_stats.get('avg','?')}年，"
+                               f"中位数 {actual_stats.get('median','?')}年",
+        },
+        "deviation": deviation_result,
+        "similar_cases": similar_cases,
+        "defense": defense_result,
+        "legal_basis": legal_basis,
+    }
+
+
+@app.route("/api/case-analyze", methods=["POST"])
+def api_case_analyze():
+    """联合案件分析 API（POST 方式）"""
+    data = request.get_json() or {}
+    crime = data.get("crime_type") or data.get("crime")
+    if not crime:
+        return jsonify({"error": "缺少 crime_type 字段"}), 400
+
+    loader = CaseLoader()
+    case_full = None
+    if data.get("case_id"):
+        try:
+            case_full = loader.load(data["case_id"])
+        except Exception:
+            pass
+
+    try:
+        return jsonify(_do_case_analyze(data, case_full))
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/case-analyze/<case_id>")
+def api_case_analyze_get(case_id):
+    """联合案件分析 API（GET 方式：从已有案件 ID 分析）"""
+    try:
+        loader = CaseLoader()
+        case_full = loader.load(case_id)
+    except Exception:
+        return jsonify({"error": f"案件不存在: {case_id}"}), 404
+
+    ci = (case_full or {}).get("case_info", {}) or {}
+    fake_data = {
+        "case_id": case_id,
+        "crime_type": ci.get("crime_type", ""),
+        "amount": ci.get("amount") or ci.get("涉案金额", 0),
+        "province": ci.get("province", "全国"),
+        "sentencing_years": ci.get("sentence_years") or ci.get("sentencing_years", 0),
+        "is_company": ci.get("is_company", False),
+        "自首": ci.get("is_自首", False),
+        "立功": ci.get("is_立功", False),
+        "坦白": ci.get("is_坦白", False),
+        "赔偿": ci.get("is_赔偿", False),
+        "谅解": ci.get("is_谅解", False),
+        "累犯": ci.get("is_累犯", False),
+        "初犯": ci.get("is_初犯", True),
+    }
+    return jsonify(_do_case_analyze(fake_data, case_full))
