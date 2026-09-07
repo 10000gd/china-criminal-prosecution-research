@@ -52,3 +52,6 @@
 - LawRAG.search() 返回值增加 title 字段（web UI 显示兼容）
 - DefenseAngle 字段映射（description → legal_references/evidence_points）
 - DefenseReportBuilder output_dir 默认路径改为基于 __file__ 绝对路径
+
+### 管理后台
+- **案件批量导入** `/admin/case-import` — 上传 CSV/Excel 批量导入案件，含模板下载
