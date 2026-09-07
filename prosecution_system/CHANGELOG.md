@@ -37,3 +37,18 @@
 - 案件对比功能
 - PDF导出
 - 移动端适配
+
+## v2.1.0 (2026-09-07)
+
+### 新功能
+- **联合案件分析 API** `/api/case-analyze` (POST + GET)
+  - 一键输出：入罪判定 + 量刑预测 + 量刑偏离 + 类案推送 + 辩护分析 + 法律依据
+- **PDF 辩护意见书导出**（基于 fpdf2 + NotoSansCJK 中文支持）
+  - `/api/defense/report?format=pdf`
+  - `/api/case-analyze/<case_id>/pdf`
+
+### Bug 修复
+- CaseLoader.load() 支持传入 list_cases() 返回的 dict 对象
+- LawRAG.search() 返回值增加 title 字段（web UI 显示兼容）
+- DefenseAngle 字段映射（description → legal_references/evidence_points）
+- DefenseReportBuilder output_dir 默认路径改为基于 __file__ 绝对路径
