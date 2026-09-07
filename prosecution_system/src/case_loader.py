@@ -171,11 +171,18 @@ class CaseLoader:
 
     # ---- 基础加载 ----
 
-    def load(self, case_id: str, use_cache: bool = True) -> Dict:
+    def load(self, case_id: str | Dict, use_cache: bool = True) -> Dict:
         """
         加载指定案件配置
-        case_id: 案件编号，如 "CASE-001" 或 "hengda"
+        case_id: 案件编号，如 "CASE-001" 或 "hengda"；也可直接传入 list_cases() 返回的 dict
         """
+        # 支持直接传入 list_cases() 返回的 dict 对象，自动取 case_id 再加载完整数据
+        if isinstance(case_id, dict):
+            cid = case_id.get("case_id") or case_id.get("id")
+            if cid:
+                return self.load(cid, use_cache=use_cache)
+            return case_id  # 既无 case_id 也无 id，当作已加载的完整数据直接返回
+
         # 优先从模块级 TTL 缓存读取
         if use_cache:
             cached = _get_cache(case_id)
