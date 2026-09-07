@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>追诉系统 — 案件管理</title>
+  <title>追诉智能辅助系统</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -12,274 +13,414 @@
       color: #1f2937;
       font-size: 14px;
     }
+    a { color: #3b82f6; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── 顶栏 ── */
     .topbar {
-      background: #1e3a5f;
-      color: #fff;
-      padding: 0 24px;
-      height: 52px;
+      background: linear-gradient(135deg, #1e3a5f 0%, #2d4f7a 100%);
+      color: white;
+      padding: 0 28px;
+      height: 54px;
       display: flex;
       align-items: center;
-      gap: 28px;
+      gap: 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
     }
-    .topbar .brand { font-size: 16px; font-weight: 700; color: #fff; text-decoration: none; }
-    .topbar .brand span { color: #fbbf24; }
+    .topbar-brand {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-right: 32px;
+      white-space: nowrap;
+    }
+    .topbar-brand span { color: #fbbf24; }
     .nav-links { display: flex; gap: 4px; }
-    .nav-links a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px; padding: 6px 14px; border-radius: 6px; }
-    .nav-links a:hover, .nav-links a.active { color: #fff; background: rgba(255,255,255,0.12); }
-    .user-menu { margin-left: auto; display: flex; gap: 8px; }
-    .user-link { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 13px; padding: 4px 10px; border-radius: 4px; }
-    .user-link:hover { color: #fff; background: rgba(255,255,255,0.1); }
-    .container { max-width: 1100px; margin: 0 auto; padding: 28px 20px; }
-    h1 { font-size: 22px; font-weight: 800; margin-bottom: 6px; color: #111827; }
-    .subtitle { color: #6b7280; font-size: 13px; margin-bottom: 24px; }
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 20px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-    }
-    .filters {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-    .filters select, .filters input {
-      padding: 8px 14px;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      font-size: 13px;
-      background: #fff;
-      color: #1f2937;
-    }
-    .filters input[type="text"] { width: 240px; }
-    .filter-btn {
-      padding: 8px 16px;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      background: #fff;
-      color: #374151;
+    .nav-links a {
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      font-size: 14px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      white-space: nowrap;
       transition: all 0.15s;
     }
-    .filter-btn:hover { background: #f3f4f6; }
-    .filter-btn.active { background: #1e3a5f; color: #fff; border-color: #1e3a5f; }
-    .btn {
-      padding: 8px 18px;
-      border: none;
-      border-radius: 8px;
-      font-size: 13px;
+    .nav-links a:hover, .nav-links a.active {
+      color: #fff;
+      background: rgba(255,255,255,0.15);
+    }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    .topbar-right a { color: rgba(255,255,255,0.8); font-size: 13px; padding: 4px 10px; border-radius: 4px; }
+    .topbar-right a:hover { color: #fff; background: rgba(255,255,255,0.1); }
+
+    /* ── 容器 ── */
+    .container { max-width: 1400px; margin: 0 auto; padding: 24px 20px; }
+
+    /* ── 标题区 ── */
+    .hero {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      border-radius: 16px;
+      padding: 32px 36px;
+      margin-bottom: 20px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 8px 24px rgba(79,70,229,0.3);
+    }
+    .hero h1 { font-size: 24px; margin-bottom: 6px; }
+    .hero p { opacity: 0.85; font-size: 14px; }
+    .hero-actions { display: flex; gap: 10px; }
+    .hero-btn {
+      padding: 10px 22px;
+      border-radius: 10px;
+      font-size: 14px;
       font-weight: 600;
       cursor: pointer;
+      transition: all 0.2s;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
       gap: 6px;
     }
-    .btn-primary { background: #1e3a5f; color: #fff; }
-    .btn-primary:hover { background: #2d4f7a; }
-    .btn-outline { background: #fff; color: #1e3a5f; border: 1px solid #1e3a5f; }
-    .btn-outline:hover { background: #f0f4f8; }
-    .case-list { display: flex; flex-direction: column; gap: 10px; }
-    .case-item {
+    .hero-btn-white {
+      background: white;
+      color: #4f46e5;
+    }
+    .hero-btn-white:hover { background: #f0f0ff; transform: translateY(-1px); }
+    .hero-btn-outline {
+      background: rgba(255,255,255,0.15);
+      color: white;
+      border: 1.5px solid rgba(255,255,255,0.4);
+    }
+    .hero-btn-outline:hover { background: rgba(255,255,255,0.25); }
+
+    /* ── 指标卡 ── */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .metric-card {
+      background: white;
+      border-radius: 14px;
+      padding: 22px 24px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
       display: flex;
       align-items: center;
       gap: 16px;
-      padding: 16px 20px;
-      background: #fafbfc;
-      border: 1px solid #e5e7eb;
-      border-radius: 10px;
-      transition: all 0.15s;
+      transition: transform 0.15s, box-shadow 0.15s;
     }
-    .case-item:hover { border-color: #1e3a5f; background: #f0f4f8; box-shadow: 0 2px 8px rgba(30,58,95,0.08); }
-    .case-item.hidden { display: none; }
-    .case-icon { font-size: 1.8rem; flex-shrink: 0; }
-    .case-info { flex: 1; min-width: 0; }
-    .case-name { font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .case-meta { font-size: 12px; color: #6b7280; display: flex; gap: 16px; flex-wrap: wrap; }
-    .case-badge {
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
+    .metric-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+    .metric-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
       flex-shrink: 0;
     }
-    .badge-draft    { background: #f3f4f6; color: #6b7280; }
-    .badge-review   { background: #dbeafe; color: #1d4ed8; }
-    .badge-prosec   { background: #fef3c7; color: #92400e; }
-    .badge-judged   { background: #d1fae5; color: #065f46; }
-    .badge-appealed { background: #ede9fe; color: #5b21b6; }
-    .badge-closed   { background: #f3f4f6; color: #374151; }
-    .badge-active   { background: #dbeafe; color: #1d4ed8; }
-    .badge-completed { background: #d1fae5; color: #065f46; }
-    .case-actions { display: flex; gap: 8px; flex-shrink: 0; }
-    .case-actions .btn { font-size: 12px; padding: 5px 12px; }
-    .empty { text-align: center; padding: 60px 20px; color: #9ca3af; }
-    .empty-icon { font-size: 3rem; margin-bottom: 12px; }
-    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 24px; }
-    .stat-box {
-      background: #fff;
-      border-radius: 10px;
-      padding: 16px;
-      text-align: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    .metric-icon.blue { background: #eff6ff; }
+    .metric-icon.green { background: #ecfdf5; }
+    .metric-icon.purple { background: #f5f3ff; }
+    .metric-icon.orange { background: #fff7ed; }
+    .metric-content { flex: 1; }
+    .metric-value { font-size: 28px; font-weight: 800; color: #1f2937; line-height: 1.1; }
+    .metric-label { font-size: 13px; color: #6b7280; margin-top: 4px; }
+    .metric-sub { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+
+    /* ── 图表区 ── */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
     }
-    .stat-box .num { font-size: 1.8rem; font-weight: 900; color: #1e3a5f; line-height: 1.2; }
-    .stat-box .lbl { font-size: 12px; color: #6b7280; margin-top: 4px; }
-    .result-count { font-size: 13px; color: #6b7280; margin-bottom: 12px; }
-    .result-count strong { color: #1e3a5f; }
-    @media (max-width: 640px) {
-      .case-item { flex-wrap: wrap; }
-      .case-actions { width: 100%; }
+    .chart-card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+    .chart-card h2 {
+      font-size: 15px;
+      color: #1f2937;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #f3f4f6;
+    }
+    .chart-wrap { width: 100%; }
+
+    /* ── 快捷功能 ── */
+    .features-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .feature-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      text-align: center;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s;
+      border: 1.5px solid transparent;
+    }
+    .feature-card:hover {
+      border-color: #4f46e5;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(79,70,229,0.15);
+      text-decoration: none;
+      color: inherit;
+    }
+    .feature-icon { font-size: 32px; margin-bottom: 10px; }
+    .feature-name { font-size: 14px; font-weight: 600; color: #1f2937; }
+    .feature-desc { font-size: 12px; color: #9ca3af; margin-top: 4px; }
+
+    /* ── 底部信息 ── */
+    .footer { text-align: center; font-size: 12px; color: #9ca3af; padding: 20px 0; }
+
+    /* ── 加载状态 ── */
+    .loading { text-align: center; padding: 40px; color: #9ca3af; }
+    .loading::after { content: '加载中...'; }
+
+    @media (max-width: 900px) {
+      .metrics-row { grid-template-columns: 1fr 1fr; }
+      .charts-row { grid-template-columns: 1fr; }
+      .hero { flex-direction: column; gap: 16px; align-items: flex-start; }
+    }
+    @media (max-width: 600px) {
+      .metrics-row { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
     }
   </style>
-  <link rel="stylesheet" href="/static/mobile.css">
 </head>
 <body>
 
+<!-- 顶栏 -->
 <div class="topbar">
-  <a href="/" class="brand">追诉系统 <span>⚖</span></a>
+  <div class="topbar-brand">⚖️ <span>追诉</span>智能辅助</div>
   <nav class="nav-links">
-    <a href="/" class="active">案件</a>
-    <a href="/stats">统计</a>
-    <a href="/reports">报告</a>
-    <a href="/threshold">门槛</a>
-    <a href="/sentencing">量刑</a>
-    <a href="/tracker">跟踪</a>
-    <a href="/compare">对比</a>
-    <a href="/docs">API</a>
-    <a href="/search">搜索</a>
-    <a href="/law/search">⚖️ 法条检索</a>
+    <a href="/" class="active">📊 首页</a>
+    <a href="/search">🔍 案例搜索</a>
+    <a href="/case-analyze">📋 联合分析</a>
+    <a href="/compare">⚖️ 案件对比</a>
+    <a href="/sentencing">📐 量刑基线</a>
+    <a href="/threshold">🚦 入罪门槛</a>
+    <a href="/defense/CASE-0001">🛡️ 辩护分析</a>
+    <a href="/law_search">📖 法律检索</a>
   </nav>
-  <div class="user-menu">
-    {% if user_logged_in %}
-      <a href="/auth/profile" class="user-link">👤 {{ session.username }}</a>
-      <a href="/auth/logout" class="user-link">退出</a>
-    {% else %}
-      <a href="/auth/login" class="user-link">登录</a>
-      <a href="/auth/register" class="user-link">注册</a>
-    {% endif %}
+  <div class="topbar-right">
+    <a href="/admin">⚙️ 管理后台</a>
   </div>
 </div>
 
 <div class="container">
-  <h1>📁 案件管理</h1>
-  <p class="subtitle">全部案件列表 · 实时筛选</p>
 
-  <!-- 统计卡片 -->
-  <div class="stats-row" id="stats-row">
-    <div class="stat-box">
-      <div class="num" id="total-count">{{ cases|length }}</div>
-      <div class="lbl">案件总数</div>
+  <!-- 标题区 -->
+  <div class="hero">
+    <div>
+      <h1>中国刑事追诉智能辅助系统</h1>
+      <p>入罪门槛 · 量刑预测 · 辩护增强 · 类案检索 · 法律依据</p>
     </div>
-    {% for s in statuses %}
-    <div class="stat-box">
-      <div class="num" id="count-{{ s }}">{{ cases|selectattr('status','equalto',s)|list|length }}</div>
-      <div class="lbl">{{ status_labels[s] }}</div>
+    <div class="hero-actions">
+      <a href="/case-analyze" class="hero-btn hero-btn-white">🔍 联合案件分析</a>
+      <a href="/search" class="hero-btn hero-btn-outline">🔎 搜索判例</a>
     </div>
-    {% endfor %}
   </div>
 
-  <!-- 实时筛选器 -->
-  <div class="filters">
-    <input type="text" id="search-input" placeholder="🔍 搜索案件名称、ID…" />
-    <select id="status-filter">
-      <option value="">全部状态</option>
-      {% for s, label in status_labels.items() %}
-      <option value="{{ s }}">{{ label }}</option>
-      {% endfor %}
-    </select>
-    <button class="filter-btn active" data-status="" onclick="setStatus('')">全部</button>
-    {% for s, label in status_labels.items() %}
-    <button class="filter-btn" data-status="{{ s }}" onclick="setStatus('{{ s }}')">{{ label }}</button>
-    {% endfor %}
+  <!-- 指标卡 -->
+  <div class="metrics-row" id="metrics-row">
+    <div class="loading"></div>
   </div>
 
-  <!-- 案件列表 -->
-  <div class="card">
-    <div class="result-count" id="result-count">显示 <strong>{{ cases|length }}</strong> 个案件</div>
-    {% if cases %}
-    <div class="case-list" id="case-list">
-      {% for case in cases %}
-      <div class="case-item" data-status="{{ case.status }}" data-name="{{ case.case_name|lower }}" data-id="{{ case.case_id|lower }}">
-        <div class="case-icon">📋</div>
-        <div class="case-info">
-          <div class="case-name">{{ case.case_name }}</div>
-          <div class="case-meta">
-            <span>ID: {{ case.case_id }}</span>
-            {% if case.case_type %}<span>类型: {{ case.case_type }}</span>{% endif %}
-            <span>判决: {{ case.judgment_date or '—' }}</span>
-          </div>
-        </div>
-        <span class="case-badge badge-{{ case.status }}">{{ status_labels.get(case.status, case.status) }}</span>
-        <div class="case-actions">
-          <a href="/case/{{ case.case_id }}" class="btn btn-outline">详情</a>
-        </div>
-      </div>
-      {% endfor %}
+  <!-- 图表 -->
+  <div class="charts-row">
+    <div class="chart-card">
+      <h2>📊 罪名分布</h2>
+      <div class="chart-wrap" id="chart-crime" style="height:280px;"></div>
     </div>
-    {% else %}
-    <div class="empty">
-      <div class="empty-icon">📂</div>
-      <p>暂无案件</p>
-      <p style="font-size:12px;margin-top:8px;">将案件 YAML 文件放入 cases/ 目录即可自动加载</p>
+    <div class="chart-card">
+      <h2>🗺️ 省份分布（Top 10）</h2>
+      <div class="chart-wrap" id="chart-province" style="height:280px;"></div>
     </div>
-    {% endif %}
+  </div>
+
+  <!-- 快捷功能 -->
+  <div class="features-row">
+    <a href="/case-analyze" class="feature-card">
+      <div class="feature-icon">🔍</div>
+      <div class="feature-name">联合案件分析</div>
+      <div class="feature-desc">一键分析案情</div>
+    </a>
+    <a href="/search" class="feature-card">
+      <div class="feature-icon">📖</div>
+      <div class="feature-name">案例搜索</div>
+      <div class="feature-desc">相似判例检索</div>
+    </a>
+    <a href="/compare" class="feature-card">
+      <div class="feature-icon">⚖️</div>
+      <div class="feature-name">案件对比</div>
+      <div class="feature-desc">多案横向比较</div>
+    </a>
+    <a href="/sentencing" class="feature-card">
+      <div class="feature-icon">📐</div>
+      <div class="feature-name">量刑基线</div>
+      <div class="feature-desc">各省量刑统计</div>
+    </a>
+    <a href="/threshold" class="feature-card">
+      <div class="feature-icon">🚦</div>
+      <div class="feature-name">入罪门槛</div>
+      <div class="feature-desc">31省门槛标准</div>
+    </a>
+    <a href="/defense/CASE-0001" class="feature-card">
+      <div class="feature-icon">🛡️</div>
+      <div class="feature-name">辩护分析</div>
+      <div class="feature-desc">辩护策略建议</div>
+    </a>
+    <a href="/law_search" class="feature-card">
+      <div class="feature-icon">⚖️</div>
+      <div class="feature-name">法律检索</div>
+      <div class="feature-desc">法条智能检索</div>
+    </a>
+    <a href="/docs" class="feature-card">
+      <div class="feature-icon">📚</div>
+      <div class="feature-name">API 文档</div>
+      <div class="feature-desc">接口说明</div>
+    </a>
+  </div>
+
+  <div class="footer">
+    追诉智能辅助系统 v2.3.0 · 数据来源：最高法/最高检公开判例
   </div>
 </div>
 
 <script>
-  const searchInput = document.getElementById('search-input');
-  const statusFilter = document.getElementById('status-filter');
-  const caseList = document.getElementById('case-list');
-  const resultCount = document.getElementById('result-count');
-  let currentStatus = '';
-  let currentQuery = '';
+async function init() {
+  // 加载数据
+  const [stats] = await Promise.all([
+    fetch('/api/stats/overview').then(r => r.json()).catch(() => null),
+  ]);
 
-  function setStatus(status) {
-    currentStatus = status;
-    statusFilter.value = status;
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.status === status);
-    });
-    applyFilter();
+  if (!stats) {
+    document.getElementById('metrics-row').innerHTML = '<div class="loading">数据加载失败</div>';
+    return;
   }
 
-  function applyFilter() {
-    if (!caseList) return;
-    const items = caseList.querySelectorAll('.case-item');
-    let visible = 0;
-    items.forEach(item => {
-      const matchStatus = !currentStatus || item.dataset.status === currentStatus;
-      const q = currentQuery.toLowerCase();
-      const matchSearch = !q ||
-        item.dataset.name.includes(q) ||
-        item.dataset.id.includes(q);
-      const show = matchStatus && matchSearch;
-      item.classList.toggle('hidden', !show);
-      if (show) visible++;
-    });
-    resultCount.innerHTML = '显示 <strong>' + visible + '</strong> / {{ cases|length }} 个案件';
-  }
+  const totalCases = stats.total_cases || 0;
+  const totalAmount = stats.total_amount_wan || 0;
+  const totalCrimes = stats.total_crimes || 0;
+  const totalProvinces = Object.keys(stats.provinces || {}).length;
 
-  searchInput.addEventListener('input', () => {
-    currentQuery = searchInput.value.trim();
-    applyFilter();
-  });
+  // 渲染指标卡
+  document.getElementById('metrics-row').innerHTML = `
+    <div class="metric-card">
+      <div class="metric-icon blue">📁</div>
+      <div class="metric-content">
+        <div class="metric-value">${totalCases}</div>
+        <div class="metric-label">案件总数</div>
+        <div class="metric-sub">已收录案例</div>
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-icon green">💰</div>
+      <div class="metric-content">
+        <div class="metric-value">${totalAmount.toFixed(1)}</div>
+        <div class="metric-label">涉案总金额（万元）</div>
+        <div class="metric-sub">平均 ${stats.avg_amount_wan ? stats.avg_amount_wan.toFixed(1) : 0} 万/案</div>
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-icon purple">⚖️</div>
+      <div class="metric-content">
+        <div class="metric-value">${totalCrimes}</div>
+        <div class="metric-label">罪名类型</div>
+        <div class="metric-sub">覆盖主要罪名</div>
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-icon orange">🗺️</div>
+      <div class="metric-content">
+        <div class="metric-value">${totalProvinces}</div>
+        <div class="metric-label">省份覆盖</div>
+        <div class="metric-sub">全国省级行政区</div>
+      </div>
+    </div>
+  `;
 
-  statusFilter.addEventListener('change', () => {
-    setStatus(statusFilter.value);
-  });
+  // 渲染图表
+  renderCrimeChart(stats.crime_types || {});
+  renderProvinceChart(stats.provinces || {});
+}
 
-  // URL 参数同步（刷新后保持筛选状态）
-  const urlParams = new URLSearchParams(window.location.search);
-  const initStatus = urlParams.get('status') || '';
-  if (initStatus) setStatus(initStatus);
+function renderCrimeChart(crimeTypes) {
+  const chart = echarts.init(document.getElementById('chart-crime'));
+  const entries = Object.entries(crimeTypes).sort((a, b) => b[1] - a[1]);
+  const colors = ['#4f46e5', '#7c3aed', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'];
+
+  const option = {
+    tooltip: { trigger: 'item', formatter: '{b}: {c} 件 ({d}%)' },
+    legend: {
+      orient: 'vertical', right: 10, top: 'center',
+      textStyle: { fontSize: 12 }
+    },
+    series: [{
+      type: 'pie',
+      radius: ['40%', '70%'],
+      center: ['35%', '50%'],
+      avoidLabelOverlap: true,
+      itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
+      label: { show: false },
+      emphasis: {
+        label: { show: true, fontSize: 14, fontWeight: 'bold' }
+      },
+      data: entries.map(([name, value], i) => ({
+        name, value,
+        itemStyle: { color: colors[i % colors.length] }
+      })),
+    }],
+  };
+  chart.setOption(option);
+  window.addEventListener('resize', () => chart.resize());
+}
+
+function renderProvinceChart(provinces) {
+  const chart = echarts.init(document.getElementById('chart-province'));
+  const entries = Object.entries(provinces).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+  const option = {
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    grid: { left: 10, right: 20, top: 10, bottom: 30, containLabel: true },
+    xAxis: { type: 'value', axisLabel: { fontSize: 11 } },
+    yAxis: {
+      type: 'category',
+      data: entries.map(([p]) => p).reverse(),
+      axisLabel: { fontSize: 11 }
+    },
+    series: [{
+      type: 'bar',
+      data: entries.map(([, v]) => v).reverse(),
+      itemStyle: {
+        color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+          { offset: 0, color: '#4f46e5' },
+          { offset: 1, color: '#7c3aed' },
+        ]),
+        borderRadius: [0, 4, 4, 0],
+      },
+      label: { show: true, position: 'right', fontSize: 11, color: '#6b7280' },
+    }],
+  };
+  chart.setOption(option);
+  window.addEventListener('resize', () => chart.resize());
+}
+
+init();
 </script>
-
 </body>
 </html>

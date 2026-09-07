@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>统计总览 - 追诉系统</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -356,9 +357,9 @@
         <button class="tab-btn" onclick="showCrimeTab('robbery')" id="btn-robbery" style="border-bottom-color:#27ae60;color:#7f8c8d;">抢夺罪</button>
       </div>
 
-      <div id="provincial-theft" class="province-grid"></div>
-      <div id="provincial-fraud" class="province-grid" style="display:none;"></div>
-      <div id="provincial-robbery" class="province-grid" style="display:none;"></div>
+      <div id="provincial-theft" style="height:320px;"></div>
+      <div id="provincial-fraud" style="height:320px;display:none;"></div>
+      <div id="provincial-robbery" style="height:320px;display:none;"></div>
 
       <div class="china-map-placeholder">
         🗺 地图可视化区域<br>
@@ -550,46 +551,97 @@
   }
 
   // ===== 省级差异 =====
-  function renderProvincial(prov) {
-    const crimeMaps = {
-      theft: 'provincial-theft',
-      fraud: 'provincial-fraud',
-      robbery: 'provincial-robbery',
-    };
+  // ECharts chart instances
+let chartTheft, chartFraud, chartRobbery;
+
+function renderProvincial(prov) {
     const crimeKeys = { theft: '盗窃罪', fraud: '诈骗罪', robbery: '抢夺罪' };
     const colors = { theft: '#3498db', fraud: '#e74c3c', robbery: '#27ae60' };
+    const charts = { theft: null, fraud: null, robbery: null };
 
     for (const [key, crime] of Object.entries(crimeKeys)) {
-      const elId = crimeMaps[key];
+      const elId = 'provincial-' + key;
       const el = document.getElementById(elId);
       const provinces = prov.data?.[crime] || {};
-      const maxAmt = prov.max_amount || 100000;
 
       if (Object.keys(provinces).length === 0) {
-        el.innerHTML = '<div class="empty">暂无数据</div>';
+        el.innerHTML = '<div style="text-align:center;padding:60px;color:#9ca3af;">暂无数据</div>';
         continue;
       }
 
-      let html = '';
-      const sorted = Object.entries(provinces).sort((a, b) => b[1].amount - a[1].amount);
-      for (const [provName, info] of sorted) {
-        const pct = Math.round(info.amount / maxAmt * 100);
-        html += `
-        <div class="province-card" style="border-left-color:${colors[key]}">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <strong style="font-size:13px;">${provName}</strong>
-            <span style="font-size:12px;color:#7f8c8d;">${info.category}</span>
-          </div>
-          <div class="province-bar">
-            <div class="prov">${provName}</div>
-            <div class="bar-wrap"><div class="bar"><div class="bar-fill" style="width:${pct}%;background:${colors[key]}"></div></div></div>
-            <div class="amount">${info.amount > 0 ? info.amount.toLocaleString() + '元' : info.standard}</div>
-          </div>
-          <div style="font-size:11px;color:#95a5a6;">${info.standard}</div>
-        </div>`;
-      }
-      el.innerHTML = html;
+      // Dispose existing chart
+      const existing = echarts.getInstanceByDom(el);
+      if (existing) { existing.dispose(); }
+
+      const chartInst = echarts.init(el);
+      charts[key] = chartInst;
+
+      const sorted = Object.entries(provinces).sort((a, b) => (b[1].amount||0) - (a[1].amount||0));
+      const labels = sorted.map(([p]) => p);
+      const amounts = sorted.map(([,info]) => info.amount || 0);
+
+      const option = {
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'shadow' },
+          formatter: function(params) {
+            const p = params[0];
+            const info = sorted[p.dataIndex][1];
+            return '<strong>' + p.name + '</strong><br/>'
+              + '数额较大门槛: ' + (info.amount > 0 ? info.amount.toLocaleString() + '元' : info.standard) + '<br/>'
+              + '地区分类: ' + info.category;
+          }
+        },
+        grid: { left: 12, right: 20, top: 10, bottom: labels.length > 12 ? 60 : 30, containLabel: true },
+        xAxis: {
+          type: 'value',
+          axisLabel: {
+            formatter: function(v) {
+              if (v >= 10000) return (v/10000).toFixed(1) + '万';
+              return v + '元';
+            },
+            fontSize: 11,
+          }
+        },
+        yAxis: {
+          type: 'category',
+          data: labels,
+          axisLabel: { fontSize: 11 },
+          triggerEvent: true,
+        },
+        series: [{
+          type: 'bar',
+          data: amounts,
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: colors[key] },
+              { offset: 1, color: colors[key] + 'aa' },
+            ]),
+            borderRadius: [0, 4, 4, 0],
+          },
+          label: {
+            show: true,
+            position: 'right',
+            fontSize: 10,
+            color: '#6b7280',
+            formatter: function(p) {
+              const v = p.value;
+              return v >= 10000 ? (v/10000).toFixed(1) + '万' : v + '元';
+            }
+          },
+          barMaxWidth: 28,
+        }],
+      };
+      chartInst.setOption(option);
     }
+
+    chartTheft = charts.theft;
+    chartFraud = charts.fraud;
+    chartRobbery = charts.robbery;
+
+    window.addEventListener('resize', () => {
+      [chartTheft, chartFraud, chartRobbery].forEach(c => { if (c) c.resize(); });
+    });
   }
 
   // ===== 公司地域 =====
@@ -668,6 +720,7 @@
 
   function showCrimeTab(crime) {
     const maps = { theft: 'provincial-theft', fraud: 'provincial-fraud', robbery: 'provincial-robbery' };
+    const chartMap = { theft: chartTheft, fraud: chartFraud, robbery: chartRobbery };
     const colors = { theft: '#3498db', fraud: '#e74c3c', robbery: '#27ae60' };
     const names = { theft: '盗窃罪', fraud: '诈骗罪', robbery: '抢夺罪' };
     Object.entries(maps).forEach(([k, elId]) => {
@@ -685,6 +738,11 @@
         btn.style.color = '';
       }
     });
+    // Resize ECharts chart when tab becomes visible
+    setTimeout(() => {
+      const chart = chartMap[crime];
+      if (chart) chart.resize();
+    }, 100);
   }
 
   // 启动
