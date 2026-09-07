@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>联合案件分析 - 追诉系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+            line-height: 1.6;
+        }
+        a { color: #4f46e5; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* ── 顶栏 ── */
+        .topbar {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 0 24px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .topbar-title {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .topbar-nav { display: flex; gap: 20px; font-size: 14px; }
+        .topbar-nav a { color: rgba(255,255,255,0.75); }
+        .topbar-nav a:hover { color: white; text-decoration: none; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
+
+        /* ── 页面标题 ── */
+        .page-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 36px 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 24px rgba(79,70,229,0.35);
+        }
+        .page-header h1 { font-size: 26px; margin-bottom: 8px; }
+        .page-header p { opacity: 0.85; font-size: 15px; }
+
+        /* ── 表单卡片 ── */
+        .form-card {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+        }
+        .form-card h2 {
+            font-size: 17px;
+            color: #1a1a2e;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #4f46e5;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+        }
+        .form-group label span { color: #dc2626; margin-left: 2px; }
+        .form-group input,
+        .form-group select {
+            padding: 10px 14px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: #fafafa;
+            color: #1a1a2e;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.12);
+            background: white;
+        }
+
+        /* 量刑情节多选 */
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 8px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.15s;
+            border: 1.5px solid transparent;
+        }
+        .checkbox-item:hover { background: #e9eaff; border-color: #4f46e5; }
+        .checkbox-item.checked { background: #eef2ff; border-color: #4f46e5; color: #4f46e5; }
+        .checkbox-item input { display: none; }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            box-shadow: 0 4px 14px rgba(79,70,229,0.35);
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,0.45); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1.5px solid #d1d5db;
+        }
+        .btn-secondary:hover { background: #e5e7eb; }
+
+        /* ── 加载状态 ── */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(240,242,245,0.85);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .loading-overlay.show { display: flex; }
+        .spinner {
+            width: 48px; height: 48px;
+            border: 4px solid #e5e7eb;
+            border-top-color: #4f46e5;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { font-size: 15px; color: #6b7280; font-weight: 500; }
+
+        /* ── 分析结果 ── */
+        #result-section { display: none; }
+        #result-section.show { display: block; }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .result-header h2 {
+            font-size: 18px;
+            color: #1a1a2e;
+        }
+        .result-meta {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 16px;
+        }
+
+        /* 结果卡片网格 */
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .result-card {
+            background: white;
+            border-radius: 14px;
+            padding: 22px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            border-left: 4px solid #4f46e5;
+        }
+        .result-card h3 {
+            font-size: 15px;
+            color: #1a1a2e;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .result-card h3 .badge {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        /* 入罪状态 */
+        .verdict-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+        .verdict-yes { background: #ecfdf5; border: 1.5px solid #10b981; }
+        .verdict-no { background: #fef2f2; border: 1.5px solid #ef4444; }
+        .verdict-icon { font-size: 24px; }
+        .verdict-text { font-size: 14px; color: #374151; }
+        .verdict-text strong { color: #1a1a2e; }
+
+        /* 量刑预测 */
+        .sentencing-bar-wrap { margin: 10px 0; }
+        .sentencing-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+        .sentencing-bar {
+            background: #e5e7eb;
+            border-radius: 6px;
+            height: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        .sentencing-fill {
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            border-radius: 6px;
+            height: 100%;
+        }
+        .sentencing-values {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .sentencing-stat {
+            text-align: center;
+            padding: 10px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+        .sentencing-stat .val { font-size: 18px; font-weight: 700; color: #4f46e5; }
+        .sentencing-stat .lbl { font-size: 11px; color: #6b7280; margin-top: 2px; }
+
+        /* 偏离度 */
+        .deviation-ring {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: 700;
+            margin: 8px auto;
+        }
+        .dev-low { background: #ecfdf5; color: #059669; }
+        .dev-mid { background: #fffbeb; color: #d97706; }
+        .dev-high { background: #fef2f2; color: #dc2626; }
+
+        /* 辩护要点 */
+        .defense-list { display: flex; flex-direction: column; gap: 10px; }
+        .defense-item {
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+        }
+        .defense-item.primary { background: #eef2ff; border-color: #4f46e5; }
+        .defense-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .defense-type { font-weight: 600; font-size: 14px; }
+        .defense-conf { font-size: 12px; padding: 2px 8px; border-radius: 20px; background: #dbeafe; color: #1d4ed8; }
+        .defense-rec { font-size: 13px; color: #374151; }
+
+        /* 类案列表 */
+        .case-list { display: flex; flex-direction: column; gap: 10px; }
+        .case-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+        }
+        .case-sim {
+            min-width: 50px; height: 50px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 700;
+            background: #eef2ff; color: #4f46e5;
+        }
+        .case-info { flex: 1; }
+        .case-info .court { font-size: 13px; color: #374151; font-weight: 500; }
+        .case-info .detail { font-size: 12px; color: #6b7280; margin-top: 2px; }
+        .case-sentence { font-size: 15px; font-weight: 700; color: #1a1a2e; white-space: nowrap; }
+
+        /* 法条列表 */
+        .law-list { display: flex; flex-direction: column; gap: 8px; }
+        .law-item {
+            padding: 10px 14px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border-left: 3px solid #4f46e5;
+        }
+        .law-title { font-size: 13px; font-weight: 600; color: #1a1a2e; margin-bottom: 4px; }
+        .law-snippet { font-size: 12px; color: #6b7280; line-height: 1.5; }
+        .law-snippet mark { background: #fef08a; padding: 0 2px; border-radius: 3px; }
+
+        /* 错误提示 */
+        .error-box {
+            background: #fef2f2; border: 1.5px solid #fca5a5;
+            border-radius: 12px; padding: 16px 20px;
+            color: #dc2626; font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 640px) {
+            .form-row { grid-template-columns: 1fr; }
+            .result-grid { grid-template-columns: 1fr; }
+            .page-header { padding: 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 顶栏 -->
+<div class="topbar">
+    <div class="topbar-title">⚖️ 追诉智能辅助系统</div>
+    <nav class="topbar-nav">
+        <a href="/">首页</a>
+        <a href="/search">案例搜索</a>
+        <a href="/sentencing">量刑基线</a>
+        <a href="/threshold">入罪门槛</a>
+        <a href="/case-analyze">案件分析</a>
+    </nav>
+</div>
+
+<!-- 加载遮罩 -->
+<div class="loading-overlay" id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">正在分析案件，请稍候...</div>
+</div>
+
+<div class="container">
+
+    <!-- 页面标题 -->
+    <div class="page-header">
+        <h1>🔍 联合案件分析</h1>
+        <p>输入案情，一键输出：入罪判定 · 量刑预测 · 偏离分析 · 类案推送 · 辩护建议 · 法律依据</p>
+    </div>
+
+    <!-- 输入表单 -->
+    <div class="form-card">
+        <h2>📋 案件信息</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label><span>*</span> 罪名</label>
+                <select id="crime_type" required>
+                    <option value="">— 选择罪名 —</option>
+                    <option value="盗窃罪">盗窃罪</option>
+                    <option value="诈骗罪">诈骗罪</option>
+                    <option value="故意伤害罪">故意伤害罪</option>
+                    <option value="危险驾驶罪">危险驾驶罪</option>
+                    <option value="交通肇事罪">交通肇事罪</option>
+                    <option value="职务侵占罪">职务侵占罪</option>
+                    <option value="非法吸收公众存款罪">非法吸收公众存款罪</option>
+                    <option value="开设赌场罪">开设赌场罪</option>
+                    <option value="敲诈勒索罪">敲诈勒索罪</option>
+                    <option value="抢劫罪">抢劫罪</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label><span>*</span> 涉案金额（元）</label>
+                <input type="number" id="amount" placeholder="如：15000" min="0" step="100">
+            </div>
+            <div class="form-group">
+                <label>省份</label>
+                <select id="province">
+                    <option value="全国">全国（默认）</option>
+                    <option value="北京">北京</option><option value="上海">上海</option>
+                    <option value="广东">广东</option><option value="浙江">浙江</option>
+                    <option value="江苏">江苏</option><option value="四川">四川</option>
+                    <option value="湖北">湖北</option><option value="湖南">湖南</option>
+                    <option value="河南">河南</option><option value="山东">山东</option>
+                    <option value="河北">河北</option><option value="安徽">安徽</option>
+                    <option value="福建">福建</option><option value="重庆">重庆</option>
+                    <option value="天津">天津</option><option value="陕西">陕西</option>
+                    <option value="辽宁">辽宁</option><option value="黑龙江">黑龙江</option>
+                    <option value="江西">江西</option><option value="云南">云南</option>
+                    <option value="广西">广西</option><option value="山西">山西</option>
+                    <option value="内蒙古">内蒙古</option><option value="吉林">吉林</option>
+                    <option value="贵州">贵州</option><option value="甘肃">甘肃</option>
+                    <option value="海南">海南</option><option value="宁夏">宁夏</option>
+                    <option value="青海">青海</option><option value="新疆">新疆</option>
+                    <option value="西藏">西藏</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>法院层级</label>
+                <select id="court_level">
+                    <option value="">— 不限 —</option>
+                    <option value="基层">基层法院</option>
+                    <option value="中级">中级人民法院</option>
+                    <option value="高级">高级人民法院</option>
+                    <option value="最高法">最高人民法院</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 8px;">
+            <label>量刑情节（可多选）</label>
+        </div>
+        <div class="checkbox-grid" id="circumstances">
+            <label class="checkbox-item" data-val="自首"><input type="checkbox" value="自首"> 🚀 自首</label>
+            <label class="checkbox-item" data-val="立功"><input type="checkbox" value="立功"> 🎯 立功</label>
+            <label class="checkbox-item" data-val="坦白"><input type="checkbox" value="坦白"> 🗣️ 坦白</label>
+            <label class="checkbox-item" data-val="赔偿"><input type="checkbox" value="赔偿"> 💰 赔偿</label>
+            <label class="checkbox-item" data-val="谅解"><input type="checkbox" value="谅解"> 🤝 谅解</label>
+            <label class="checkbox-item" data-val="认罪认罚"><input type="checkbox" value="认罪认罚"> 📝 认罪认罚</label>
+            <label class="checkbox-item" data-val="初犯"><input type="checkbox" value="初犯"> 🌱 初犯</label>
+            <label class="checkbox-item" data-val="累犯"><input type="checkbox" value="累犯"> ⚠️ 累犯</label>
+            <label class="checkbox-item" data-val="从犯"><input type="checkbox" value="从犯"> 🔽 从犯</label>
+            <label class="checkbox-item" data-val="预备"><input type="checkbox" value="预备"> ⏪ 预备</label>
+        </div>
+
+        <div class="form-row" style="margin-top: 16px;">
+            <div class="form-group">
+                <label>关键词（选填）</label>
+                <input type="text" id="keyword" placeholder="如：入户盗窃、电信诈骗">
+            </div>
+            <div class="form-group">
+                <label>实际量刑（已有判决时填，用于偏离分析）</label>
+                <input type="number" id="actual_sentencing" placeholder="如：1.5（年）" step="0.1" min="0">
+            </div>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn btn-primary" onclick="runAnalysis()">
+                <span>🔍</span> 开始分析
+            </button>
+            <button class="btn btn-secondary" onclick="resetForm()">重置</button>
+        </div>
+    </div>
+
+    <!-- 错误提示 -->
+    <div class="error-box" id="error-box" style="display:none"></div>
+
+    <!-- 结果区域 -->
+    <div id="result-section">
+
+        <!-- 结果顶栏 -->
+        <div class="result-header">
+            <h2>📊 分析结果</h2>
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-primary" onclick="downloadPdf()" style="padding:8px 18px; font-size:13px;">
+                    📄 下载辩护 PDF
+                </button>
+                <button class="btn btn-secondary" onclick="runAnalysis()" style="padding:8px 18px; font-size:13px;">
+                    🔄 重新分析
+                </button>
+            </div>
+        </div>
+        <div class="result-meta" id="result-meta"></div>
+
+        <!-- 结果卡片 -->
+        <div class="result-grid">
+            <!-- 入罪判定 -->
+            <div class="result-card">
+                <h3>🚦 入罪判定</h3>
+                <div id="res-verdict"></div>
+            </div>
+            <!-- 量刑预测 -->
+            <div class="result-card">
+                <h3>📐 量刑预测</h3>
+                <div id="res-sentencing"></div>
+            </div>
+            <!-- 量刑偏离 -->
+            <div class="result-card">
+                <h3>📊 量刑偏离分析</h3>
+                <div id="res-deviation"></div>
+            </div>
+            <!-- 辩护分析 -->
+            <div class="result-card">
+                <h3>🛡️ 辩护分析</h3>
+                <div id="res-defense"></div>
+            </div>
+        </div>
+
+        <!-- 类案推送 -->
+        <div class="result-card" style="margin-bottom:16px;">
+            <h3>📋 相似判例推送</h3>
+            <div class="case-list" id="res-cases"></div>
+        </div>
+
+        <!-- 法律依据 -->
+        <div class="result-card">
+            <h3>⚖️ 相关法律依据</h3>
+            <div class="law-list" id="res-laws"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // 多选框样式
+    document.querySelectorAll('.checkbox-item').forEach(el => {
+        el.addEventListener('click', () => {
+            el.classList.toggle('checked');
+        });
+    });
+
+    function getCircumstances() {
+        return [...document.querySelectorAll('.checkbox-item.checked')]
+            .map(el => el.dataset.val);
+    }
+
+    function showLoading() {
+        document.getElementById('loading').classList.add('show');
+        document.getElementById('error-box').style.display = 'none';
+        document.getElementById('result-section').classList.remove('show');
+    }
+
+    function hideLoading() {
+        document.getElementById('loading').classList.remove('show');
+    }
+
+    function showError(msg) {
+        const el = document.getElementById('error-box');
+        el.textContent = '❌ ' + msg;
+        el.style.display = 'block';
+        hideLoading();
+    }
+
+    function escapeHtml(s) {
+        if (s == null) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    async function runAnalysis() {
+        const crime = document.getElementById('crime_type').value;
+        const amount = parseFloat(document.getElementById('amount').value) || 0;
+        if (!crime) { showError('请选择罪名'); return; }
+
+        showLoading();
+        const data = {
+            crime_type: crime,
+            amount: amount,
+            province: document.getElementById('province').value || '全国',
+            court_level: document.getElementById('court_level').value || undefined,
+            keyword: document.getElementById('keyword').value || undefined,
+        };
+
+        // 量刑情节
+        ['自首','立功','坦白','赔偿','谅解','认罪认罚','初犯','累犯','从犯','预备'].forEach(c => {
+            data[c] = document.querySelector(`.checkbox-item[data-val="${c}"]`).classList.contains('checked');
+        });
+
+        // 实际量刑
+        const actual = parseFloat(document.getElementById('actual_sentencing').value);
+        if (actual > 0) data.sentencing_years = actual;
+
+        try {
+            const resp = await fetch('/api/case-analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+            const json = await resp.json();
+            if (!resp.ok) { showError(json.error || '分析失败'); return; }
+            hideLoading();
+            renderResult(json);
+        } catch(e) {
+            showError('网络错误：' + e.message);
+        }
+    }
+
+    function renderResult(r) {
+        // 保存最新结果
+        window._lastResult = r;
+
+        document.getElementById('result-section').classList.add('show');
+
+        // 元信息
+        const c = r.case_info || {};
+        document.getElementById('result-meta').textContent =
+            `分析时间：${new Date().toLocaleString('zh-CN')}　　罪名：${escapeHtml(c.crime_type)}　　涉案金额：${c.amount != null ? c.amount.toLocaleString() + '元' : '未填'}`;
+
+        // 入罪判定
+        const ver = r.criminal_threshold || {};
+        if (ver.reached) {
+            document.getElementById('res-verdict').innerHTML = `
+                <div class="verdict-box verdict-yes">
+                    <div class="verdict-icon">✅</div>
+                    <div class="verdict-text"><strong>已构成入罪标准</strong><br>${escapeHtml(ver.standard || '')}（${escapeHtml(ver.province)}）</div>
+                </div>
+                <div style="font-size:13px;color:#6b7280;">${escapeHtml(ver.legal_basis || '')}</div>`;
+        } else {
+            document.getElementById('res-verdict').innerHTML = `
+                <div class="verdict-box verdict-no">
+                    <div class="verdict-icon">❌</div>
+                    <div class="verdict-text"><strong>未达到入罪门槛</strong><br>${escapeHtml(ver.standard || '')}（${escapeHtml(ver.province)}）</div>
+                </div>`;
+        }
+
+        // 量刑预测
+        const pred = r.sentencing_prediction || {};
+        let barWidth = '60%';
+        let barLabel = '类案均值';
+        if (pred.legal_range) {
+            const w = Math.min(100, Math.max(20, 100 / (pred.legal_range.max - pred.legal_range.min) * (pred.actual_avg || pred.legal_range.min)));
+            barWidth = w + '%';
+        }
+        let predHtml = '';
+        if (pred.legal_range) {
+            predHtml += `<div style="font-size:13px;color:#6b7280;margin-bottom:6px;">法条量刑区间：${pred.legal_range.min} ~ ${pred.legal_range.max} 年</div>`;
+        }
+        predHtml += `<div class="sentencing-bar-wrap"><div class="sentencing-labels"><span>0年</span><span>类案均值 ${pred.actual_avg ? pred.actual_avg.toFixed(2) : '?'}年</span><span>${pred.legal_range ? pred.legal_range.max : '?'}年</span></div>
+            <div class="sentencing-bar"><div class="sentencing-fill" style="width:${barWidth}"></div></div></div>`;
+        predHtml += `<div class="sentencing-values">
+            <div class="sentencing-stat"><div class="val">${pred.actual_avg ? pred.actual_avg.toFixed(2) : '?'}</div><div class="lbl">均值（年）</div></div>
+            <div class="sentencing-stat"><div class="val">${pred.median != null ? pred.median.toFixed(2) : '?'}</div><div class="lbl">中位数（年）</div></div>
+            <div class="sentencing-stat"><div class="val">${pred.sample_count || '?'}</div><div class="lbl">样本数</div></div>
+        </div>`;
+        document.getElementById('res-sentencing').innerHTML = predHtml;
+
+        // 量刑偏离
+        const dev = r.deviation_analysis || {};
+        let devClass = 'dev-low', devLabel = '正常';
+        if (dev.level === 'high' || dev.deviation_score > 40) { devClass = 'dev-high'; devLabel = '偏离较大'; }
+        else if (dev.level === 'medium' || (dev.deviation_score > 15 && dev.deviation_score <= 40)) { devClass = 'dev-mid'; devLabel = '略有偏离'; }
+        const devScore = dev.deviation_score != null ? dev.deviation_score.toFixed(1) : '?';
+        let devHtml = `<div class="deviation-ring ${devClass}">${devScore}</div>
+            <div style="text-align:center;font-size:14px;font-weight:600;margin-bottom:6px;">${devLabel}</div>`;
+        if (dev.rational_range) {
+            devHtml += `<div style="text-align:center;font-size:12px;color:#6b7280;">合理区间：${dev.rational_range[0] || 0} ~ ${dev.rational_range[1] || '?'} 年</div>`;
+        }
+        if (dev.actual_sentence && dev.deviation_score != null) {
+            devHtml += `<div style="text-align:center;font-size:12px;color:#6b7280;margin-top:4px;">实际量刑：${dev.actual_sentence} 年，偏离度 ${devScore}%</div>`;
+        }
+        document.getElementById('res-deviation').innerHTML = devHtml;
+
+        // 辩护分析
+        const def = r.defense_analysis || {};
+        let defHtml = '';
+        const primary = def.primary_defense;
+        if (primary) {
+            defHtml += `<div class="defense-item primary">
+                <div class="defense-item-header">
+                    <span class="defense-type">🔥 ${escapeHtml(primary.type || primary.type_cn || '主要辩护点')}</span>
+                    <span class="defense-conf">主要</span>
+                </div>
+                <div class="defense-rec">${escapeHtml(primary.recommendation || primary.risk_mitigation || '')}</div>
+            </div>`;
+        }
+        const secondary = def.secondary_defenses || [];
+        secondary.forEach(d => {
+            defHtml += `<div class="defense-item">
+                <div class="defense-item-header">
+                    <span class="defense-type">${escapeHtml(d.type || d.type_cn || '')}</span>
+                    <span class="defense-conf">${d.confidence != null ? d.confidence + '%' : ''}</span>
+                </div>
+                ${d.recommendation ? `<div class="defense-rec">${escapeHtml(d.recommendation)}</div>` : ''}
+            </div>`;
+        });
+        if (!defHtml) defHtml = '<div style="color:#9ca3af;font-size:13px;">暂无辩护分析数据</div>';
+        document.getElementById('res-defense').innerHTML = defHtml;
+
+        // 类案
+        const cases = r.similar_cases || [];
+        if (cases.length) {
+            let casesHtml = '';
+            cases.slice(0, 6).forEach(c => {
+                const sim = c.similarity_score != null ? c.similarity_score.toFixed(1) : '?';
+                casesHtml += `<div class="case-item">
+                    <div class="case-sim">${sim}</div>
+                    <div class="case-info">
+                        <div class="court">${escapeHtml(c.court || c.court_name || '')}</div>
+                        <div class="detail">${escapeHtml(c.crime_type || '')}｜涉案 ${c.amount != null ? Number(c.amount).toLocaleString() + '元' : ''}｜${escapeHtml(c.year || '')}年</div>
+                    </div>
+                    <div class="case-sentence">${escapeHtml(c.sentence || '')}</div>
+                </div>`;
+            });
+            document.getElementById('res-cases').innerHTML = casesHtml;
+        } else {
+            document.getElementById('res-cases').innerHTML = '<div style="color:#9ca3af;font-size:13px;">暂无相似案例</div>';
+        }
+
+        // 法条
+        const laws = r.legal_basis || [];
+        if (laws.length) {
+            let lawsHtml = '';
+            laws.slice(0, 5).forEach(l => {
+                const snippet = l.highlighted || l.content || l.snippet || '';
+                lawsHtml += `<div class="law-item">
+                    <div class="law-title">${escapeHtml(l.title || l.name || '')}</div>
+                    <div class="law-snippet">${escapeHtml(snippet).substring(0, 200)}</div>
+                </div>`;
+            });
+            document.getElementById('res-laws').innerHTML = lawsHtml;
+        } else {
+            document.getElementById('res-laws').innerHTML = '<div style="color:#9ca3af;font-size:13px;">暂无法律依据数据</div>';
+        }
+    }
+
+    async function downloadPdf() {
+        const r = window._lastResult;
+        if (!r) { alert('请先运行分析'); return; }
+        const crime = encodeURIComponent(document.getElementById('crime_type').value);
+        const amount = parseFloat(document.getElementById('amount').value) || 0;
+        const province = encodeURIComponent(document.getElementById('province').value || '全国');
+        window.open(`/api/case-analyze/new/pdf?crime_type=${crime}&amount=${amount}&province=${province}`, '_blank');
+    }
+
+    function resetForm() {
+        document.querySelectorAll('.checkbox-item').forEach(el => el.classList.remove('checked'));
+        document.querySelectorAll('input:not([type=checkbox])').forEach(el => el.value = '');
+        document.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
+        document.getElementById('result-section').classList.remove('show');
+        document.getElementById('error-box').style.display = 'none';
+    }
+</script>
+</body>
+</html>
