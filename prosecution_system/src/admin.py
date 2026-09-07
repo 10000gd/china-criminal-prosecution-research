@@ -172,4 +172,69 @@ def create_admin_blueprint(app):
         from data_export import DataExporter
         return DataExporter.export_to_csv(db.get_operation_logs(limit=5000)), 200, {"Content-Type": "text/csv"}
     
+    @bp.route("/case-import", methods=["GET", "POST"])
+    @admin_required
+    def case_import():
+        """案件批量导入"""
+        if request.method == "GET":
+            return render_template("admin/case_import.html", result=None, errors=[])
+
+        # POST: 处理文件上传
+        from src.case_importer import CaseImporter
+        import tempfile, os
+
+        if "file" not in request.files:
+            return render_template("admin/case_import.html", result=None, errors=["请选择要上传的文件"])
+
+        file = request.files["file"]
+        if not file.filename:
+            return render_template("admin/case_import.html", result=None, errors=["未选择文件"])
+
+        suffix = file.filename.split(".")[-1].lower()
+        if suffix not in ("csv", "xlsx", "xls"):
+            return render_template("admin/case_import.html", result=None,
+                                  errors=[f"不支持的格式: .{suffix}，仅支持 CSV / Excel（.xlsx .xls）"])
+
+        # 保存到临时文件
+        tmp_dir = tempfile.mkdtemp(prefix="case_import_")
+        tmp_path = os.path.join(tmp_dir, file.filename)
+        file.save(tmp_path)
+
+        try:
+            from pathlib import Path as _Path
+            importer = CaseImporter(output_dir=_Path(tmp_dir))
+            result = importer.import_file(tmp_path)
+        finally:
+            import shutil
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
+        # 返回结果
+        return render_template("admin/case_import.html",
+                               result={
+                                   "success": result.success,
+                                   "imported": result.imported,
+                                   "failed": result.failed,
+                                   "total": result.imported + result.failed,
+                                   "summary": result.summary(),
+                                   "warnings": result.warnings[:10],
+                               },
+                               errors=result.errors[:20])
+
+    @bp.route("/case-import/template")
+    @admin_required
+    def case_import_template():
+        """下载案件导入模板 CSV"""
+        import io, csv
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["case_id", "case_name", "court", "被告人", "罪名", "涉案金额", "判决日期", "备注"])
+        writer.writerow(["CASE-EXAMPLE-001", "张三盗窃案", "上海市浦东新区人民法院", "张三", "盗窃罪", "15000", "2024-06-15", "初犯、自首"])
+        writer.writerow(["CASE-EXAMPLE-002", "李四诈骗案", "北京市朝阳区人民法院", "李四", "诈骗罪", "80000", "2024-05-20", "已赔偿、谅解"])
+        output.seek(0)
+        return output.getvalue(), 200, {
+            "Content-Type": "text/csv; charset=utf-8-sig",
+            "Content-Disposition": "attachment; filename=case_import_template.csv"
+        }
+
+
     return bp
