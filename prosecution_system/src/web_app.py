@@ -178,7 +178,6 @@ def case_detail(case_id):
 
 # ---- 搜索 ----
 
-@app.route("/search")
 @app.route("/api/search")
 def api_search():
     """全局搜索 API（案件+法律条文混合）"""
@@ -222,6 +221,7 @@ def api_search():
     })
 
 
+@app.route("/search")
 def search():
     """全局搜索"""
     query = request.args.get("q", "").strip()
