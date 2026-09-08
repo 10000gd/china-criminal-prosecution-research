@@ -1234,6 +1234,7 @@ def api_defense_report():
         "success": True,
         "report_path": str(filepath),
         "download_url": f"/download/{Path(filepath).name}",
+        "content": report.get("content", "") if isinstance(report, dict) else str(report)[:2000],
     })
 
 
@@ -1407,6 +1408,9 @@ def api_threshold():
     amount = request.args.get("amount", type=float, default=0)
 
     from threshold_api import CRIME_THRESHOLDS, CRIME_LEGAL_BASIS
+    if crime not in CRIME_THRESHOLDS:
+        return jsonify({"error": f"暂不支持该罪名: {crime}（支持：盗窃罪/诈骗罪/抢夺罪/开设赌场罪）"}), 404
+
     thresholds = CRIME_THRESHOLDS.get(crime, {})
     legal_basis = CRIME_LEGAL_BASIS.get(crime, "")
 
