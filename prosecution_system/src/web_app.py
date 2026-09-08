@@ -61,14 +61,31 @@ app.register_blueprint(api_docs_bp)
 
 loader = CaseLoader()
 # LawRAG: 法律语义检索（惰性初始化，首次搜索时加载）
+# 使用后台线程预热，不阻塞请求处理
+import threading
 _rag_instance = None
+_rag_lock = threading.Lock()
+_rag_ready = threading.Event()
 
-def get_rag():
+def _warmup_rag():
+    """后台线程：预热 LawRAG，完成后通知等待者"""
     global _rag_instance
-    if _rag_instance is None:
+    import io, contextlib, os
+    os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
         from law_rag import LawRAG
         _rag_instance = LawRAG(enable_vector=True)
-    return _rag_instance
+    _rag_ready.set()
+
+def get_rag():
+    """返回 LawRAG 单例，首次调用时后台启动预热线程"""
+    global _rag_instance
+    if _rag_instance is None:
+        with _rag_lock:
+            if _rag_instance is None:
+                t = threading.Thread(target=_warmup_rag, daemon=True)
+                t.start()
+    return _rag_instance  # 返回未完全初始化的实例用于快速返回
 
 OUTPUT_DIR = Path(__file__).parent.parent / "output"
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -1713,8 +1730,7 @@ def _do_case_analyze(data: dict, case_full: dict = None) -> dict:
         }
 
     # 6. 法律依据检索
-    from law_rag import LawRAG
-    rag = LawRAG()
+    rag = get_rag()
     law_results = rag.search(crime, top_k=3)
     legal_basis = [
         {
