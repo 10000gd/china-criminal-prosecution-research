@@ -330,13 +330,16 @@ class DefenseEnhancer:
         """提取罪名信息"""
         charges = []
 
-        # 从多个可能的路径提取
+        # 字符串类型（如 "盗窃罪"）直接转为 Dict
         for path in ["charges", "charges_judged", "allegations"]:
             if path in case_data:
-                if isinstance(case_data[path], dict):
-                    charges.extend(case_data[path].values())
-                elif isinstance(case_data[path], list):
-                    charges.extend(case_data[path])
+                val = case_data[path]
+                if isinstance(val, str):
+                    charges.append({"name": val})
+                elif isinstance(val, dict):
+                    charges.extend(val.values())
+                elif isinstance(val, list):
+                    charges.extend(val)
 
         return charges
 
