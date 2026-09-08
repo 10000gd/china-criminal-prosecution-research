@@ -825,6 +825,7 @@ def api_fact_check(case_id):
             },
             "fields": result["fields"],
             "issues": result["issues"],
+            "average_confidence": avg_conf,
             "grade_labels": FactChecker.__module__ and {
                 "GRADE_A": "✅ 官方一手来源（可引用）",
                 "GRADE_B": "🔶 可推断来源（建议注明推断依据）",
@@ -1002,12 +1003,18 @@ def api_defense_analyze():
             print(f"[辩护分析] 案件加载失败: {e}")
     
     # 如果加载失败或数据不足，用请求数据兜底
+    charges_val = data.get("charges")
+    if isinstance(charges_val, str):
+        charges_val = {"primary": {"name": charges_val}}
+    elif not isinstance(charges_val, dict):
+        charges_val = {"primary": {"name": data.get("crime", "未知罪名")}}
+
     if not case_data or not case_data.get("case_summary"):
         case_data = {
             "case_id": case_id,
-            "case_summary": data.get("facts", ""),
+            "case_summary": data.get("case_summary") or data.get("facts", ""),
             "defendants": [{"name": data.get("defendant_name", "被告")}],
-            "charges": {"primary": {"name": data.get("crime", "未知罪名")}},
+            "charges": charges_val,
         }
     
     # 执行分析
@@ -1018,10 +1025,14 @@ def api_defense_analyze():
     # 检索类似案例
     from defense_case_db import DefenseCaseDatabase
     db = DefenseCaseDatabase()
-    crime = (case_data.get("charges", {}).get("primary", {}).get("name") or 
-             data.get("crime", ""))
+    charges_dict = case_data.get("charges", {})
+    if isinstance(charges_dict, str):
+        crime = charges_dict
+    else:
+        crime = (charges_dict.get("primary", {}).get("name") or
+                 data.get("crime", ""))
     similar = db.search_by_defense(
-        analysis.primary_defense.type.value if analysis.primary_defense else "", 
+        analysis.primary_defense.type.value if analysis.primary_defense else "",
         crime, limit=5
     )
     
