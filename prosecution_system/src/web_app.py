@@ -497,6 +497,42 @@ def api_compare():
     })
 
 
+# ---- GET 支持（兼容 ?ids= 用法） ----
+
+@app.route("/api/compare", methods=["GET"])
+def api_compare_get():
+    """案件对比 API（GET 方式，兼容 ids= 参数）"""
+    ids_param = request.args.get("ids", "")
+    case_ids = [x.strip() for x in ids_param.split(",") if x.strip()]
+    if len(case_ids) < 2:
+        return jsonify({"error": "至少需要2个案件，用逗号分隔，如 ?ids=CASE-0001,CASE-0002"}), 400
+    if len(case_ids) > 5:
+        return jsonify({"error": "最多支持5个案件"}), 400
+    cases_data = []
+    for case_id in case_ids:
+        try:
+            case_data = loader.load(case_id)
+            cases_data.append(case_data)
+        except FileNotFoundError:
+            return jsonify({"error": f"案件不存在: {case_id}"}), 404
+    comparator = CaseComparator()
+    result = comparator.compare_cases(case_ids, cases_data)
+    return jsonify({
+        "case_ids": result.case_ids,
+        "summary": result.summary,
+        "insights": result.insights,
+        "comparison_items": [
+            {
+                "field": item.field,
+                "label": item.label,
+                "values": item.values,
+                "highlight": item.highlight,
+            }
+            for item in result.comparison_items
+        ],
+    })
+
+
 # ---- PDF导出 ----
 
 from pdf_exporter import PDFExporter
@@ -575,6 +611,12 @@ def api_case(case_id):
         return jsonify(data)
     except FileNotFoundError:
         return jsonify({"error": f"案件未找到: {case_id}"}), 404
+
+
+@app.route("/api/cases/<case_id>")
+def api_case_alias(case_id):
+    """案件详情 API（兼容 /api/cases/<id> 路径）"""
+    return api_case(case_id)
 
 
 @app.route("/api/case/<case_id>/charges")
@@ -982,8 +1024,13 @@ def api_defense_analyze():
         crime, limit=5
     )
     
+    primary = analysis.primary_defense
+    secondary = analysis.secondary_defenses
+    defense_angles = ([primary] + secondary) if primary else secondary
+
     return jsonify({
         "analysis": analysis.to_dict(),
+        "defense_angles": [a.to_dict() for a in defense_angles],
         "similar_cases": [c.to_dict() for c in similar.cases],
     })
 
@@ -1512,7 +1559,7 @@ def _do_case_analyze(data: dict, case_full: dict = None) -> dict:
     """
     联合案件分析核心逻辑（供 POST 和 GET 共同调用）
     """
-    crime = data.get("crime_type") or data.get("crime")
+    crime = data.get("crime_type") or data.get("crime") or data.get("charges")
     if not crime:
         raise ValueError("缺少 crime_type 字段")
 
@@ -1690,7 +1737,7 @@ def _do_case_analyze(data: dict, case_full: dict = None) -> dict:
 def api_case_analyze():
     """联合案件分析 API（POST 方式）"""
     data = request.get_json() or {}
-    crime = data.get("crime_type") or data.get("crime")
+    crime = data.get("crime_type") or data.get("crime") or data.get("charges")
     if not crime:
         return jsonify({"error": "缺少 crime_type 字段"}), 400
 
