@@ -308,6 +308,7 @@ def api_law_search():
                 score_type = "vector"
 
             results.append({
+                "title": h.get("title", ""),
                 "law": h.get("law", ""),
                 "article": h.get("article", ""),
                 "category": h.get("category", ""),
