@@ -126,7 +126,7 @@ class DefenseOpinionGenerator:
         sections.append(self._generate_intro(case_data))
         
         # 根据辩护类型生成相应章节
-        primary_defense = self.defense_analysis.get("primary_defense", {})
+        primary_defense = self.defense_analysis.get("primary_defense") or {}
         defense_type = primary_defense.get("type", "")
         
         if defense_type in ["正当防卫", "紧急避险", "精神病人无刑事责任", "不可抗力/意外事件"]:
@@ -186,7 +186,7 @@ class DefenseOpinionGenerator:
     
     def _generate_innocence_section(self, defense_type: str) -> DefenseOpinionSection:
         """生成无罪辩护章节"""
-        primary = self.defense_analysis.get("primary_defense", {})
+        primary = self.defense_analysis.get("primary_defense") or {}
         evidence_points = primary.get("evidence_points", [])
         legal_basis = primary.get("legal_references", [])
         
@@ -242,7 +242,7 @@ class DefenseOpinionGenerator:
     
     def _generate_legal_basis_section(self) -> DefenseOpinionSection:
         """生成法律依据章节"""
-        primary = self.defense_analysis.get("primary_defense", {})
+        primary = self.defense_analysis.get("primary_defense") or {}
         legal_basis = primary.get("legal_references", [])
         legal_text = "\n".join(f"- {ref}" for ref in legal_basis) if legal_basis else "相关法律规定"
         
@@ -273,7 +273,7 @@ class DefenseOpinionGenerator:
     
     def _generate_evidence_challenge_section(self) -> DefenseOpinionSection:
         """生成证据质疑章节"""
-        primary = self.defense_analysis.get("primary_defense", {})
+        primary = self.defense_analysis.get("primary_defense") or {}
         evidence_points = primary.get("evidence_points", [])
         
         content = """辩护人经审查全案证据材料，认为现有证据不足以认定被告人构成犯罪，理由如下：
@@ -305,8 +305,8 @@ class DefenseOpinionGenerator:
     
     def _generate_sentencing_section(self) -> DefenseOpinionSection:
         """生成量刑辩护章节"""
-        primary = self.defense_analysis.get("primary_defense", {})
-        secondary = self.defense_analysis.get("secondary_defenses", [])
+        primary = self.defense_analysis.get("primary_defense") or {}
+        secondary = self.defense_analysis.get("secondary_defenses") or []
         
         primary_text = f"一、主要辩护情节：{primary.get('type', '待认定')}\n\n{primary.get('legal_basis', '')}"
         
@@ -461,9 +461,9 @@ class DefenseOpinionGenerator:
     
     def _get_statutory_mitigation_text(self) -> str:
         """获取法定从轻减轻情节文本（同时查 primary + secondary）"""
-        primary = self.defense_analysis.get("primary_defense", {})
+        primary = self.defense_analysis.get("primary_defense") or {}
         primary_type = primary.get("type", "")
-        secondary = self.defense_analysis.get("secondary_defenses", [])
+        secondary = self.defense_analysis.get("secondary_defenses") or []
         
         STATUTORY_MAP = {
             # 法定情节（刑法典直接依据）
@@ -497,7 +497,7 @@ class DefenseOpinionGenerator:
     
     def _get_discretionary_mitigation_text(self) -> str:
         """获取酌定从轻情节文本（排除已出现在法定情节中的）"""
-        secondary = self.defense_analysis.get("secondary_defenses", [])
+        secondary = self.defense_analysis.get("secondary_defenses") or []
         
         # 已在法定情节中展示的，跳过避免重复
         statutory_keys = {"自首", "立功", "正当防卫", "紧急避险",
