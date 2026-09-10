@@ -150,7 +150,13 @@ def index():
 
 @app.route("/docs")
 def docs_page():
-    """API文档页面"""
+    """API文档页面 - 中文文档"""
+    return render_template("docs_zh.html")
+
+
+@app.route("/docs-en")
+def docs_page_en():
+    """API文档页面 - 英文文档"""
     return render_template("docs.html")
 
 

@@ -1,0 +1,87 @@
+# ============================================================
+# 检察机关办案系统 Dockerfile - 多架构支持
+# 支持: linux/amd64, linux/arm64, linux/arm/v7
+# ============================================================
+# 用法:
+#   docker buildx build --platform linux/amd64,linux/arm64 -t prosecution-system .  # 构建多架构
+#   docker build -t prosecution-system --platform linux/amd64 .                     # 构建单架构
+# ============================================================
+
+# ── 阶段1: builder (用于依赖预编译) ────────────────────────
+FROM --platform=$BUILDPLATFORM python:3.12-slim AS builder
+
+WORKDIR /build
+
+# 安装构建依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        curl \
+        git \
+    && rm -rf /var/lib/apt/lists/*
+
+# 预下载 Python 包
+COPY requirements.txt .
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+# ── 阶段2: 生产镜像 ───────────────────────────────────────
+FROM python:3.12-slim
+
+LABEL maintainer="prosecution-system"
+LABEL description="检察机关办案系统 - RAG增强法律检索平台"
+LABEL org.opencontainers.image.title="中国刑事追诉智能辅助系统"
+LABEL org.opencontainers.image.description="量刑分析/入罪门槛/辩护增强/法律检索"
+LABEL org.opencontainers.image.source="https://github.com/10000gd/china-criminal-prosecution-research"
+LABEL org.opencontainers.image.version="2.4.0"
+
+# 架构检测日志（仅调试用）
+RUN echo "Building for \$(uname -m)" && \
+    if [ "\$(uname -m)" = "aarch64" ]; then \
+        echo "Detected ARM64 architecture"; \
+    elif [ "\$(uname -m)" = "x86_64" ]; then \
+        echo "Detected x86_64 architecture"; \
+    fi || true
+
+WORKDIR /app
+
+# 安装运行时系统依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl \
+        vim \
+        libgomp1 \
+        libopenblas0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# 从 builder 复制已安装的包
+COPY --from=builder /root/.local /root/.local
+ENV PATH=/root/.local/bin:$PATH
+
+# Python 优化设置
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV OMP_NUM_THREADS=4
+
+# HuggingFace 配置
+ENV HF_HUB_DOWNLOAD_TIMEOUT=10
+ENV HF_HUB_HTTP_TIMEOUT=10
+
+# ── 非 root 用户 ───────────────────────────────────────────
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+# ── 复制应用代码 ──────────────────────────────────────────
+COPY --chown=appuser:appuser . .
+
+# ── 入口点 ───────────────────────────────────────────────
+COPY --chown=appuser:appuser docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+EXPOSE 5000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:5000/health/live \
+    || python -m src.cli health \
+    || exit 1
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD []
