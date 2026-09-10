@@ -16,6 +16,7 @@ Flask Web 应用
 import os
 import re
 import sys
+from src.rate_limit import RateLimitMiddleware, rate_limit
 from pathlib import Path
 from datetime import datetime
 
@@ -26,7 +27,7 @@ from logging_config import setup_logging
 
 logger = setup_logging("web_app")
 
-from flask import Flask, render_template, request, jsonify, redirect, url_for, send_file, session
+from flask import Flask, render_template, request, jsonify, redirect, url_for, send_file, session, g
 
 # 导入认证模块
 from auth import create_auth_blueprint, login_required, get_current_user
@@ -488,7 +489,7 @@ def tracker_log():
 
 # ---- 案件对比 ----
 
-from case_comparison import CaseComparator, compare_cases
+from case_comparison import CaseComparator, compare_cases_standalone
 
 @app.route("/compare")
 def compare_page():
@@ -506,7 +507,7 @@ def compare_page():
             return f"案件不存在: {case_id}", 404
     
     comparator = CaseComparator()
-    result = comparator.compare_cases(case_ids, cases_data)
+    result = comparator.compare_cases_standalone(case_ids, cases_data)
     
     return render_template("compare.html", 
                          comparison=result,
@@ -532,7 +533,7 @@ def api_compare():
             return jsonify({"error": f"案件不存在: {case_id}"}), 404
     
     comparator = CaseComparator()
-    result = comparator.compare_cases(case_ids, cases_data)
+    result = comparator.compare_cases_standalone(case_ids, cases_data)
     
     return jsonify({
         "case_ids": result.case_ids,
@@ -569,7 +570,7 @@ def api_compare_get():
         except FileNotFoundError:
             return jsonify({"error": f"案件不存在: {case_id}"}), 404
     comparator = CaseComparator()
-    result = comparator.compare_cases(case_ids, cases_data)
+    result = comparator.compare_cases_standalone(case_ids, cases_data)
     return jsonify({
         "case_ids": result.case_ids,
         "summary": result.summary,
@@ -622,7 +623,7 @@ def export_comparison_pdf():
             return jsonify({"error": f"案件不存在: {case_id}"}), 404
     
     comparator = CaseComparator()
-    result = comparator.compare_cases(case_ids, cases_data)
+    result = comparator.compare_cases_standalone(case_ids, cases_data)
     
     comparison_data = {
         "case_ids": result.case_ids,
@@ -1422,128 +1423,6 @@ def api_sentencing_provincial():
 
 # ── 入罪门槛 ───────────────────────────────────────────────
 
-@app.route("/threshold")
-def threshold_page():
-    """入罪门槛对比页面"""
-    crime = request.args.get("crime", "盗窃罪")
-    from threshold_api import CRIME_THRESHOLDS, CRIME_LABELS
-    thresholds = CRIME_THRESHOLDS.get(crime, {})
-    rows = []
-    for province, data in thresholds.items():
-        threshold = data.get("low", 0)
-        rows.append({
-            "province": province,
-            "threshold_yuan": threshold,
-            "threshold_wan": round(threshold / 10000, 2),
-            "standard": data.get("standard", ""),
-        })
-    rows.sort(key=lambda x: x["threshold_yuan"])
-    return render_template(
-        "threshold.html",
-        crime=crime,
-        crime_label=CRIME_LABELS.get(crime, crime),
-        rows=rows,
-        available_crimes=list(CRIME_THRESHOLDS.keys()),
-    )
-
-
-@app.route("/api/threshold")
-def api_threshold():
-    """入罪门槛 API
-
-    GET /api/threshold?crime=盗窃罪              → 所有省份
-    GET /api/threshold?crime=盗窃罪&province=北京  → 单一省份
-    GET /api/threshold?crime=盗窃罪&amount=5000   → 判断是否入罪
-    """
-    crime = request.args.get("crime", "盗窃罪")
-    province = request.args.get("province", "").strip()
-    amount = request.args.get("amount", type=float, default=0)
-
-    from threshold_api import CRIME_THRESHOLDS, CRIME_LEGAL_BASIS
-    if crime not in CRIME_THRESHOLDS:
-        return jsonify({"error": f"暂不支持该罪名: {crime}（支持：盗窃罪/诈骗罪/抢夺罪/开设赌场罪）"}), 404
-
-    thresholds = CRIME_THRESHOLDS.get(crime, {})
-    legal_basis = CRIME_LEGAL_BASIS.get(crime, "")
-
-    def _get_threshold(data: dict):
-        """从数据字典中提取入罪门槛金额（新旧结构兼容）"""
-        if isinstance(data, dict):
-            return data.get("low") or data.get("amount_standard") or 0
-        return 0
-
-    def _is_text_data(data: dict):
-        """判断是否为文字描述类数据（如交通肇事罪）"""
-        if not isinstance(data, dict):
-            return False
-        return "death1_flee" in data or "death1_serious" in data
-
-    if province:
-        data = thresholds.get(province, {})
-        if not data:
-            return jsonify({"error": f"未找到省份: {province}"}), 404
-
-        if _is_text_data(data):
-            return jsonify({
-                "province": province,
-                "crime": crime,
-                "threshold_yuan": 0,
-                "is_text_based": True,
-                "description": data,
-                "legal_basis": legal_basis,
-            })
-
-        threshold = _get_threshold(data)
-        return jsonify({
-            "province": province,
-            "crime": crime,
-            "threshold_yuan": threshold,
-            "threshold_wan": round(threshold / 10000, 2),
-            "standard": data.get("standard", ""),
-            "legal_basis": legal_basis,
-            "reached": amount > 0 and amount >= threshold if amount else None,
-        })
-
-    rows = []
-    for p, data in thresholds.items():
-        if _is_text_data(data):
-            rows.append({
-                "province": p,
-                "threshold_yuan": 0,
-                "threshold_wan": 0,
-                "is_text_based": True,
-                "description": data,
-                "legal_basis": legal_basis,
-            })
-            continue
-
-        threshold = _get_threshold(data)
-        reached = None
-        if amount > 0:
-            reached = amount >= threshold
-        rows.append({
-            "province": p,
-            "threshold_yuan": threshold,
-            "threshold_wan": round(threshold / 10000, 2),
-            "standard": data.get("standard", ""),
-            "reached": reached,
-            "legal_basis": legal_basis,
-        })
-
-    # 数值类按门槛排序，文字类放最后
-    text_rows = [r for r in rows if r.get("is_text_based")]
-    num_rows = sorted([r for r in rows if not r.get("is_text_based")],
-                      key=lambda x: x["threshold_yuan"])
-    return jsonify({
-        "crime": crime,
-        "amount": amount,
-        "count": len(rows),
-        "rows": num_rows + text_rows,
-    })
-
-
-# ---- 运行 ----
-
 if __name__ == "__main__":
     """
     生产级启动入口（优先使用 gunicorn/waitress，不建议直接运行此文件）
@@ -2036,4 +1915,111 @@ def api_monitor_slow():
     from src.performance_monitor import monitor
     limit = request.args.get('limit', 10, type=int)
     return jsonify({"slow_requests": monitor.get_slow_requests(limit)})
+@app.route("/api/threshold")
+def api_threshold():
+    """入罪门槛 API
+
+    GET /api/threshold?crime=盗窃罪              → 所有省份
+    GET /api/threshold?crime=盗窃罪&province=北京  → 单一省份
+    GET /api/threshold?crime=盗窃罪&amount=5000   → 判断是否入罪
+    """
+    crime = request.args.get("crime", "盗窃罪")
+    province = request.args.get("province", "").strip()
+    amount = request.args.get("amount", type=float, default=0)
+
+    from threshold_db import THEFT_THRESHOLDS, FRAUD_THRESHOLDS, ROBBERY_THRESHOLDS, GAMBLING_THRESHOLDS
+    CRIME_THRESHOLDS = {
+        "盗窃罪": THEFT_THRESHOLDS,
+        "诈骗罪": FRAUD_THRESHOLDS,
+        "抢夺罪": ROBBERY_THRESHOLDS,
+        "开设赌场罪": GAMBLING_THRESHOLDS,
+    }
+    CRIME_LEGAL_BASIS = {
+        "盗窃罪": "刑法第264条",
+        "诈骗罪": "刑法第266条",
+        "抢夺罪": "刑法第267条",
+        "开设赌场罪": "刑法第303条",
+    }
+    if crime not in CRIME_THRESHOLDS:
+        return jsonify({"error": f"暂不支持该罪名: {crime}（支持：盗窃罪/诈骗罪/抢夺罪/开设赌场罪）"}), 404
+
+    thresholds = CRIME_THRESHOLDS.get(crime, {})
+    legal_basis = CRIME_LEGAL_BASIS.get(crime, "")
+
+    def _get_threshold(data: dict):
+        """从数据字典中提取入罪门槛金额（新旧结构兼容）"""
+        if isinstance(data, dict):
+            return data.get("low") or data.get("amount_standard") or 0
+        return 0
+
+    def _is_text_data(data: dict):
+        """判断是否为文字描述类数据（如交通肇事罪）"""
+        if not isinstance(data, dict):
+            return False
+        return "death1_flee" in data or "death1_serious" in data
+
+    if province:
+        data = thresholds.get(province, {})
+        if not data:
+            return jsonify({"error": f"未找到省份: {province}"}), 404
+
+        if _is_text_data(data):
+            return jsonify({
+                "province": province,
+                "crime": crime,
+                "threshold_yuan": 0,
+                "is_text_based": True,
+                "description": data,
+                "legal_basis": legal_basis,
+            })
+
+        threshold = _get_threshold(data)
+        return jsonify({
+            "province": province,
+            "crime": crime,
+            "threshold_yuan": threshold,
+            "threshold_wan": round(threshold / 10000, 2),
+            "standard": data.get("standard", ""),
+            "legal_basis": legal_basis,
+            "reached": amount > 0 and amount >= threshold if amount else None,
+        })
+
+    rows = []
+    for p, data in thresholds.items():
+        if _is_text_data(data):
+            rows.append({
+                "province": p,
+                "threshold_yuan": 0,
+                "threshold_wan": 0,
+                "is_text_based": True,
+                "description": data,
+                "legal_basis": legal_basis,
+            })
+            continue
+
+        threshold = _get_threshold(data)
+        reached = None
+        if amount > 0:
+            reached = amount >= threshold
+        rows.append({
+            "province": p,
+            "threshold_yuan": threshold,
+            "threshold_wan": round(threshold / 10000, 2),
+            "standard": data.get("standard", ""),
+            "reached": reached,
+            "legal_basis": legal_basis,
+        })
+
+    # 数值类按门槛排序，文字类放最后
+    text_rows = [r for r in rows if r.get("is_text_based")]
+    num_rows = sorted([r for r in rows if not r.get("is_text_based")],
+                      key=lambda x: x["threshold_yuan"])
+    return jsonify({
+        "crime": crime,
+        "amount": amount,
+        "count": len(rows),
+        "rows": num_rows + text_rows,
+    })
+
+
 

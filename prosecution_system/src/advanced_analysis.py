@@ -31,7 +31,7 @@ class SimilarityAnalyzer:
 
 class TrendAnalyzer:
     @classmethod
-    def analyze(cls, cases: List[Dict], crime: str = None) -> Dict:
+    def analyze_case(cls, cases: List[Dict], crime: str = None) -> Dict:
         filtered = [c for c in cases if not crime or c.get('crime') == crime]
         by_month = defaultdict(list)
         for case in filtered:
@@ -77,7 +77,7 @@ class AnomalyDetector:
 
 class StatisticsEngine:
     @classmethod
-    def analyze(cls, cases: List[Dict]) -> Dict:
+    def analyze_batch(cls, cases: List[Dict]) -> Dict:
         if not cases: return {"error": "无案例数据"}
         years = [c.get('sentence_years', 0) for c in cases if c.get('sentence_years')]
         return {

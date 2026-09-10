@@ -487,9 +487,9 @@ class DefenseReportBuilderPDF(DefenseReportBuilder):
         try:
             pdf.add_font(self.CJK_FONT_NAME, fname=self.CJK_FONT_PATH)
             pdf.set_font(self.CJK_FONT_NAME, size=12)
-            def font(pdf, size): pdf.set_font(self.CJK_FONT_NAME, size=size)
+            def _get_font(pdf, size): pdf.set_font(self.CJK_FONT_NAME, size=size)
         except Exception:
-            def font(pdf, size): pdf.set_font("helvetica", size=size)
+            def _get_font_alt(pdf, size): pdf.set_font("helvetica", size=size)
 
         pdf.add_page()
 
@@ -639,17 +639,17 @@ class DefenseReportBuilderPDF(DefenseReportBuilder):
 
 
 
-def save_defense_report_pdf(report, output_dir=None):
+def _save_pdf_report(report, output_dir=None):
     """便捷函数：直接生成辩护 PDF"""
     builder = DefenseReportBuilderPDF(output_dir=output_dir)
     return builder.save_pdf(report)
 
-def save_defense_report_pdf(report: DefenseReport, output_dir: Path = None) -> Path:
+def _save_pdf_report_alt1(report: DefenseReport, output_dir: Path = None) -> Path:
     """便捷函数：直接生成辩护 PDF"""
     builder = DefenseReportBuilderPDF(output_dir=output_dir)
     return builder.save_pdf(report)
 
-def save_defense_report_pdf(report: DefenseReport, output_dir: Path = None) -> Path:
+def _save_pdf_report_alt2(report: DefenseReport, output_dir: Path = None) -> Path:
     """便捷函数：直接生成辩护 PDF"""
     builder = DefenseReportBuilderPDF(output_dir=output_dir)
     return builder.save_pdf(report)

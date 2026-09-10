@@ -20,19 +20,19 @@ logger = logging.getLogger(__name__)
 def login_required(f):
     """登录验证装饰器"""
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def _auth_wrapper(*args, **kwargs):
         if "user_id" not in session:
             if request.is_json:
                 return jsonify({"error": "请先登录", "code": "unauthorized"}), 401
             return redirect(url_for("auth.login"))
         return f(*args, **kwargs)
-    return decorated_function
+    return _auth_wrapper
 
 
 def admin_required(f):
     """管理员权限装饰器"""
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def _auth_wrapper(*args, **kwargs):
         if "user_id" not in session:
             if request.is_json:
                 return jsonify({"error": "请先登录", "code": "unauthorized"}), 401
@@ -44,7 +44,7 @@ def admin_required(f):
                 return jsonify({"error": "需要管理员权限", "code": "forbidden"}), 403
             return redirect(url_for("index"))
         return f(*args, **kwargs)
-    return decorated_function
+    return _auth_wrapper
 
 
 def get_current_user():

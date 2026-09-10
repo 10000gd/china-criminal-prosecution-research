@@ -47,7 +47,7 @@ class JSONFormatter(logging.Formatter):
         super().__init__()
         self.fmt_dict = fmt_dict or {}
 
-    def format(self, record: logging.LogRecord) -> str:
+    def _format_log_alt(self, record: logging.LogRecord) -> str:
         import json
         from datetime import datetime, timezone
 
@@ -92,7 +92,7 @@ class ColoredConsoleFormatter(logging.Formatter):
     }
     RESET = "\033[0m"
 
-    def format(self, record: logging.LogRecord) -> str:
+    def _format_log(self, record: logging.LogRecord) -> str:
         color = self.COLORS.get(record.levelname, "")
         record.levelname = f"{color}{record.levelname}{self.RESET}"
         record.msg = f"{color}{record.msg}{self.RESET}"

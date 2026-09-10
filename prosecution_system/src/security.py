@@ -318,7 +318,7 @@ class APIRateLimiter:
 def rate_limit(f):
     """速率限制装饰器"""
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def _secured_wrapper(*args, **kwargs):
         allowed, message, info = RateLimiter.check_rate_limit()
         if not allowed:
             if request.is_json:
@@ -338,9 +338,9 @@ def rate_limit(f):
 
 def api_rate_limit(api_name: str):
     """API专用速率限制装饰器"""
-    def decorator(f):
+    def _security_decorator(f):
         @wraps(f)
-        def decorated_function(*args, **kwargs):
+        def _secured_wrapper(*args, **kwargs):
             allowed, message = APIRateLimiter.check_api_limit(api_name)
             if not allowed:
                 if request.is_json:
@@ -353,9 +353,9 @@ def api_rate_limit(api_name: str):
 
 def validate_json(*required_fields):
     """JSON参数验证装饰器"""
-    def decorator(f):
+    def _security_decorator(f):
         @wraps(f)
-        def decorated_function(*args, **kwargs):
+        def _secured_wrapper(*args, **kwargs):
             if not request.is_json:
                 return jsonify({"error": "需要JSON格式"}), 400
             
@@ -372,7 +372,7 @@ def validate_json(*required_fields):
 def sanitize_input(f):
     """输入净化装饰器"""
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def _secured_wrapper(*args, **kwargs):
         # 净化所有表单数据
         if request.form:
             sanitized_form = {}
@@ -469,7 +469,7 @@ class CSRFProtection:
 def csrf_protect(f):
     """CSRF保护装饰器"""
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def _secured_wrapper(*args, **kwargs):
         if request.method in ["POST", "PUT", "DELETE", "PATCH"]:
             if not CSRFProtection.validate_token():
                 if request.is_json:

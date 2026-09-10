@@ -60,7 +60,7 @@ class CaseComparator:
     def __init__(self):
         pass
     
-    def compare_cases(self, case_ids: List[str], cases_data: List[Dict]) -> ComparisonResult:
+    def compare_cases_full(self, case_ids: List[str], cases_data: List[Dict]) -> ComparisonResult:
         """对比多个案件
         
         Args:
@@ -398,7 +398,7 @@ class CaseComparator:
         return html
 
 
-def compare_cases(case_ids: List[str], cases_data: List[Dict]) -> ComparisonResult:
+def compare_cases_standalone(case_ids: List[str], cases_data: List[Dict]) -> ComparisonResult:
     """便捷函数：对比案件"""
     comparator = CaseComparator()
     return comparator.compare_cases(case_ids, cases_data)
