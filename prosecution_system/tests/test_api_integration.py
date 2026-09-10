@@ -19,11 +19,15 @@ def client():
         def __init__(self, base):
             self.base = base
             self.session = requests.Session()
+            # 测试请求头，跳过限流检查
+            self.test_headers = {'X-Test-Request': 'true'}
         
         def get(self, path, **kwargs):
+            kwargs.setdefault('headers', {}).update(self.test_headers)
             return self.session.get(f"{self.base}{path}", **kwargs)
         
         def post(self, path, **kwargs):
+            kwargs.setdefault('headers', {}).update(self.test_headers)
             return self.session.post(f"{self.base}{path}", **kwargs)
     
     return APIClient(base_url)

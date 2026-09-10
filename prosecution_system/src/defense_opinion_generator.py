@@ -50,7 +50,7 @@ class DefenseOpinion:
     primary_defense: str
     overall_conclusion: str
     
-    def to_dict_alt(self) -> Dict:
+    def to_dict(self) -> Dict:
         return {
             "case_id": self.case_id,
             "case_name": self.case_name,

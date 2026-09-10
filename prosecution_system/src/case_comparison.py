@@ -401,7 +401,7 @@ class CaseComparator:
 def compare_cases_standalone(case_ids: List[str], cases_data: List[Dict]) -> ComparisonResult:
     """便捷函数：对比案件"""
     comparator = CaseComparator()
-    return comparator.compare_cases(case_ids, cases_data)
+    return comparator.compare_cases_full(case_ids, cases_data)
 
 
 if __name__ == "__main__":
