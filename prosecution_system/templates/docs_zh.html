@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 文档 - 中国刑事追诉智能辅助系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; background: #f5f7fa; color: #333; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header { background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%); color: white; padding: 40px 0; text-align: center; border-radius: 12px; margin-bottom: 30px; }
+        header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        header p { font-size: 1.1em; opacity: 0.9; }
+        .nav { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
+        .nav a { padding: 10px 20px; background: white; border-radius: 8px; text-decoration: none; color: #1a73e8; font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.3s; }
+        .nav a:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        .section { background: white; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .section h2 { color: #1a73e8; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; margin-bottom: 20px; font-size: 1.5em; }
+        .endpoint { background: #f8f9fa; border-left: 4px solid #1a73e8; padding: 15px 20px; margin-bottom: 15px; border-radius: 0 8px 8px 0; }
+        .endpoint h3 { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .method { padding: 4px 12px; border-radius: 4px; font-weight: bold; font-size: 0.85em; }
+        .method-get { background: #28a745; color: white; }
+        .method-post { background: #007bff; color: white; }
+        .method-delete { background: #dc3545; color: white; }
+        .path { font-family: "SF Mono", Monaco, monospace; color: #333; }
+        .description { color: #666; margin: 10px 0; }
+        .params { background: #fff3cd; padding: 10px 15px; border-radius: 6px; margin: 10px 0; }
+        .params h4 { color: #856404; margin-bottom: 8px; }
+        .param { display: flex; gap: 10px; margin: 5px 0; font-size: 0.9em; }
+        .param-name { font-weight: bold; color: #1a73e8; min-width: 120px; }
+        .param-desc { color: #666; }
+        .example { background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 6px; margin: 10px 0; font-family: "SF Mono", Monaco, monospace; font-size: 0.85em; overflow-x: auto; }
+        .example-title { color: #a0aec0; margin-bottom: 8px; }
+        .response { background: #e8f5e9; padding: 10px 15px; border-radius: 6px; margin: 10px 0; }
+        .response h4 { color: #2e7d32; margin-bottom: 8px; }
+        .status { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.8em; margin-right: 5px; }
+        .status-200 { background: #28a745; color: white; }
+        .status-400 { background: #ffc107; color: #333; }
+        .status-404 { background: #dc3545; color: white; }
+        .status-500 { background: #6c757d; color: white; }
+        .category { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+        .card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; }
+        .card h3 { margin-bottom: 10px; }
+        .card p { font-size: 0.9em; opacity: 0.9; }
+        .card .count { font-size: 2em; font-weight: bold; margin-top: 10px; }
+        footer { text-align: center; padding: 30px; color: #666; font-size: 0.9em; }
+        code { background: #e9ecef; padding: 2px 6px; border-radius: 4px; font-family: "SF Mono", Monaco, monospace; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📋 中国刑事追诉智能辅助系统</h1>
+            <p>API 文档中心 | 版本 2.4.0 | 更新时间: 2026-09-10</p>
+        </header>
+        
+        <div class="nav">
+            <a href="#cases">案件管理</a>
+            <a href="#analyze">分析引擎</a>
+            <a href="#threshold">入罪门槛</a>
+            <a href="#law">法律检索</a>
+            <a href="#defense">辩护增强</a>
+            <a href="#stats">统计分析</a>
+            <a href="#compare">案件对比</a>
+        </div>
+
+        <!-- 概览 -->
+        <div class="section">
+            <h2>📊 API 概览</h2>
+            <div class="category">
+                <div class="card">
+                    <h3>案件管理</h3>
+                    <p>案件列表、详情、创建</p>
+                    <div class="count">5 个端点</div>
+                </div>
+                <div class="card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <h3>分析引擎</h3>
+                    <p>量刑分析、事实核查</p>
+                    <div class="count">5 个端点</div>
+                </div>
+                <div class="card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <h3>入罪门槛</h3>
+                    <p>各省门槛查询</p>
+                    <div class="count">1 个端点</div>
+                </div>
+                <div class="card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                    <h3>法律检索</h3>
+                    <p>RAG 智能检索</p>
+                    <div class="count">1 个端点</div>
+                </div>
+                <div class="card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                    <h3>辩护增强</h3>
+                    <p>辩护词生成</p>
+                    <div class="count">4 个端点</div>
+                </div>
+                <div class="card" style="background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);">
+                    <h3>统计分析</h3>
+                    <p>数据统计、可视化</p>
+                    <div class="count">5 个端点</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 案件管理 -->
+        <div class="section" id="cases">
+            <h2>📁 案件管理</h2>
+            
+            <div class="endpoint">
+                <h3><span class="method method-get">GET</span><span class="path">/api/cases</span></h3>
+                <p class="description">获取案件列表，支持分页和筛选</p>
+                <div class="params">
+                    <h4>查询参数</h4>
+                    <div class="param"><span class="param-name">page</span><span class="param-desc">页码（默认1）</span></div>
+                    <div class="param"><span class="param-name">limit</span><span class="param-desc">每页数量（默认20）</span></div>
+                    <div class="param"><span class="param-name">province</span><span class="param-desc">省份筛选（可选）</span></div>
+                    <div class="param"><span class="param-name">crime_type</span><span class="param-desc">罪名筛选（可选）</span></div>
+                </div>
+                <div class="example">
+                    <div class="example-title">请求示例</div>
+curl -X GET "http://localhost:5000/api/cases?province=上海&crime_type=盗窃罪"
+                </div>
+                <div class="response">
+                    <h4>响应示例</h4>
+<pre>{
+  "cases": [
+    {
+      "case_id": "CASE-0001",
+      "case_name": "上海市盗窃案",
+      "crime_type": "盗窃罪",
+      "amount": 89775.79,
+      "province": "上海"
+    }
+  ],
+  "total": 51,
+  "page": 1
+}</pre>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method method-get">GET</span><span class="path">/api/case/{case_id}</span></h3>
+                <p class="description">获取案件详情</p>
+                <div class="example">
+                    <div class="example-title">请求示例</div>
+curl -X GET "http://localhost:5000/api/case/CASE-0001"
+                </div>
+                <div class="response">
+                    <h4>响应字段</h4>
+                    <p>case_info: 案件基本信息 | charges: 罪名信息 | aggravating_factors: 从重情节 | mitigating_factors: 从轻情节 | legal_basis: 法律依据</p>
+                </div>
+                <p><span class="status status-200">200</span>成功 <span class="status status-404">404</span>案件不存在</p>
+            </div>
+        </div>
+
+        <!-- 分析引擎 -->
+        <div class="section" id="analyze">
+            <h2>🔍 分析引擎</h2>
+            
+            <div class="endpoint">
+                <h3><span class="method method-get">GET</span><span class="path">/api/case-analyze/{case_id}</span></h3>
+                <p class="description">案件综合分析，包含量刑预测、辩护建议、类案分析</p>
+                <div class="example">
+                    <div class="example-title">请求示例</div>
+curl -X GET "http://localhost:5000/api/case-analyze/CASE-0001"
+                </div>
+                <div class="response">
+                    <h4>响应字段</h4>
+                    <p>case_info: 案件信息 | charges: 罪名 | defense: 辩护建议 | sentencing_prediction: 量刑预测 | similar_cases: 类案 | legal_basis: 法律依据</p>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method method-post">POST</span><span class="path">/api/case-analyze</span></h3>
+                <p class="description">新建案件分析（无需已有案件ID）</p>
+                <div class="params">
+                    <h4>请求体</h4>
+                    <div class="param"><span class="param-name">case_summary</span><span class="param-desc">案件摘要对象</span></div>
+                    <div class="param"><span class="param-name">charges</span><span class="param-desc">罪名列表</span></div>
+                </div>
+                <div class="example">
+                    <div class="example-title">请求示例</div>
+curl -X POST "http://localhost:5000/api/case-analyze" \
+  -H "Content-Type: application/json" \
+  -d '{"case_summary":{"description":"盗窃1000元"},"charges":["盗窃罪"]}'
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method method-get">GET</span><span class="path">/api/fact-check/{case_id}</span></h3>
+                <p class="description">案件事实核查，返回每个字段的置信度等级</p>
+                <div class="response">
+                    <h4>置信度等级</h4>
+                    <p>GRADE_A: ✅ 官方一手来源 | GRADE_B: 🔶 可推断来源 | GRADE_C: ⚠️ 需要验证 | GRADE_D: ❌ 无来源</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 入罪门槛 -->
+        <div class="section" id="threshold">
+            <h2>⚖️ 入罪门槛</h2>
+            
+            <div class="endpoint">
+                <h3><span class="method method-get">GET</span><span class="path">/api/threshold</span></h3>
+                <p class="description">查询各省盗窃罪、诈骗罪、抢夺罪等入罪门槛</p>
+                <div class="params">
+                    <h4>查询参数</h4>
+                    <div class="param"><span class="param-name">crime</span><span class="param-desc">罪名（盗窃罪/诈骗罪/抢夺罪）</span></div>
+                    <div class="param"><span class="param-name">province</span><span class="param-desc">省份（默认全国标准）</span></div>
+                </div>
+                <div class="example">
+                    <div class="example-title">请求示例</div>
+curl -X GET "http://localhost:5000/api/threshold?crime=盗窃罪&province=北京"
+                </div>
+                <div class="response">
+                    <h4>响应示例</h4>
+<pre>{
+  "crime": "盗窃罪",
+  "province": "北京",
+  "amount_large": 2000,
+  "amount_massive": 50000,
+  "amount_especially_massive": 400000,
+  "reached": true,
+  "legal_basis": "最高法最高检《关于办理盗窃刑事案件适用法律若干问题的解释》"
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- 法律检索 -->
+        <div class="section" id="law">
+            <h2>📖 法律检索</h2>
+            
+            <div class="endpoint">
+                <h3><span class="method method-get">GET</span><span class="path">/api/law/search</span></h3>
+                <p class="description">基于 RAG 的法律全文智能检索（2055部法律法规）</p>
+                <div class="params">
+                    <h4>查询参数</h4>
+                    <div class="param"><span class="param-name">q</span><span class="param-desc">检索关键词</span></div>
+                    <div class="param"><span class="param-name">category</span><span class="param-desc">分类筛选（法律/司法解释/行政法规）</span></div>
+                    <div class="param"><span class="param-name">limit</span><span class="param-desc">结果数量（默认10）</span></div>
+                </div>
+                <div class="example">
+                    <div class="example-title">请求示例</div>
+curl -X GET "http://localhost:5000/api/law/search?q=正当防卫&limit=5"
+                </div>
+                <div class="response">
+                    <h4>响应字段</h4>
+                    <p>results: 检索结果列表 | score: 相似度分数 | article: 条款 | law: 法律名称 | preview: 内容预览</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 辩护增强 -->
+        <div class="section" id="defense">
+            <h2>🛡️ 辩护增强</h2>
+            
+            <div class="endpoint">
+                <h3><span class="method method-post">POST</span><span class="path">/api/defense/analyze</span></h3>
+                <p class="description">案件辩护分析，识别辩护角度和策略</p>
+                <div class="params">
+                    <h4>请求体</h4>
+                    <div class="param"><span class="param-name">case_id</span><span class="param-desc">案件ID</span></div>
+                </div>
+                <div class="response">
+                    <h4>响应字段</h4>
+                    <p>primary_defense: 主要辩护意见 | secondary_defenses: 辅助辩护意见 | recommended_strategy: 推荐策略 | overall_strength: 综合强度(0-100)</p>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method method-post">POST</span><span class="path">/api/defense/opinion</span></h3>
+                <p class="description">生成辩护词文档</p>
+                <div class="example">
+                    <div class="example-title">请求示例</div>
+curl -X POST "http://localhost:5000/api/defense/opinion" \
+  -H "Content-Type: application/json" \
+  -d '{"case_id":"CASE-0001"}'
+                </div>
+                <div class="response">
+                    <h4>响应字段</h4>
+                    <p>opinion: 辩护词内容 | defendant: 被告人 | charge: 罪名 | key_defenses: 核心辩护点</p>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method method-get">GET</span><span class="path">/api/defense/search</span></h3>
+                <p class="description">辩护案例库检索</p>
+                <div class="example">
+                    <div class="example-title">请求示例</div>
+curl -X GET "http://localhost:5000/api/defense/search?q=自首&crime=盗窃罪"
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计分析 -->
+        <div class="section" id="stats">
+            <h2>📈 统计分析</h2>
+            
+            <div class="endpoint">
+                <h3><span class="method method-get">GET</span><span class="path">/api/stats/overview</span></h3>
+                <p class="description">系统统计概览</p>
+                <div class="response">
+                    <h4>响应字段</h4>
+                    <p>total_cases: 总案件数 | cases_by_province: 省份分布 | cases_by_crime: 罪名分布 | avg_sentence: 平均刑期</p>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method method-get">GET</span><span class="path">/api/stats/provincial-diffs</span></h3>
+                <p class="description">各省入罪门槛差异对比</p>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method method-get">GET</span><span class="path">/api/stats/company-geo</span></h3>
+                <p class="description">企业犯罪地理分布热力图数据</p>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method method-get">GET</span><span class="path">/api/stats/hallucination</span></h3>
+                <p class="description">数据幻觉率统计（C-CLAIM溯源评估）</p>
+            </div>
+        </div>
+
+        <!-- 案件对比 -->
+        <div class="section" id="compare">
+            <h2>⚖️ 案件对比</h2>
+            
+            <div class="endpoint">
+                <h3><span class="method method-post">POST</span><span class="path">/api/compare</span></h3>
+                <p class="description">多案件对比分析</p>
+                <div class="example">
+                    <div class="example-title">请求示例</div>
+curl -X POST "http://localhost:5000/api/compare" \
+  -H "Content-Type: application/json" \
+  -d '{"case_ids":["CASE-0001","CASE-0002","CASE-0003"]}'
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method method-get">GET</span><span class="path">/api/compare</span></h3>
+                <p class="description">GET 方式的案件对比</p>
+                <div class="example">
+                    <div class="example-title">请求示例</div>
+curl -X GET "http://localhost:5000/api/compare?case_ids=CASE-0001,CASE-0002"
+                </div>
+            </div>
+        </div>
+
+        <!-- 报告生成 -->
+        <div class="section">
+            <h2>📄 报告生成</h2>
+            
+            <div class="endpoint">
+                <h3><span class="method method-get">GET</span><span class="path">/api/reports</span></h3>
+                <p class="description">获取已生成的报告列表</p>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method method-post">POST</span><span class="path">/api/defense/report</span></h3>
+                <p class="description">生成辩护报告（PDF格式）</p>
+            </div>
+        </div>
+
+        <footer>
+            <p>中国刑事追诉智能辅助系统 v2.4.0 | 基于 Flask + RAG 构建</p>
+            <p>数据来源: 2055部法律法规 | 51个真实案例</p>
+        </footer>
+    </div>
+</body>
+</html>
