@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 # -*- coding: utf-8 -*-
 """
 司法解释覆盖基线文档 - prosecution_system/src/judicial_interp_baseline.py

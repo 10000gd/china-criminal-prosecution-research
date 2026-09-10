@@ -10,6 +10,10 @@
 """
 
 import json
+
+import logging
+logger = logging.getLogger(__name__)
+
 import csv
 import io
 from datetime import datetime

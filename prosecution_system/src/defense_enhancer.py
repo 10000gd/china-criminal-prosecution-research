@@ -152,7 +152,7 @@ class DefenseAnalysis:
     estimated_outcome: str  # 预估结果
     key_evidence_needed: List[str]  # 还需要补充的关键证据
 
-    def to_dict(self) -> Dict:
+    def case_to_dict(self) -> Dict:
         result = {
             "case_id": self.case_id,
             "primary_defense": self.primary_defense.to_dict() if self.primary_defense else None,

@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 # -*- coding: utf-8 -*-
 """
 法律 RAG 检索 Benchmark 工具 - prosecution_system/src/rag_benchmark.py

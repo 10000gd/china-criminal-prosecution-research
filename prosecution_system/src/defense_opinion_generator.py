@@ -10,6 +10,10 @@
 """
 
 import json
+
+import logging
+logger = logging.getLogger(__name__)
+
 from typing import Dict, List, Optional
 from dataclasses import dataclass
 from datetime import datetime

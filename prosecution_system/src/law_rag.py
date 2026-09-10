@@ -133,7 +133,7 @@ class LawConflictDetector:
     def __init__(self):
         self._rules_cache: Dict[str, List[Dict]] = {}
 
-    def detect_conflicts(self, chunks: List[Dict], law_name: str = "") -> List[Dict[str, Any]]:
+    def detect_law_conflicts(self, chunks: List[Dict], law_name: str = "") -> List[Dict[str, Any]]:
         """检测法律条文间的潜在冲突"""
         conflicts = []
         texts = [c.get("content", "") for c in chunks]

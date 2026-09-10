@@ -640,7 +640,7 @@ class ReportBuilder:
         self.p(r"""\vfill
 \noindent\textbf{法条引用准确性声明}：本报告所有法律条文引用均直接对应《中华人民共和国刑法》（2023年修正）、《中华人民共和国刑事诉讼法》（2018年修正）及最高人民法院司法解释原文，无任何AI生成性法律引用。\\\textbf{零幻觉引用声明}：本研究严格遵守信息质量铁律，所有引用均可溯源验证，无任何模糊表述。\\\textbf{报告日期}：""" + self.meta.get("report_date", "") + r"""\end{document}""")
 
-    def build(self) -> str:
+    def build_case_report(self) -> str:
         """完整构建报告"""
         self.build_preamble()
         self.build_cover()

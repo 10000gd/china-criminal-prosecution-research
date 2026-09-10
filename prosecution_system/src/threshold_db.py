@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 # -*- coding: utf-8 -*-
 """
 入罪门槛数据库 - prosecution_system/src/threshold_db.py

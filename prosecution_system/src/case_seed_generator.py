@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 # -*- coding: utf-8 -*-
 """
 案件种子数据生成器 - prosecution_system/src/case_seed_generator.py

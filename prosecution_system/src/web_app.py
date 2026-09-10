@@ -126,6 +126,35 @@ def inject_template_globals():
     }
 
 
+
+@app.before_request
+def check_rate_limit():
+    """API限流检查"""
+    # 排除静态文件和文档
+    if request.path.startswith('/static') or request.path.startswith('/docs'):
+        return None
+    
+    # 只对API端点限流
+    if request.path.startswith('/api/'):
+        allowed, remaining, reset_time = RateLimitMiddleware.check_rate_limit()
+        if not allowed:
+            return jsonify({
+                'error': '请求过于频繁，请稍后再试',
+                'retry_after': reset_time
+            }), 429
+        
+        # 添加限流头信息
+        g.rate_limit_remaining = remaining
+        g.rate_limit_reset = reset_time
+
+@app.after_request
+def add_rate_limit_headers(response):
+    """添加限流头信息"""
+    if hasattr(g, 'rate_limit_remaining'):
+        response.headers['X-RateLimit-Remaining'] = str(g.rate_limit_remaining)
+        response.headers['X-RateLimit-Reset'] = str(g.rate_limit_reset)
+    return response
+
 @app.route("/")
 def index():
     """首页 - 案件列表"""
@@ -1980,3 +2009,31 @@ def api_case_analyze_new_pdf():
     pdf_path = DefenseReportBuilderPDF(output_dir=output_dir).save_pdf(report)
     return send_file(pdf_path, as_attachment=True,
                      download_name="辩护意见书_" + crime_type + "_" + datetime.now().strftime("%Y%m%d") + ".pdf")
+
+
+@app.route("/api/monitor/stats")
+def api_monitor_stats():
+    """性能统计API"""
+    from src.performance_monitor import monitor
+    return jsonify(monitor.get_stats())
+
+@app.route("/api/monitor/system")
+def api_monitor_system():
+    """系统资源API"""
+    from src.performance_monitor import monitor
+    return jsonify(monitor.get_system_stats())
+
+@app.route("/api/monitor/errors")
+def api_monitor_errors():
+    """最近错误API"""
+    from src.performance_monitor import monitor
+    limit = request.args.get('limit', 10, type=int)
+    return jsonify({"errors": monitor.get_recent_errors(limit)})
+
+@app.route("/api/monitor/slow")
+def api_monitor_slow():
+    """慢请求API"""
+    from src.performance_monitor import monitor
+    limit = request.args.get('limit', 10, type=int)
+    return jsonify({"slow_requests": monitor.get_slow_requests(limit)})
+

@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 # -*- coding: utf-8 -*-
 """API文档生成器"""
 from flask import Blueprint, jsonify, render_template
