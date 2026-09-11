@@ -1,6 +1,6 @@
 #!/bin/bash
 # 启动脚本：warmup workers 后再开放服务
-cd /root/.openclaw/workspace/prosecution_system
+cd /app
 gunicorn -c gunicorn_config.py src.web_app:app >> logs/gunicorn.log 2>&1 &
 GUNICORN_PID=$!
 
