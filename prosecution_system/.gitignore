@@ -49,20 +49,10 @@ venv/
 env/
 ENV/
 
-# 法律数据库原始文件（已转换为 YAML）
-cases/legaldb/*.csv
-cases/legaldb/*.jsonl
-.openclaw
-
-# 临时文件
-*.tmp
-*.bak
-*.swp
-
 # Docker
-!.dockerignore   # 提交 .dockerignore
+!.dockerignore
 
-# Node (如有前端)
+# Node
 node_modules/
 package-lock.json
 
@@ -75,41 +65,25 @@ package-lock.json
 # pytest
 .pytest_cache/
 
-# 数据文件（可选择忽略大型数据）
-# cases/legaldb/laws/           # 大型法律库
-# cases/legaldb/.rag_cache/     # RAG缓存
-
 # 音频文件
 music/
 
 # 环境配置
 .env
 
+# 临时文件
+*.tmp
+*.bak
+*.swp
+
+# 法律数据库原始文件
+cases/legaldb/*.csv
+cases/legaldb/*.jsonl
+cases/legaldb/.rag_cache/
+
 # 数据库
 src/data/*.db
 src/data/*.db-journal
 
-
-# RAG索引缓存（可重新生成）
-cases/legaldb/.rag_cache/
-
 # 工作区记忆和配置
 memory/
-
-# 根目录数据库文件
-*.db
-*.db-journal
-
-# OpenClaw 工作区泄露文件
-AGENTS.md
-SOUL.md
-IDENTITY.md
-USER.md
-TOOLS.md
-HEARTBEAT.md
-output/defense_reports/
-output/reports/
-output/*.pdf
-output/*.html
-output/*.json
-output/

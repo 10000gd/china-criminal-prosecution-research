@@ -1,13 +1,7 @@
-
-# === OpenClaw Agent Internal Files ===
+# Agent workspace files
 memory/
-.openclaw/
-HEARTBEAT.md
-AGENTS.md
-SOUL.md
-IDENTITY.md
-USER.md
-TOOLS.md
+.agent/
+.agent-config/
 
 # Project build/generated files
 prosecution_system/data/
