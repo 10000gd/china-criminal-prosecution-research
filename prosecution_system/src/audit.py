@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 from enum import Enum
 from dataclasses import dataclass, asdict
-from database import db
+from src.database import db
 
 
 class AuditAction(Enum):

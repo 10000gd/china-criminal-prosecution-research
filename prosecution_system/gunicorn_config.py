@@ -1,7 +1,13 @@
 """Gunicorn config - production settings"""
 import os
+import sys
 
-bind = "0.0.0.0:5000"
+# Fixed absolute path - gunicorn daemon mode changes cwd to /
+basedir = "/root/.openclaw/workspace/prosecution_system"
+os.chdir(basedir)
+sys.path.insert(0, basedir)
+
+bind = "0.0.0.0:5001"
 workers = 4
 worker_class = "sync"
 timeout = 120

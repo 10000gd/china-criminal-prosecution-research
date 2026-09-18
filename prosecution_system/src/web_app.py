@@ -3,14 +3,14 @@
 追诉系统 Web UI - prosecution_system/src/web_app.py
 Flask Web 应用
 
-功能：
+功能:
 - 案件搜索与浏览
 - 报告生成
 - 案件跟踪管理
 - 实时状态更新
 
-启动：python src/web_app.py
-访问：http://localhost:5000
+启动:python src/web_app.py
+访问:http://localhost:5000
 """
 
 import os
@@ -41,7 +41,7 @@ from build_report import ReportBuilder
 from wenshu_updater import CaseTracker, ManualTracker
 
 # ---- Flask App ----
-# template_folder 指向项目根目录 (src/ 的上一层)，而不是 src/templates/
+# template_folder 指向项目根目录 (src/ 的上一层),而不是 src/templates/
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 app = Flask(__name__,
                 template_folder=str(PROJECT_ROOT / "templates"),
@@ -62,15 +62,15 @@ api_docs_bp = create_api_docs_blueprint(app)
 app.register_blueprint(api_docs_bp)
 
 loader = CaseLoader()
-# LawRAG: 法律语义检索（惰性初始化，首次搜索时加载）
-# 使用后台线程预热，不阻塞请求处理
+# LawRAG: 法律语义检索(惰性初始化,首次搜索时加载)
+# 使用后台线程预热,不阻塞请求处理
 import threading
 _rag_instance = None
 _rag_lock = threading.Lock()
 _rag_ready = threading.Event()
 
 def _warmup_rag():
-    """后台线程：预热 LawRAG，完成后通知等待者"""
+    """后台线程:预热 LawRAG,完成后通知等待者"""
     global _rag_instance
     import io, contextlib, os
     os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
@@ -80,7 +80,7 @@ def _warmup_rag():
     _rag_ready.set()
 
 def get_rag():
-    """返回 LawRAG 单例，首次调用时后台启动预热线程"""
+    """返回 LawRAG 单例,首次调用时后台启动预热线程"""
     global _rag_instance
     if _rag_instance is None:
         with _rag_lock:
@@ -135,22 +135,22 @@ def check_rate_limit():
     # 排除静态文件和文档
     if request.path.startswith('/static') or request.path.startswith('/docs'):
         return None
-    
-    # 测试模式：跳过限流检查（通过X-Test-Request头识别）
+
+    # 测试模式:跳过限流检查(通过X-Test-Request头识别)
     if request.headers.get('X-Test-Request') == 'true':
         g.rate_limit_remaining = 100
         g.rate_limit_reset = int(time.time()) + 3600
         return None
-    
+
     # 只对API端点限流
     if request.path.startswith('/api/'):
         allowed, remaining, reset_time = RateLimitMiddleware.check_rate_limit()
         if not allowed:
             return jsonify({
-                'error': '请求过于频繁，请稍后再试',
+                'error': '请求过于频繁,请稍后再试',
                 'retry_after': reset_time
             }), 429
-        
+
         # 添加限流头信息
         g.rate_limit_remaining = remaining
         g.rate_limit_reset = reset_time
@@ -240,7 +240,7 @@ def case_detail(case_id):
 
 @app.route("/api/search")
 def api_search():
-    """全局搜索 API（案件+法律条文混合）"""
+    """全局搜索 API(案件+法律条文混合)"""
     query = request.args.get("q", "").strip()
     if not query:
         return jsonify({"error": "缺少查询参数 q"}), 400
@@ -288,8 +288,8 @@ def search():
     """全局搜索"""
     query = request.args.get("q", "").strip()
     user = get_current_user()
-    
-    # 如果没有查询，显示搜索历史
+
+    # 如果没有查询,显示搜索历史
     if not query:
         return render_template(
             "search.html",
@@ -299,10 +299,10 @@ def search():
             search_history=user.search_history[:10] if user else [],
         )
 
-    # 保存搜索历史（如果已登录）
+    # 保存搜索历史(如果已登录)
     if user and query:
         user_db.add_search_history(user.username, query)
-    
+
     # 搜索案件配置
     results = loader.search_cases(query)
 
@@ -399,7 +399,7 @@ def api_law_search():
 
 @app.route("/case/<case_id>/generate", methods=["GET", "POST"])
 def generate_report(case_id):
-    """生成报告 — GET/POST 均改为调用已有的辩护报告 API"""
+    """生成报告 - GET/POST 均改为调用已有的辩护报告 API"""
     try:
         loader.load(case_id)
     except FileNotFoundError:
@@ -419,7 +419,7 @@ def generate_report(case_id):
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-    # GET: 重定向到辩护分析页（那里有完整的报告生成流程）
+    # GET: 重定向到辩护分析页(那里有完整的报告生成流程)
     from flask import redirect
     return redirect(f"/defense/{case_id}")
 
@@ -502,11 +502,11 @@ from case_comparison import CaseComparator, compare_cases_standalone
 
 @app.route("/compare")
 def compare_page():
-    """案件对比页面（支持空访问，由前端JS动态加载案件列表）"""
+    """案件对比页面(支持空访问,由前端JS动态加载案件列表)"""
     case_ids = request.args.getlist("case_id")
     if len(case_ids) < 2:
         return render_template("compare.html", comparison=None, case_ids=[])  # 前端JS动态对比
-    
+
     cases_data = []
     for case_id in case_ids:
         try:
@@ -514,11 +514,11 @@ def compare_page():
             cases_data.append(data)
         except FileNotFoundError:
             return f"案件不存在: {case_id}", 404
-    
+
     comparator = CaseComparator()
     result = compare_cases_standalone(case_ids, cases_data)
-    
-    return render_template("compare.html", 
+
+    return render_template("compare.html",
                          comparison=result,
                          case_ids=case_ids)
 
@@ -527,12 +527,12 @@ def api_compare():
     """案件对比 API"""
     data = request.get_json()
     case_ids = data.get("case_ids", [])
-    
+
     if len(case_ids) < 2:
         return jsonify({"error": "至少需要2个案件"}), 400
     if len(case_ids) > 5:
         return jsonify({"error": "最多支持5个案件"}), 400
-    
+
     cases_data = []
     for case_id in case_ids:
         try:
@@ -540,10 +540,10 @@ def api_compare():
             cases_data.append(case_data)
         except FileNotFoundError:
             return jsonify({"error": f"案件不存在: {case_id}"}), 404
-    
+
     comparator = CaseComparator()
     result = compare_cases_standalone(case_ids, cases_data)
-    
+
     return jsonify({
         "case_ids": result.case_ids,
         "summary": result.summary,
@@ -560,15 +560,15 @@ def api_compare():
     })
 
 
-# ---- GET 支持（兼容 ?ids= 用法） ----
+# ---- GET 支持(兼容 ?ids= 用法) ----
 
 @app.route("/api/compare", methods=["GET"])
 def api_compare_get():
-    """案件对比 API（GET 方式，兼容 ids= 参数）"""
+    """案件对比 API(GET 方式,兼容 ids= 参数)"""
     ids_param = request.args.get("ids", "")
     case_ids = [x.strip() for x in ids_param.split(",") if x.strip()]
     if len(case_ids) < 2:
-        return jsonify({"error": "至少需要2个案件，用逗号分隔，如 ?ids=CASE-0001,CASE-0002"}), 400
+        return jsonify({"error": "至少需要2个案件,用逗号分隔,如 ?ids=CASE-0001,CASE-0002"}), 400
     if len(case_ids) > 5:
         return jsonify({"error": "最多支持5个案件"}), 400
     cases_data = []
@@ -603,15 +603,15 @@ from pdf_exporter import PDFExporter
 @app.route("/export/case/<case_id>")
 @login_required
 def export_case_pdf(case_id):
-    """导出案件为PDF（HTML格式）"""
+    """导出案件为PDF(HTML格式)"""
     try:
         case_data = loader.load(case_id)
     except FileNotFoundError:
         return f"案件不存在: {case_id}", 404
-    
+
     exporter = PDFExporter()
     output_path = exporter.export_case_to_html(case_data)
-    
+
     return send_file(output_path, as_attachment=True, download_name=f"{case_id}_report.html")
 
 
@@ -622,7 +622,7 @@ def export_comparison_pdf():
     case_ids = request.args.getlist("case_id")
     if len(case_ids) < 2:
         return jsonify({"error": "至少需要2个案件"}), 400
-    
+
     cases_data = []
     for case_id in case_ids:
         try:
@@ -630,10 +630,10 @@ def export_comparison_pdf():
             cases_data.append(data)
         except FileNotFoundError:
             return jsonify({"error": f"案件不存在: {case_id}"}), 404
-    
+
     comparator = CaseComparator()
     result = compare_cases_standalone(case_ids, cases_data)
-    
+
     comparison_data = {
         "case_ids": result.case_ids,
         "summary": result.summary,
@@ -649,10 +649,10 @@ def export_comparison_pdf():
             for item in result.comparison_items
         ],
     }
-    
+
     exporter = PDFExporter()
     output_path = exporter.export_comparison_to_html(comparison_data)
-    
+
     return send_file(output_path, as_attachment=True, download_name="comparison_report.html")
 
 
@@ -678,7 +678,7 @@ def api_case(case_id):
 
 @app.route("/api/cases/<case_id>")
 def api_case_alias(case_id):
-    """案件详情 API（兼容 /api/cases/<id> 路径）"""
+    """案件详情 API(兼容 /api/cases/<id> 路径)"""
     return api_case(case_id)
 
 
@@ -696,7 +696,7 @@ def api_charges(case_id):
 
 @app.route("/stats")
 def stats_page():
-    """统计总览页：幻觉率/置信度分布、各案件评分一览"""
+    """统计总览页:幻觉率/置信度分布、各案件评分一览"""
     from stats_aggregator import StatsAggregator
     agg = StatsAggregator()
     stats = agg.get_all_stats()
@@ -726,7 +726,7 @@ def serve_output(filename):
 
 @app.route("/api/reports")
 def api_reports():
-    """报告列表 API（JSON）"""
+    """报告列表 API(JSON)"""
     reports = []
     reports_dir = Path(OUTPUT_DIR)
     for subdir in (reports_dir / "defense_reports", reports_dir):
@@ -756,7 +756,7 @@ def reports_page():
     """已生成报告列表页面"""
     reports = []
     reports_dir = Path(OUTPUT_DIR)
-    
+
     # 收集辩护报告
     defense_dir = reports_dir / "defense_reports"
     if defense_dir.exists():
@@ -772,7 +772,7 @@ def reports_page():
                     "size_kb": round(f.stat().st_size / 1024, 1),
                     "time": datetime.fromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d %H:%M"),
                 })
-    
+
     # 收集量刑报告
     if reports_dir.exists():
         for f in sorted(reports_dir.iterdir(), key=lambda x: -x.stat().st_mtime):
@@ -787,7 +787,7 @@ def reports_page():
                     "size_kb": round(f.stat().st_size / 1024, 1),
                     "time": datetime.fromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d %H:%M"),
                 })
-    
+
     return render_template(
         "reports.html",
         reports=reports,
@@ -797,7 +797,7 @@ def reports_page():
 
 @app.route("/api/stats/overview")
 def api_stats_overview():
-    """案件统计概览 — 从真实案件数据聚合"""
+    """案件统计概览 - 从真实案件数据聚合"""
     cases = loader.list_cases()
     provinces = {}
     crime_types = {}
@@ -851,14 +851,14 @@ def api_hallucination():
 def api_fact_check(case_id):
     """
     真实性核查 API
-    
-    对案件 YAML 各字段逐条核查来源等级，返回：
-    - GRADE_A: 官方一手来源（判决原文/最高法官网）
-    - GRADE_B: 可推断来源（根据官方数据合理推断）
-    - GRADE_C: 推测来源（无官方依据，需警告）
-    - GRADE_D: 完全未知（无任何依据）
-    - GRADE_E: 已验证错误（必须修正）
-    
+
+    对案件 YAML 各字段逐条核查来源等级,返回:
+    - GRADE_A: 官方一手来源(判决原文/最高法官网)
+    - GRADE_B: 可推断来源(根据官方数据合理推断)
+    - GRADE_C: 推测来源(无官方依据,需警告)
+    - GRADE_D: 完全未知(无任何依据)
+    - GRADE_E: 已验证错误(必须修正)
+
     幻觉率 = (grade_c + grade_d + grade_e) / total_fields
     """
     from fact_checker import FactChecker
@@ -889,11 +889,11 @@ def api_fact_check(case_id):
             "issues": result["issues"],
             "average_confidence": avg_conf,
             "grade_labels": FactChecker.__module__ and {
-                "GRADE_A": "✅ 官方一手来源（可引用）",
-                "GRADE_B": "🔶 可推断来源（建议注明推断依据）",
-                "GRADE_C": "⚠️ 推测来源（需在报告中标注）",
-                "GRADE_D": "❓ 完全未知（建议删除或标注存疑）",
-                "GRADE_E": "❌ 已验证错误（必须修正）",
+                "GRADE_A": "✅ 官方一手来源(可引用)",
+                "GRADE_B": "🔶 可推断来源(建议注明推断依据)",
+                "GRADE_C": "⚠️ 推测来源(需在报告中标注)",
+                "GRADE_D": "❓ 完全未知(建议删除或标注存疑)",
+                "GRADE_E": "❌ 已验证错误(必须修正)",
             },
         })
     except FileNotFoundError:
@@ -936,8 +936,8 @@ def _hall_label(rate: float) -> str:
 
 @app.route("/defense/<case_id>")
 def defense_page(case_id):
-    """辩护分析页面（支持文件案件和内置辩护案例）"""
-    # 优先尝试文件型案件（CASE- 前缀）
+    """辩护分析页面(支持文件案件和内置辩护案例)"""
+    # 优先尝试文件型案件(CASE- 前缀)
     try:
         case_data = loader.load(case_id)
     except FileNotFoundError:
@@ -998,12 +998,12 @@ def defense_page(case_id):
 def api_defense_analyze():
     """辩护分析 API - 分析提交的新案件"""
     data = request.get_json()
-    
+
     if not data:
         return jsonify({"error": "请提供案件数据"}), 400
-    
+
     case_id = data.get("case_id", f"CASE-{datetime.now().strftime('%Y%m%d%H%M')}")
-    
+
     # 优先尝试从案件库加载完整数据
     case_data = None
     if case_id:
@@ -1019,35 +1019,35 @@ def api_defense_analyze():
                     case_info_raw = ast.literal_eval(case_info_raw) if case_info_raw else {}
                 elif not isinstance(case_info_raw, dict):
                     case_info_raw = {}
-                
+
                 # 解析 charges
                 charges_raw = full_case.get("charges", "{}")
                 if isinstance(charges_raw, str):
                     charges_raw = ast.literal_eval(charges_raw) if charges_raw else {}
                 elif not isinstance(charges_raw, dict):
                     charges_raw = {}
-                
+
                 # 解析 defendants_person
                 defendants_raw = full_case.get("defendants_person", "[]")
                 if isinstance(defendants_raw, str):
                     defendants_raw = ast.literal_eval(defendants_raw) if defendants_raw else []
                 elif not isinstance(defendants_raw, list):
                     defendants_raw = []
-                
+
                 # 解析 mitigating_factors
                 mitigating_raw = full_case.get("mitigating_factors", "[]")
                 if isinstance(mitigating_raw, str):
                     mitigating_raw = ast.literal_eval(mitigating_raw) if mitigating_raw else []
                 elif not isinstance(mitigating_raw, list):
                     mitigating_raw = []
-                
+
                 # 解析 legal_arguments
                 legal_args_raw = full_case.get("legal_arguments", "[]")
                 if isinstance(legal_args_raw, str):
                     legal_args_raw = ast.literal_eval(legal_args_raw) if legal_args_raw else []
                 elif not isinstance(legal_args_raw, list):
                     legal_args_raw = []
-                
+
                 case_data = {
                     "case_id": case_id,
                     "case_name": full_case.get("meta", {}).get("case_name", case_id) if isinstance(full_case.get("meta"), dict) else case_id,
@@ -1063,8 +1063,8 @@ def api_defense_analyze():
                 }
         except Exception as e:
             print(f"[辩护分析] 案件加载失败: {e}")
-    
-    # 如果加载失败或数据不足，用请求数据兜底
+
+    # 如果加载失败或数据不足,用请求数据兜底
     charges_val = data.get("charges")
     if isinstance(charges_val, str):
         charges_val = {"primary": {"name": charges_val}}
@@ -1078,12 +1078,12 @@ def api_defense_analyze():
             "defendants": [{"name": data.get("defendant_name", "被告")}],
             "charges": charges_val,
         }
-    
+
     # 执行分析
     from defense_enhancer import DefenseEnhancer
     enhancer = DefenseEnhancer()
     analysis = enhancer.analyze_case(case_data)
-    
+
     # 检索类似案例
     from defense_case_db import DefenseCaseDatabase
     db = DefenseCaseDatabase()
@@ -1097,7 +1097,7 @@ def api_defense_analyze():
         analysis.primary_defense.type.value if analysis.primary_defense else "",
         crime, limit=5
     )
-    
+
     primary = analysis.primary_defense
     secondary = analysis.secondary_defenses
     defense_angles = ([primary] + secondary) if primary else secondary
@@ -1114,7 +1114,7 @@ def api_defense_opinion():
     """辩护意见生成 API - 加载完整案件后生成辩护词"""
     data = request.get_json() or {}
     case_id = data.get("case_id", "")
-    
+
     # 从案件库加载完整数据
     case_data = None
     if case_id:
@@ -1141,7 +1141,7 @@ def api_defense_opinion():
                 meta_raw = full_case.get("meta", {})
                 if not isinstance(meta_raw, dict):
                     meta_raw = {}
-                
+
                 case_data = {
                     "case_id": case_id,
                     "case_name": meta_raw.get("case_name", case_id),
@@ -1157,8 +1157,8 @@ def api_defense_opinion():
                 }
         except Exception as e:
             print(f"[辩护意见] 案件加载失败: {e}")
-    
-    # 兜底：至少保留请求参数
+
+    # 兜底:至少保留请求参数
     if not case_data or not case_data.get("case_summary"):
         case_data = {
             "case_id": case_id or "unknown",
@@ -1167,12 +1167,12 @@ def api_defense_opinion():
             "defendants": [{"name": data.get("defendant_name", "被告")}],
             "charges": {"primary": {"name": data.get("crime", "未知罪名")}},
         }
-    
-    # 运行辩护分析（获得 analysis 和 similar_cases）
+
+    # 运行辩护分析(获得 analysis 和 similar_cases)
     from defense_enhancer import DefenseEnhancer
     enhancer = DefenseEnhancer()
     analysis = enhancer.analyze_case(case_data)
-    
+
     from defense_case_db import DefenseCaseDatabase
     db = DefenseCaseDatabase()
     crime = (case_data.get("charges", {}).get("primary", {}).get("name") or
@@ -1181,12 +1181,12 @@ def api_defense_opinion():
         analysis.primary_defense.type.value if analysis.primary_defense else "",
         crime, limit=5
     )
-    
+
     # 生成辩护意见
     from defense_opinion_generator import DefenseOpinionGenerator
     generator = DefenseOpinionGenerator(analysis.to_dict(), [c.to_dict() for c in similar.cases])
     opinion = generator.generate_full_opinion(case_data)
-    
+
     return jsonify({
         "opinion": opinion.to_dict(),
         "markdown": opinion.to_markdown(),
@@ -1200,13 +1200,13 @@ def api_defense_report():
     """辩护报告生成 API - 支持只传 case_id"""
     data = request.get_json() or {}
     case_id = data.get("case_id", "")
-    
-    # 如果只传了 case_id，则加载完整案件数据
+
+    # 如果只传了 case_id,则加载完整案件数据
     case_data = data.get("case_data")
     defense_analysis = data.get("analysis", {})
     similar_cases = data.get("similar_cases", [])
     opinion_text = data.get("opinion", "")
-    
+
     if not case_data and case_id:
         try:
             from case_loader import CaseLoader
@@ -1231,7 +1231,7 @@ def api_defense_report():
                 legal_args_raw = full_case.get("legal_arguments", [])
                 if not isinstance(legal_args_raw, list):
                     legal_args_raw = []
-                
+
                 case_data = {
                     "case_id": case_id,
                     "case_name": meta_raw.get("case_name", case_id),
@@ -1245,13 +1245,13 @@ def api_defense_report():
                     "mitigating_factors": mitigating_raw,
                     "legal_arguments": legal_args_raw,
                 }
-                
-                # 如果没有传入 analysis/similar_cases/opinion，也自动生成
+
+                # 如果没有传入 analysis/similar_cases/opinion,也自动生成
                 if not defense_analysis:
                     from defense_enhancer import DefenseEnhancer
                     enhancer = DefenseEnhancer()
                     defense_analysis = enhancer.analyze_case(case_data).to_dict()
-                
+
                 if not similar_cases:
                     from defense_case_db import DefenseCaseDatabase
                     db = DefenseCaseDatabase()
@@ -1259,27 +1259,27 @@ def api_defense_report():
                     primary_def = defense_analysis.get("primary_defense", {})
                     similar = db.search_by_defense(primary_def.get("type", "") if primary_def else "", crime, limit=5)
                     similar_cases = [c.to_dict() for c in similar.cases]
-                
+
                 if not opinion_text:
                     from defense_opinion_generator import DefenseOpinionGenerator
                     gen = DefenseOpinionGenerator(defense_analysis, similar_cases)
                     opinion_text = gen.generate_full_opinion(case_data).to_markdown()
         except Exception as e:
             print(f"[辩护报告] 案件加载失败: {e}")
-    
+
     if not case_data:
         return jsonify({"error": "缺少案件数据"}), 400
-    
+
     from defense_report_builder import DefenseReportBuilder
     builder = DefenseReportBuilder()
-    
+
     report = builder.build(
         case_data=case_data,
         defense_analysis=defense_analysis,
         similar_cases=similar_cases,
         opinion=opinion_text,
     )
-    
+
     # 保存报告
     format_type = data.get("format", "html")
     if format_type == "html":
@@ -1291,7 +1291,7 @@ def api_defense_report():
         filepath = save_defense_report_pdf(report)
     else:
         filepath = builder.save_markdown(report)
-    
+
     return jsonify({
         "success": True,
         "report_path": str(filepath),
@@ -1307,17 +1307,17 @@ def api_defense_search():
     crime = request.args.get("crime", q).strip()  # 兼容 q= 参数
     defense_type = request.args.get("defense_type", "")
     limit = int(request.args.get("limit", 10))
-    
+
     from defense_case_db import DefenseCaseDatabase
     db = DefenseCaseDatabase()
-    
+
     if defense_type:
         result = db.search_by_defense(defense_type, crime, limit)
     elif crime:
         result = db.search_by_crime(crime, "innocent", limit)
     else:
         return jsonify({"error": "请提供罪名或辩护类型"}), 400
-    
+
     return jsonify({
         "cases": [c.to_dict() for c in result.cases],
         "total": result.total,
@@ -1333,7 +1333,7 @@ def sentencing_page():
     from sentencing_consistency import SentencingConsistencyAnalyzer
     analyzer = SentencingConsistencyAnalyzer()
     report = analyzer.generate_report()
-    
+
     # 准备图表数据
     crime_stats = []
     for crime, stats in report.get("crime_stats", {}).items():
@@ -1346,7 +1346,7 @@ def sentencing_page():
                 "probation_rate": stats.get("probation_rate", 0),
                 "distribution": stats.get("distribution", {}),
             })
-    
+
     return render_template(
         "sentencing.html",
         report=report,
@@ -1359,17 +1359,17 @@ def sentencing_crime_page(crime):
     """特定罪名量刑分析页面"""
     from sentencing_consistency import SentencingConsistencyAnalyzer
     analyzer = SentencingConsistencyAnalyzer()
-    
+
     stats = analyzer.get_stats_by_crime(crime)
     comparison = analyzer.get_provincial_comparison(crime)
     legal_comp = analyzer.get_legal_comparison(crime)
-    
+
     # 排序省份数据
     sorted_provinces = sorted(
         comparison.items(),
         key=lambda x: x[1]["avg_sentence"]
     ) if comparison else []
-    
+
     return render_template(
         "sentencing_crime.html",
         crime=crime,
@@ -1384,11 +1384,11 @@ def sentencing_crime_page(crime):
 def api_sentencing_report():
     """量刑一致性报告 API"""
     crime = request.args.get("crime", None)
-    
+
     from sentencing_consistency import SentencingConsistencyAnalyzer
     analyzer = SentencingConsistencyAnalyzer()
     report = analyzer.generate_report(crime)
-    
+
     return jsonify(report)
 
 
@@ -1396,14 +1396,14 @@ def api_sentencing_report():
 def api_sentencing_deviation():
     """个案偏离度分析 API"""
     data = request.get_json()
-    
+
     if not data:
         return jsonify({"error": "请提供案件数据"}), 400
-    
+
     from sentencing_consistency import SentencingConsistencyAnalyzer
     analyzer = SentencingConsistencyAnalyzer()
     result = analyzer.analyze_deviation(data)
-    
+
     return jsonify({
         "case_id": result.case_id,
         "crime": result.crime,
@@ -1422,26 +1422,93 @@ def api_sentencing_deviation():
 def api_sentencing_provincial():
     """省份量刑对比 API"""
     crime = request.args.get("crime", None)
-    
+
     from sentencing_consistency import SentencingConsistencyAnalyzer
     analyzer = SentencingConsistencyAnalyzer()
     comparison = analyzer.get_provincial_comparison(crime)
-    
+
     return jsonify(comparison)
+
+
+@app.route("/api/sentencing/deviation/chart", methods=["POST"])
+def api_sentencing_deviation_chart():
+    """量刑偏离度可视化 API
+
+    返回 ECharts 图表配置：仪表盘 + 刑期对比柱状图 + 量刑情节雷达图
+
+    POST /api/sentencing/deviation/chart
+    {
+        "case_id": "xxx",
+        "crime": "盗窃罪",
+        "sentence_years": 3.5,
+        "factors": ["自首", "赔偿谅解", "初犯"]
+    }
+    """
+    data = request.get_json() or {}
+    if not data.get("crime"):
+        return jsonify({"error": "缺少 crime 字段"}), 400
+
+    from sentencing_consistency import (
+        SentencingConsistencyAnalyzer,
+        get_echarts_deviation_chart,
+    )
+    analyzer = SentencingConsistencyAnalyzer()
+    charts = get_echarts_deviation_chart(analyzer, data)
+    return jsonify({"charts": charts})
+
+
+@app.route("/api/sentencing/distribution")
+def api_sentencing_distribution():
+    """罪名量刑分布可视化 API
+
+    GET /api/sentencing/distribution?crime=盗窃罪&province=广东
+    """
+    crime = request.args.get("crime", "盗窃罪")
+    province = request.args.get("province", None)
+
+    from sentencing_consistency import (
+        SentencingConsistencyAnalyzer,
+        get_echarts_crime_distribution,
+    )
+    analyzer = SentencingConsistencyAnalyzer()
+    result = get_echarts_crime_distribution(analyzer, crime, province)
+    if "error" in result:
+        return jsonify(result), 404
+    return jsonify(result)
+
+
+@app.route("/api/sentencing/provincial/chart")
+def api_sentencing_provincial_chart():
+    """省份量刑对比可视化 API
+
+    GET /api/sentencing/provincial/chart?crime=盗窃罪&top_n=10
+    """
+    crime = request.args.get("crime", "盗窃罪")
+    top_n = min(int(request.args.get("top_n", 10)), 20)
+
+    from sentencing_consistency import (
+        SentencingConsistencyAnalyzer,
+        get_echarts_provincial_comparison,
+    )
+    analyzer = SentencingConsistencyAnalyzer()
+    result = get_echarts_provincial_comparison(analyzer, crime, top_n)
+    if "error" in result:
+        return jsonify(result), 404
+    return jsonify(result)
 
 
 # ── 入罪门槛 ───────────────────────────────────────────────
 
 if __name__ == "__main__":
     """
-    生产级启动入口（优先使用 gunicorn/waitress，不建议直接运行此文件）
+    生产级启动入口(优先使用 gunicorn/waitress,不建议直接运行此文件)
 
-    推荐启动方式：
+    推荐启动方式:
       gunicorn (Linux):  gunicorn -w 4 -b 0.0.0.0:5000 --timeout 120 'src.web_app:app'
       waitress (通用):   waitress-serve --port 5000 --threads 8 src.web_app:app
       开发调试:          python src/web_app.py
 
-    ⚠️ 直接运行 python src/web_app.py 使用 Flask 内置服务器（不安全），仅适合开发调试。
+    ⚠️ 直接运行 python src/web_app.py 使用 Flask 内置服务器(不安全),仅适合开发调试。
     """
     port = int(os.environ.get("PORT", 5000))
     debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
@@ -1449,13 +1516,13 @@ if __name__ == "__main__":
 
     if not debug:
         print("=" * 60)
-        print("⚠️  警告：直接运行本文件使用 Flask 内置服务器（不安全）")
-        print("   生产环境请使用：")
+        print("⚠️  警告:直接运行本文件使用 Flask 内置服务器(不安全)")
+        print("   生产环境请使用:")
         print(f"   gunicorn -w 4 -b 0.0.0.0:{port} --timeout 120 'src.web_app:app'")
         print(f"   或 waitress-serve --port {port} --threads 8 src.web_app:app")
         print("=" * 60)
 
-    logger.info(f"🚀 追诉系统启动: http://localhost:{port}，调试模式: {debug}，案件数量: {case_count}")
+    logger.info(f"🚀 追诉系统启动: http://localhost:{port},调试模式: {debug},案件数量: {case_count}")
     print(f"🚀 追诉系统启动: http://localhost:{port}")
     print(f"   调试模式: {debug}")
     print(f"   案件数量: {case_count}")
@@ -1513,13 +1580,13 @@ def metrics():
 
 def _do_case_analyze(data: dict, case_full: dict = None) -> dict:
     """
-    联合案件分析核心逻辑（供 POST 和 GET 共同调用）
+    联合案件分析核心逻辑(供 POST 和 GET 共同调用)
     """
     crime = data.get("crime_type") or data.get("crime") or data.get("charges")
     if not crime:
         raise ValueError("缺少 crime_type 字段")
 
-    # 合并：外部参数优先，其次从完整案件提取
+    # 合并:外部参数优先,其次从完整案件提取
     def _v(key, default=None):
         return data.get(key) if data.get(key) is not None else (
             (case_full or {}).get("case_info", {}).get(key, default)
@@ -1543,14 +1610,14 @@ def _do_case_analyze(data: dict, case_full: dict = None) -> dict:
                        if t.get("province") == province or t.get("province") == "DEFAULT"]
             thresh_result = matched[0] if matched else thresh_list["thresholds"][0]
 
-    # 2. 量刑预测（基于类案统计）
+    # 2. 量刑预测(基于类案统计)
     from sentencing_consistency import SentencingConsistencyAnalyzer
     sca = SentencingConsistencyAnalyzer()
     legal_comp = sca.get_legal_comparison(crime)
     legal_range = legal_comp.get("legal_range", {})
     actual_stats = legal_comp.get("actual_stats", {})
 
-    # 3. 量刑偏离分析（若提供了实际量刑）
+    # 3. 量刑偏离分析(若提供了实际量刑)
     deviation_result = None
     if sent_years > 0 and case_full:
         dev_data = {
@@ -1642,13 +1709,13 @@ def _do_case_analyze(data: dict, case_full: dict = None) -> dict:
         if _v("坦白", False): factors.append("坦白/认罪认罚")
         if _v("赔偿", False) or _v("谅解", False): factors.append("赔偿谅解")
         if _v("初犯", False): factors.append("初犯/偶犯")
-        if _v("累犯", False): factors.append("累犯（从重）")
+        if _v("累犯", False): factors.append("累犯(从重)")
         defense_result = {
             "primary_defense": {"type": "依参数构造", "confidence": "中",
                                 "description": f"有利因素: {', '.join(factors) or '无明显有利因素'}"},
             "secondary_defenses": [],
             "overall_strength": 50 + (10 * len(factors)) if factors else 50,
-            "recommended_strategy": "建议争取从轻情节，参考类似案件量刑",
+            "recommended_strategy": "建议争取从轻情节,参考类似案件量刑",
             "estimated_outcome": "量刑区间内从轻处理",
         }
 
@@ -1678,7 +1745,7 @@ def _do_case_analyze(data: dict, case_full: dict = None) -> dict:
             "actual_stats": actual_stats,
             "sample_count": legal_comp.get("sample_count", 0),
             "prediction_note": f"法条量刑区间 {legal_range.get('min',0)}-{legal_range.get('max',0)} "
-                               f"{legal_range.get('unit','年')}；类案均值 {actual_stats.get('avg','?')}年，"
+                               f"{legal_range.get('unit','年')};类案均值 {actual_stats.get('avg','?')}年,"
                                f"中位数 {actual_stats.get('median','?')}年",
         },
         "deviation": deviation_result,
@@ -1688,9 +1755,42 @@ def _do_case_analyze(data: dict, case_full: dict = None) -> dict:
     }
 
 
+@app.route("/api/reasoning/charges", methods=["POST"])
+def api_reasoning_charges():
+    """案由推理引擎 API
+
+    输入案情描述,自动推荐可能适用的罪名
+
+    POST /api/reasoning/charges
+    {
+        "description": "被告人张某利用职务便利,收受他人财物共计50万元",
+        "top_k": 5
+    }
+    """
+    from case_reasoning_engine import CaseReasoningEngine
+    data = request.get_json() or {}
+    description = data.get("description", "").strip()
+    top_k = min(int(data.get("top_k", 5)), 10)
+
+    if len(description) < 10:
+        return jsonify({"error": "案情描述过短(至少10字)"}), 400
+
+    engine = CaseReasoningEngine()
+    result = engine.reason(description, top_k=top_k)
+    return jsonify(result)
+
+
+@app.route("/api/reasoning/crimes", methods=["GET"])
+def api_reasoning_crimes():
+    """获取案由推理引擎支持的罪名列表"""
+    from case_reasoning_engine import CaseReasoningEngine
+    engine = CaseReasoningEngine()
+    return jsonify(engine.get_all_crimes())
+
+
 @app.route("/api/case-analyze", methods=["POST"])
 def api_case_analyze():
-    """联合案件分析 API（POST 方式）"""
+    """联合案件分析 API(POST 方式)"""
     data = request.get_json() or {}
     crime = data.get("crime_type") or data.get("crime") or data.get("charges")
     if not crime:
@@ -1718,7 +1818,7 @@ def case_analyze_page():
 
 @app.route("/api/case-analyze/<case_id>")
 def api_case_analyze_get(case_id):
-    """联合案件分析 API（GET 方式：从已有案件 ID 分析）"""
+    """联合案件分析 API(GET 方式:从已有案件 ID 分析)"""
     try:
         loader = CaseLoader()
         case_full = loader.load(case_id)
@@ -1774,7 +1874,7 @@ def api_case_analyze_pdf(case_id):
     }
     analysis = _do_case_analyze(fake_data, case_full)
 
-    # 生成辩护角度 dict（用于 DefenseReportBuilder）
+    # 生成辩护角度 dict(用于 DefenseReportBuilder)
     defense_data = analysis.get("defense", {})
     primary = defense_data.get("primary_defense", {})
     secondary = defense_data.get("secondary_defenses", [])
@@ -1784,17 +1884,17 @@ def api_case_analyze_pdf(case_id):
     opinion_parts = []
     pd = primary.get("recommendation", "")
     if pd:
-        opinion_parts.append(f"主要辩护策略：{pd}")
+        opinion_parts.append(f"主要辩护策略:{pd}")
     sp = analysis.get("sentencing_prediction", {})
     if sp.get("prediction_note"):
-        opinion_parts.append(f"量刑预测：{sp['prediction_note']}")
+        opinion_parts.append(f"量刑预测:{sp['prediction_note']}")
     dev = analysis.get("deviation", {})
     if dev:
-        opinion_parts.append(f"量刑偏离分析：{dev.get('deviation_type','?')}（偏离分{dev.get('deviation_score','?')}），"
+        opinion_parts.append(f"量刑偏离分析:{dev.get('deviation_type','?')}(偏离分{dev.get('deviation_score','?')}),"
                              f"合理区间{dev.get('expected_sentence','?')}")
     sc_list = analysis.get("similar_cases", [])
     if sc_list:
-        opinion_parts.append(f"参考类案{len(sc_list)}件，最高量刑{sc_list[0].get('sentence','?')}，"
+        opinion_parts.append(f"参考类案{len(sc_list)}件,最高量刑{sc_list[0].get('sentence','?')},"
                              f"最低量刑{sc_list[-1].get('sentence','?')}。")
     opinion_text = "\n\n".join(opinion_parts)
 
@@ -1808,9 +1908,9 @@ def api_case_analyze_pdf(case_id):
         case_name=meta.get("case_name", ci.get("case_name", case_id)),
         generated_at=datetime.now().strftime("%Y-%m-%d %H:%M"),
         analysis_summary=(
-            f"罪名：{analysis['crime_type']}；涉案金额：{analysis['amount']:.0f}元（{analysis['province']}）；"
-            f"入罪判定：{'已达到入罪标准' if analysis.get('threshold',{}).get('reached') else '未达入罪标准'}；"
-            f"辩护强度：{defense_data.get('overall_strength','?')}/100"
+            f"罪名:{analysis['crime_type']};涉案金额:{analysis['amount']:.0f}元({analysis['province']});"
+            f"入罪判定:{'已达到入罪标准' if analysis.get('threshold',{}).get('reached') else '未达入罪标准'};"
+            f"辩护强度:{defense_data.get('overall_strength','?')}/100"
         ),
         defense_angles=defense_angles,
         similar_cases=sc_list,
@@ -1826,7 +1926,7 @@ def api_case_analyze_pdf(case_id):
 @app.route("/api/case-analyze/new/pdf")
 def api_case_analyze_new_pdf():
     """
-    对新建案件直接生成辩护 PDF（GET 参数）
+    对新建案件直接生成辩护 PDF(GET 参数)
     ?crime_type=盗窃罪&amount=15000&province=上海
     """
     crime_type = request.args.get("crime_type", "")
@@ -1869,11 +1969,11 @@ def api_case_analyze_new_pdf():
     opinion_lines = []
     if primary:
         conf = primary.get("confidence", "?")
-        opinion_lines.append("主要辩护策略：" + (primary.get("type","待定")) + "（匹配度 " + str(conf) + "%）")
+        opinion_lines.append("主要辩护策略:" + (primary.get("type","待定")) + "(匹配度 " + str(conf) + "%)")
         if primary.get("recommendation"):
-            opinion_lines.append("具体建议：" + primary["recommendation"])
+            opinion_lines.append("具体建议:" + primary["recommendation"])
     for d in secondary:
-        opinion_lines.append("次要策略：" + (d.get("type","待定")) + "（匹配度 " + str(d.get("confidence","?")) + "%）")
+        opinion_lines.append("次要策略:" + (d.get("type","待定")) + "(匹配度 " + str(d.get("confidence","?")) + "%)")
     opinion_text = "\n".join(opinion_lines)
 
     output_dir = Path(__file__).parent.parent / "output" / "defense_reports"
@@ -1881,11 +1981,11 @@ def api_case_analyze_new_pdf():
     reached = analysis.get("threshold", {}).get("reached")
     verdict = "已达到入罪标准" if reached else "未达入罪标准"
     strength = defense_data.get("overall_strength", "?")
-    summary = ("罪名：" + crime_type + "；涉案金额：" + str(int(amount)) + "元（" + province + "）；"
-               + "入罪判定：" + verdict + "；辩护强度：" + str(strength) + "/100")
+    summary = ("罪名:" + crime_type + ";涉案金额:" + str(int(amount)) + "元(" + province + ");"
+               + "入罪判定:" + verdict + ";辩护强度:" + str(strength) + "/100")
     report = DefenseReport(
         case_id=case_data["case_id"],
-        case_name=province + " " + crime_type + "（新建）",
+        case_name=province + " " + crime_type + "(新建)",
         generated_at=datetime.now().strftime("%Y-%m-%d %H:%M"),
         analysis_summary=summary,
         defense_angles=defense_angles,
@@ -1928,41 +2028,70 @@ def api_monitor_slow():
 def api_threshold():
     """入罪门槛 API
 
-    GET /api/threshold?crime=盗窃罪              → 所有省份
-    GET /api/threshold?crime=盗窃罪&province=北京  → 单一省份
-    GET /api/threshold?crime=盗窃罪&amount=5000   → 判断是否入罪
+    GET /api/threshold?crime=盗窃罪              → 所有省份(默认北京)
+    GET /api/threshold?crime=盗窃罪&province=上海 → 单一省份
+    GET /api/threshold?crime=盗窃罪&amount=5000  → 判断是否入罪
+    GET /api/threshold?crime=危险驾驶罪          → 行为犯(无金额门槛)
     """
-    crime = request.args.get("crime", "盗窃罪")
-    province = request.args.get("province", "").strip()
+    crime = request.args.get("crime", "盗窃罪").strip()
+    province = request.args.get("province", "北京").strip()
     amount = request.args.get("amount", type=float, default=0)
 
-    from threshold_db import THEFT_THRESHOLDS, FRAUD_THRESHOLDS, ROBBERY_THRESHOLDS, GAMBLING_THRESHOLDS
-    CRIME_THRESHOLDS = {
-        "盗窃罪": THEFT_THRESHOLDS,
-        "诈骗罪": FRAUD_THRESHOLDS,
-        "抢夺罪": ROBBERY_THRESHOLDS,
-        "开设赌场罪": GAMBLING_THRESHOLDS,
-    }
-    CRIME_LEGAL_BASIS = {
-        "盗窃罪": "刑法第264条",
-        "诈骗罪": "刑法第266条",
-        "抢夺罪": "刑法第267条",
-        "开设赌场罪": "刑法第303条",
-    }
-    if crime not in CRIME_THRESHOLDS:
-        return jsonify({"error": f"暂不支持该罪名: {crime}（支持：盗窃罪/诈骗罪/抢夺罪/开设赌场罪）"}), 404
+    from threshold_db import ThresholdDB
+    db = ThresholdDB()
 
-    thresholds = CRIME_THRESHOLDS.get(crime, {})
-    legal_basis = CRIME_LEGAL_BASIS.get(crime, "")
+    # 行为犯(无金额门槛)
+    non_amount_crimes = {
+        "污染环境罪", "危险驾驶罪", "拒不支付劳动报酬罪",
+        "非法侵入住宅罪", "寻衅滋事罪",
+    }
+
+    # 获取门槛信息
+    t = db.get_threshold(crime, province)
+    if "error" in t:
+        return jsonify({
+            "error": t["error"],
+            "supported": db.get_all_supported_crimes(),
+        }), 404
+
+    # 如果有金额,判断是否入罪
+    if amount > 0:
+        result = db.check_threshold(province, crime, amount)
+        return jsonify({
+            "crime": crime,
+            "province": province,
+            "amount": amount,
+            "threshold": t,
+            "reached": result.verdict,
+            "level": result.level,
+            "confidence": result.confidence,
+            "legal_basis": result.legal_basis,
+        })
+
+    # 无金额,只返回门槛信息
+    is_non_amount = crime in non_amount_crimes
+    threshold_yuan = t.get("amount_standard", 0)
+
+    return jsonify({
+        "crime": crime,
+        "province": province,
+        "is_behavior_based": is_non_amount,
+        "threshold_yuan": threshold_yuan,
+        "threshold_wan": round(threshold_yuan / 10000, 2) if threshold_yuan else None,
+        "standard_note": t.get("standard_note") or t.get("threshold_note", ""),
+        "legal_basis": t.get("legal_basis", ""),
+        "amount_massive": t.get("amount_massive"),
+        "amount_especially_massive": t.get("amount_especially_massive"),
+    })
 
     def _get_threshold(data: dict):
-        """从数据字典中提取入罪门槛金额（新旧结构兼容）"""
+        """从数据字典中提取入罪门槛金额(新旧结构兼容)"""
         if isinstance(data, dict):
             return data.get("low") or data.get("amount_standard") or 0
         return 0
 
     def _is_text_data(data: dict):
-        """判断是否为文字描述类数据（如交通肇事罪）"""
+        """判断是否为文字描述类数据(如交通肇事罪)"""
         if not isinstance(data, dict):
             return False
         return "death1_flee" in data or "death1_serious" in data
@@ -2019,7 +2148,7 @@ def api_threshold():
             "legal_basis": legal_basis,
         })
 
-    # 数值类按门槛排序，文字类放最后
+    # 数值类按门槛排序,文字类放最后
     text_rows = [r for r in rows if r.get("is_text_based")]
     num_rows = sorted([r for r in rows if not r.get("is_text_based")],
                       key=lambda x: x["threshold_yuan"])

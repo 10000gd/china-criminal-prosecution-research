@@ -522,6 +522,225 @@ def get_sentencing_report(crime: str = None) -> Dict:
     return analyzer.generate_report(crime)
 
 
+
+# ═══════════════════════════════════════════════════════════════════
+# ECharts 可视化函数（独立函数，供 API 调用）
+# ═══════════════════════════════════════════════════════════════════
+
+
+def _echarts_factor_radar(factors):
+    """生成雷达图因子向量"""
+    factor_map = {
+        "自首": 0, "立功": 0, "重大立功": 0,
+        "赔偿": 1, "谅解": 1, "退赃": 1, "退赔": 1,
+        "认罪": 2, "认罪认罚": 2, "坦白": 2,
+        "初犯": 3, "偶犯": 3, "前科": 3,
+        "中止": 4, "未遂": 4,
+        "过错": 5, "被害人过错": 5,
+    }
+    radar = [0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
+    for f in factors:
+        for key, idx in factor_map.items():
+            if key in f:
+                radar[idx] = 1.0
+                break
+    return radar
+
+
+def get_echarts_deviation_chart(analyzer, case_data):
+    """获取个案偏离度 ECharts 图表配置（仪表盘 + 柱状图 + 雷达图）
+
+    Args:
+        analyzer: SentencingConsistencyAnalyzer 实例
+        case_data: 案件数据（含 crime, sentence_years, factors）
+
+    Returns:
+        dict: 含 3 个 ECharts 图表配置的字典
+    """
+    result = analyzer.analyze_deviation(case_data)
+    actual = result.actual_sentence or 0
+    expected = result.expected_sentence or 0
+
+    # 同类案例均值
+    stats = analyzer.get_stats_by_crime(case_data.get("crime", ""))
+    avg = stats.avg_sentence if stats and stats.avg_sentence else 0
+
+    color_map = {"偏重": "#e74c3c", "偏轻": "#3498db", "正常": "#27ae60"}
+    gauge_color = color_map.get(result.deviation_type, "#95a5a6")
+
+    return {
+        "deviationGauge": {
+            "title": {"text": "量刑偏离度分析\n" + result.deviation_type, "left": "center", "top": 10},
+            "tooltip": {"formatter": "{c} 分（满分100）"},
+            "series": [{
+                "type": "gauge",
+                "radius": "75%",
+                "center": ["50%", "55%"],
+                "startAngle": 200,
+                "endAngle": -20,
+                "min": 0,
+                "max": 100,
+                "splitNumber": 5,
+                "itemStyle": {"color": gauge_color},
+                "detail": {"formatter": "{value}分", "fontSize": 18, "fontWeight": "bold", "offsetCenter": [0, "40%"]},
+                "data": [{"value": round(result.deviation_score, 1), "name": result.deviation_type}],
+                "axisLine": {"lineStyle": {"width": 15}},
+                "axisTick": {"show": False},
+                "splitLine": {"length": 10},
+                "pointer": {"width": 5},
+            }],
+        },
+        "comparisonBar": {
+            "title": {"text": "刑期对比（年）", "left": "center"},
+            "tooltip": {"trigger": "axis"},
+            "legend": {"data": ["本案实际", "法条基准", "同类均值"], "bottom": 0},
+            "xAxis": {"type": "category", "data": ["本案实际", "法条基准", "同类均值"]},
+            "yAxis": {"type": "value", "name": "刑期（年）", "min": 0},
+            "series": [{
+                "type": "bar",
+                "data": [
+                    {"value": round(actual, 2), "itemStyle": {"color": gauge_color}},
+                    {"value": round(expected, 2), "itemStyle": {"color": "#95a5a6"}},
+                    {"value": round(avg, 2), "itemStyle": {"color": "#3498db"}},
+                ],
+                "label": {"show": True, "position": "top"},
+                "barWidth": "40%",
+            }],
+        },
+        "factorRadar": {
+            "title": {"text": "量刑情节雷达图", "left": "center"},
+            "tooltip": {},
+            "legend": {"data": ["本案因素", "理想因素"], "bottom": 0},
+            "radar": {
+                "indicator": [
+                    {"name": "自首立功", "max": 1},
+                    {"name": "赔偿谅解", "max": 1},
+                    {"name": "认罪认罚", "max": 1},
+                    {"name": "初犯偶犯", "max": 1},
+                    {"name": "犯罪中止", "max": 1},
+                    {"name": "被害人过错", "max": 1},
+                ],
+                "radius": "65%",
+            },
+            "series": [{
+                "type": "radar",
+                "data": [
+                    {
+                        "value": _echarts_factor_radar(result.factors),
+                        "name": "本案因素",
+                        "areaStyle": {"color": "rgba(52,152,219,0.3)"},
+                    },
+                    {
+                        "value": _echarts_factor_radar([]),
+                        "name": "理想因素",
+                        "areaStyle": {"color": "rgba(39,174,96,0.1)"},
+                    },
+                ],
+            }],
+        },
+    }
+
+
+def get_echarts_crime_distribution(analyzer, crime, province=None):
+    """获取某罪名量刑分布图（ECharts 直方图配置）"""
+    import math
+    records = analyzer._records_by_crime.get(crime, [])
+    if province:
+        records = [r for r in records if r.province == province]
+    if not records:
+        return {"error": f"暂无 {crime} 的数据"}
+
+    sentences = [r.sentence_years for r in records if r.sentence_years and r.sentence_years > 0]
+    if not sentences:
+        return {"error": "数据不足"}
+
+    sentences_sorted = sorted(sentences)
+    n = len(sentences_sorted)
+    mean_val = sum(sentences_sorted) / n
+    min_v, max_v = min(sentences_sorted), max(sentences_sorted)
+    bucket_size = max(0.5, (max_v - min_v) / 10)
+
+    buckets = {}
+    for v in sentences_sorted:
+        bucket = round(min_v + math.floor((v - min_v) / bucket_size) * bucket_size, 2)
+        buckets[bucket] = buckets.get(bucket, 0) + 1
+
+    hist_data = [{"range": k, "count": v} for k, v in sorted(buckets.items(), key=lambda x: x[0])]
+
+    return {
+        "histogram": {
+            "title": {
+                "text": crime + " 量刑分布" + (f"（{province}）" if province else ""),
+                "left": "center",
+            },
+            "tooltip": {"trigger": "axis", "formatter": "{b}年: {c}件"},
+            "grid": {"left": "15%", "right": "10%", "bottom": "15%", "top": "20%"},
+            "xAxis": {"type": "category", "data": [d["range"] for d in hist_data], "name": "刑期（年）"},
+            "yAxis": {"type": "value", "name": "案件数量"},
+            "series": [{
+                "type": "bar",
+                "data": [d["count"] for d in hist_data],
+                "itemStyle": {"color": "#3498db"},
+                "barWidth": "80%",
+                "markLine": {
+                    "silent": True,
+                    "data": [{"name": f"均值 {mean_val:.2f}年", "xAxis": round(mean_val, 2)}],
+                    "label": {"formatter": f"均值{mean_val:.2f}年"},
+                },
+            }],
+        },
+        "summary": {
+            "crime": crime,
+            "province": province or "全国",
+            "sample_count": n,
+            "avg_sentence": round(mean_val, 2),
+            "median_sentence": round(sentences_sorted[n // 2], 2),
+            "min_sentence": round(min_v, 2),
+            "max_sentence": round(max_v, 2),
+        },
+    }
+
+
+def get_echarts_provincial_comparison(analyzer, crime, top_n=10):
+    """获取省份量刑对比图（ECharts 横向柱状图）"""
+    comparison = analyzer.get_provincial_comparison(crime)
+    if not comparison:
+        return {"error": f"暂无 {crime} 的数据"}
+
+    sorted_provinces = sorted(
+        [(p, d) for p, d in comparison.items() if d.get("avg_sentence")],
+        key=lambda x: x[1]["avg_sentence"],
+        reverse=True,
+    )[:top_n]
+
+    color_map = {"偏重": "#e74c3c", "偏轻": "#3498db", "正常": "#27ae60"}
+    colors = [color_map.get(d.get("deviation_type", ""), "#95a5a6") for _, d in sorted_provinces]
+
+    return {
+        "chart": {
+            "title": {"text": f"{crime} 各省量刑对比（平均刑期）", "left": "center"},
+            "tooltip": {"trigger": "axis", "axisPointer": {"type": "shadow"}},
+            "grid": {"left": "20%", "right": "10%", "bottom": "15%", "top": "20%"},
+            "xAxis": {"type": "value", "name": "平均刑期（年）"},
+            "yAxis": {"type": "category", "data": [p for p, _ in sorted_provinces], "name": "省份"},
+            "series": [{
+                "type": "bar",
+                "data": [
+                    {"value": round(d["avg_sentence"], 2), "itemStyle": {"color": colors[i]}}
+                    for i, (_, d) in enumerate(sorted_provinces)
+                ],
+                "label": {"show": True, "position": "right"},
+                "barWidth": "60%",
+            }],
+        },
+        "table": [
+            {"province": p, "avg": round(d["avg_sentence"], 2),
+             "count": d.get("case_count", 0), "type": d.get("deviation_type", "未知")}
+            for p, d in sorted_provinces
+        ],
+    }
+
+
 if __name__ == "__main__":
     print("=== 量刑一致性分析测试 ===\n")
     analyzer = SentencingConsistencyAnalyzer()

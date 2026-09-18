@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 def client():
     """使用已运行的 Flask 服务"""
     import requests
-    base_url = "http://localhost:5000"
+    base_url = "http://localhost:5001"
     
     class APIClient:
         def __init__(self, base):

@@ -512,6 +512,79 @@ FUND_RAISING_FRAUD_THRESHOLDS: Dict[str, Dict[str, int]] = {
     "西藏": {"amount_standard": 100000, "massive": 1000000, "especially_massive": 5000000},
 }
 
+# =============================================================================
+# 非法经营罪数额标准（元）
+# 刑法第225条：情节严重入罪（非法经营额≥50万或违法所得≥10万）
+# 全国统一标准
+# =============================================================================
+ILLEGAL_BUSINESS_THRESHOLDS: Dict[str, Dict[str, int]] = {
+    "DEFAULT": {"amount_standard": 500000, "massive": 2500000, "especially_massive": 50000000},
+    "北京": {"amount_standard": 500000, "massive": 2500000, "especially_massive": 50000000},
+    "上海": {"amount_standard": 500000, "massive": 2500000, "especially_massive": 50000000},
+    "浙江": {"amount_standard": 500000, "massive": 2500000, "especially_massive": 50000000},
+    "广东": {"amount_standard": 500000, "massive": 2500000, "especially_massive": 50000000},
+    "江苏": {"amount_standard": 500000, "massive": 2500000, "especially_massive": 50000000},
+    "四川": {"amount_standard": 500000, "massive": 2500000, "especially_massive": 50000000},
+    "河南": {"amount_standard": 500000, "massive": 2500000, "especially_massive": 50000000},
+    "山东": {"amount_standard": 500000, "massive": 2500000, "especially_massive": 50000000},
+}
+
+# =============================================================================
+# 虚开增值税专用发票罪数额标准（元）
+# 刑法第205条之一：虚开税款数额≥5万入罪
+# =============================================================================
+FRAUDULENT_INVOICE_THRESHOLDS: Dict[str, Dict[str, int]] = {
+    "DEFAULT": {"amount_standard": 50000, "massive": 500000, "especially_massive": 5000000},
+    "北京": {"amount_standard": 50000, "massive": 500000, "especially_massive": 5000000},
+    "上海": {"amount_standard": 50000, "massive": 500000, "especially_massive": 5000000},
+    "浙江": {"amount_standard": 50000, "massive": 500000, "especially_massive": 5000000},
+    "广东": {"amount_standard": 50000, "massive": 500000, "especially_massive": 5000000},
+    "江苏": {"amount_standard": 50000, "massive": 500000, "especially_massive": 5000000},
+    "四川": {"amount_standard": 50000, "massive": 500000, "especially_massive": 5000000},
+    "河南": {"amount_standard": 50000, "massive": 500000, "especially_massive": 5000000},
+    "山东": {"amount_standard": 50000, "massive": 500000, "especially_massive": 5000000},
+}
+
+# =============================================================================
+# 行贿罪数额标准（元）
+# 刑法第389条：数额≥3万入罪（2016解释）
+# =============================================================================
+BRIBERY_THRESHOLDS: Dict[str, Dict[str, int]] = {
+    "DEFAULT": {"amount_standard": 30000, "massive": 1000000, "especially_massive": 5000000},
+    "北京": {"amount_standard": 20000, "massive": 1000000, "especially_massive": 5000000},
+    "上海": {"amount_standard": 20000, "massive": 1000000, "especially_massive": 5000000},
+    "浙江": {"amount_standard": 30000, "massive": 1000000, "especially_massive": 5000000},
+    "广东": {"amount_standard": 30000, "massive": 1000000, "especially_massive": 5000000},
+    "江苏": {"amount_standard": 30000, "massive": 1000000, "especially_massive": 5000000},
+}
+
+# =============================================================================
+# 挪用公款罪数额标准（元）
+# 刑法第384条：挪用公款归个人使用
+# =============================================================================
+EMBEZZLEMENT_PUBLIC_THRESHOLDS: Dict[str, Dict[str, int]] = {
+    "DEFAULT": {"amount_standard": 50000, "massive": 2000000, "especially_massive": 5000000},
+    "北京": {"amount_standard": 50000, "massive": 2000000, "especially_massive": 5000000},
+    "上海": {"amount_standard": 50000, "massive": 2000000, "especially_massive": 5000000},
+    "浙江": {"amount_standard": 50000, "massive": 2000000, "especially_massive": 5000000},
+    "广东": {"amount_standard": 50000, "massive": 2000000, "especially_massive": 5000000},
+    "江苏": {"amount_standard": 50000, "massive": 2000000, "especially_massive": 5000000},
+}
+
+# =============================================================================
+# 信用卡诈骗罪数额标准（元）
+# 刑法第196条：恶意透支或冒用他人信用卡
+# =============================================================================
+CREDIT_CARD_FRAUD_THRESHOLDS: Dict[str, Dict[str, int]] = {
+    "DEFAULT": {"amount_standard": 5000, "massive": 50000, "especially_massive": 500000},
+    "北京": {"amount_standard": 10000, "massive": 100000, "especially_massive": 500000},
+    "上海": {"amount_standard": 5000, "massive": 500000, "especially_massive": 5000000},
+    "浙江": {"amount_standard": 5000, "massive": 50000, "especially_massive": 500000},
+    "广东": {"amount_standard": 5000, "massive": 50000, "especially_massive": 500000},
+    "深圳": {"amount_standard": 5000, "massive": 50000, "especially_massive": 500000},
+    "江苏": {"amount_standard": 5000, "massive": 50000, "especially_massive": 500000},
+}
+
 
 @dataclass
 class ThresholdResult:
@@ -554,6 +627,11 @@ class ThresholdDB:
         self.traffic_accident_thresholds = TRAFFIC_ACCIDENT_THRESHOLDS
         self.fraud_absorb_thresholds = FRAUD_ABSORB_THRESHOLDS
         self.fund_raising_fraud_thresholds = FUND_RAISING_FRAUD_THRESHOLDS
+        self.illegal_business_thresholds = ILLEGAL_BUSINESS_THRESHOLDS
+        self.fraudulent_invoice_thresholds = FRAUDULENT_INVOICE_THRESHOLDS
+        self.bribery_thresholds = BRIBERY_THRESHOLDS
+        self.embezzlement_public_thresholds = EMBEZZLEMENT_PUBLIC_THRESHOLDS
+        self.credit_card_fraud_thresholds = CREDIT_CARD_FRAUD_THRESHOLDS
 
     def get_threshold(self, crime_type: str, province: str = None) -> Dict[str, Any]:
         """获取某省份某罪名的入罪门槛"""
@@ -681,6 +759,116 @@ class ThresholdDB:
                 "drug_types": list(self.drug_thresholds.keys()),
                 "standard_note": "以毒品重量（克）计，不以金额计",
                 "legal_basis": "《刑法》第347条 + 最高法《毒品犯罪座谈会纪要》(2015)",
+            }
+
+        elif ct in ("非法经营罪", "非法经营"):
+            return {
+                "crime_type": "非法经营罪",
+                "province": "（全国统一标准）",
+                "amount_standard": 500000,
+                "amount_massive": 2500000,
+                "amount_especially_massive": 50000000,
+                "standard_note": "情节严重：非法经营额≥50万或违法所得≥10万（刑法第225条）",
+                "legal_basis": "《刑法》第225条 + 最高法《关于审理非法经营罪刑事案件具体应用法律若干问题的解释》",
+            }
+
+        elif ct in ("虚开增值税专用发票罪", "虚开发票", "虚开增值税发票", "虚开专票"):
+            return {
+                "crime_type": "虚开增值税专用发票罪",
+                "province": "（全国统一标准）",
+                "amount_standard": 50000,
+                "amount_massive": 500000,
+                "amount_especially_massive": 5000000,
+                "standard_note": "虚开税款数额≥5万入罪（刑法第205条之一）",
+                "legal_basis": "《刑法》第205条之一 + 最高法《关于虚开增值税专用发票刑事案件定罪量刑标准的规定》",
+            }
+
+        elif ct in ("行贿罪", "行贿"):
+            return {
+                "crime_type": "行贿罪",
+                "province": pk if pk != "DEFAULT" else "（全国统一标准）",
+                "amount_standard": 30000,
+                "amount_massive": 1000000,
+                "amount_especially_massive": 5000000,
+                "standard_note": "为谋取不正当利益，给予国家工作人员财物≥3万（2016解释）",
+                "legal_basis": "《刑法》第389条 + 最高法最高检《关于办理贪污贿赂刑事案件适用法律若干问题的解释》(2016) 第7条",
+            }
+
+        elif ct in ("挪用公款罪", "挪用公款"):
+            return {
+                "crime_type": "挪用公款罪",
+                "province": pk if pk != "DEFAULT" else "（全国统一标准）",
+                "amount_standard": 50000,
+                "amount_massive": 2000000,
+                "amount_especially_massive": 5000000,
+                "standard_note": "≥5万(超3月) / ≥100万(营利) / ≥200万(非法)（刑法第384条）",
+                "legal_basis": "《刑法》第384条 + 最高法最高检《关于办理贪污贿赂刑事案件适用法律若干问题的解释》(2016) 第5条",
+            }
+
+        elif ct in ("信用卡诈骗罪", "信用卡诈骗", "盗刷"):
+            return {
+                "crime_type": "信用卡诈骗罪",
+                "province": pk if pk != "DEFAULT" else "（全国统一标准）",
+                "amount_standard": 5000,
+                "amount_massive": 50000,
+                "amount_especially_massive": 500000,
+                "standard_note": "数额较大≥5000元 / 数额巨大≥5万 / 数额特别巨大≥50万（刑法第196条）",
+                "legal_basis": "《刑法》第196条 + 最高法《关于审理信用卡诈骗刑事案件具体应用法律若干问题的解释》",
+            }
+
+        elif ct in ("污染环境罪", "环境污染"):
+            return {
+                "crime_type": "污染环境罪",
+                "province": "（全国统一标准）",
+                "threshold_note": "以行为和后果定罪，非金额门槛",
+                "standard_note": "严重污染环境入罪（2023刑法修正案）",
+                "legal_basis": "《刑法》第338条 + 2023修正案 + 两高《关于办理环境污染刑事案件适用法律若干问题的解释》",
+            }
+
+        elif ct in ("危险驾驶罪", "醉驾", "酒驾", "危险驾驶"):
+            return {
+                "crime_type": "危险驾驶罪",
+                "province": "（全国统一标准）",
+                "threshold_note": "行为犯，醉驾入罪（非金额门槛）",
+                "standard_note": "血液酒精≥80mg/100ml 或 追逐竞驶情节恶劣（刑法第133条之一）",
+                "legal_basis": "《刑法》第133条之一",
+            }
+
+        elif ct in ("拒不支付劳动报酬罪", "拖欠工资", "欠薪", "拒不支付报酬"):
+            return {
+                "crime_type": "拒不支付劳动报酬罪",
+                "province": pk if pk != "DEFAULT" else "（参考标准）",
+                "amount_standard": 5000,
+                "threshold_note": "政府责令支付仍不支付，数额较大（各省5000-10000元/人）",
+                "standard_note": "以逃匿、转移财产等方法逃避支付劳动报酬（刑法第276条之一）",
+                "legal_basis": "《刑法》第276条之一 + 最高法《关于审理拒不支付劳动报酬刑事案件具体应用法律若干问题的解释》",
+            }
+
+        elif ct in ("非法侵入住宅罪", "私闯民宅", "侵入住宅"):
+            return {
+                "crime_type": "非法侵入住宅罪",
+                "province": "（全国统一标准）",
+                "threshold_note": "行为犯，非法侵入他人住宅即构成犯罪（非金额门槛）",
+                "standard_note": "以侵入行为定罪，不以数额计（刑法第245条）",
+                "legal_basis": "《刑法》第245条",
+            }
+
+        elif ct in ("故意毁坏财物罪", "毁坏财物", "故意毁坏"):
+            return {
+                "crime_type": "故意毁坏财物罪",
+                "province": pk if pk != "DEFAULT" else "（参考标准）",
+                "amount_standard": 5000,
+                "standard_note": "数额较大≥5000元（各省不同），或毁坏三次以上",
+                "legal_basis": "《刑法》第275条 + 最高法《关于审理故意毁坏财物刑事案件适用法律若干问题的解释》",
+            }
+
+        elif ct in ("寻衅滋事罪", "寻衅滋事"):
+            return {
+                "crime_type": "寻衅滋事罪",
+                "province": "（全国统一标准）",
+                "threshold_note": "行为犯，随意殴打/强拿硬要/任意损毁公私财物情节严重入罪（非金额门槛）",
+                "standard_note": "多次实施或纠集他人，严重破坏社会秩序（刑法第293条）",
+                "legal_basis": "《刑法》第293条 + 最高法最高检《关于办理寻衅滋事刑事案件适用法律若干问题的解释》",
             }
 
         else:
@@ -1074,12 +1262,285 @@ class ThresholdDB:
                     legal_basis=basis,
                 )
 
-        # ── 不支持的罪名 ────────────────────────────────────────
+        # 新增罪名判断（fallback）
+        result = self.check_threshold_new(province, crime_type, amount)
+        if result.level != "UNKNOWN":
+            return result
+
+        # 不支持的罪名
         return ThresholdResult(
             crime_type=ct, province=province or "未指定",
             amount=amt, threshold=0,
             level="UNKNOWN",
             verdict="❌ 系统暂不支持该罪名的入罪门槛判断，请人工查阅司法解释",
+            confidence="低", confidence_note="暂不支持的罪名类型",
+            legal_basis="需人工核查",
+        )
+
+    def check_threshold_new(self, province: str, crime_type: str, amount: float) -> ThresholdResult:
+        """新增罪名入罪门槛判断（扩展罪名支持）"""
+        ct = crime_type.strip()
+        amt = float(amount)
+        pk = province or "DEFAULT"
+
+        # ── 非法经营罪 ──────────────────────────────────────────
+        if ct in ("非法经营罪", "非法经营"):
+            large = 500000
+            massive = 2500000
+            espe = 50000000
+            basis = "《刑法》第225条"
+            if amt < large:
+                return ThresholdResult(
+                    crime_type="非法经营罪", province=pk,
+                    amount=amt, threshold=large,
+                    level="NOT_CRIME",
+                    verdict=f"非法经营额{amt:.0f}元 < {large}元入罪门槛，❌ 不构成非法经营罪",
+                    confidence="高", confidence_note="非法经营额需≥50万", legal_basis=basis,
+                )
+            elif amt < massive:
+                return ThresholdResult(
+                    crime_type="非法经营罪", province=pk,
+                    amount=amt, threshold=large,
+                    level="AMOUNT_LARGE",
+                    verdict=f"非法经营额{amt:.0f}元 ≥ {large}元，✅ 涉嫌非法经营罪（情节严重）",
+                    confidence="高", confidence_note="情节严重", legal_basis=basis,
+                )
+            elif amt < espe:
+                return ThresholdResult(
+                    crime_type="非法经营罪", province=pk,
+                    amount=amt, threshold=massive,
+                    level="MASSIVE",
+                    verdict=f"非法经营额{amt:.0f}元 ≥ {massive}元，⚠️ 涉嫌非法经营罪（情节特别严重）",
+                    confidence="高", confidence_note="情节特别严重", legal_basis=basis,
+                )
+            else:
+                return ThresholdResult(
+                    crime_type="非法经营罪", province=pk,
+                    amount=amt, threshold=espe,
+                    level="ESPECIALLY_MASSIVE",
+                    verdict=f"非法经营额{amt:.0f}元 ≥ {espe}元，⚠️ 涉嫌非法经营罪（特别严重）",
+                    confidence="高", confidence_note="特别严重", legal_basis=basis,
+                )
+
+        # ── 虚开增值税专用发票罪 ────────────────────────────────
+        if ct in ("虚开增值税专用发票罪", "虚开发票", "虚开增值税发票", "虚开专票"):
+            large = 50000
+            massive = 500000
+            espe = 5000000
+            basis = "《刑法》第205条之一"
+            if amt < large:
+                return ThresholdResult(
+                    crime_type="虚开增值税专用发票罪", province=pk,
+                    amount=amt, threshold=large,
+                    level="NOT_CRIME",
+                    verdict=f"虚开税款{amt:.0f}元 < {large}元入罪门槛，❌ 不构成虚开增值税专用发票罪",
+                    confidence="高", confidence_note="税款数额需≥5万", legal_basis=basis,
+                )
+            elif amt < massive:
+                return ThresholdResult(
+                    crime_type="虚开增值税专用发票罪", province=pk,
+                    amount=amt, threshold=large,
+                    level="AMOUNT_LARGE",
+                    verdict=f"虚开税款{amt:.0f}元 ≥ {large}元，✅ 涉嫌虚开增值税专用发票罪",
+                    confidence="高", confidence_note="达到入罪标准", legal_basis=basis,
+                )
+            elif amt < espe:
+                return ThresholdResult(
+                    crime_type="虚开增值税专用发票罪", province=pk,
+                    amount=amt, threshold=massive,
+                    level="MASSIVE",
+                    verdict=f"虚开税款{amt:.0f}元 ≥ {massive}元，⚠️ 涉嫌虚开增值税专用发票罪（数额巨大）",
+                    confidence="高", confidence_note="数额巨大", legal_basis=basis,
+                )
+            else:
+                return ThresholdResult(
+                    crime_type="虚开增值税专用发票罪", province=pk,
+                    amount=amt, threshold=espe,
+                    level="ESPECIALLY_MASSIVE",
+                    verdict=f"虚开税款{amt:.0f}元 ≥ {espe}元，⚠️ 涉嫌虚开增值税专用发票罪（数额特别巨大）",
+                    confidence="高", confidence_note="数额特别巨大，可判无期", legal_basis=basis,
+                )
+
+        # ── 行贿罪 ─────────────────────────────────────────────
+        if ct in ("行贿罪", "行贿"):
+            large = 30000
+            massive = 1000000
+            espe = 5000000
+            basis = "《刑法》第389条（2016解释第7条）"
+            if amt < large:
+                return ThresholdResult(
+                    crime_type="行贿罪", province=pk,
+                    amount=amt, threshold=large,
+                    level="NOT_CRIME",
+                    verdict=f"行贿金额{amt:.0f}元 < {large}元入罪门槛，❌ 不构成行贿罪（需≥3万且为不正当利益）",
+                    confidence="中", confidence_note="2016解释，需为谋取不正当利益", legal_basis=basis,
+                )
+            elif amt < massive:
+                return ThresholdResult(
+                    crime_type="行贿罪", province=pk,
+                    amount=amt, threshold=large,
+                    level="AMOUNT_LARGE",
+                    verdict=f"行贿金额{amt:.0f}元 ≥ {large}元，✅ 涉嫌行贿罪",
+                    confidence="中", confidence_note="需确认是为谋取不正当利益", legal_basis=basis,
+                )
+            elif amt < espe:
+                return ThresholdResult(
+                    crime_type="行贿罪", province=pk,
+                    amount=amt, threshold=massive,
+                    level="MASSIVE",
+                    verdict=f"行贿金额{amt:.0f}元 ≥ {massive}元，⚠️ 涉嫌行贿罪（数额巨大），法定刑5-10年",
+                    confidence="中", confidence_note="数额巨大，5-10年", legal_basis=basis,
+                )
+            else:
+                return ThresholdResult(
+                    crime_type="行贿罪", province=pk,
+                    amount=amt, threshold=espe,
+                    level="ESPECIALLY_MASSIVE",
+                    verdict=f"行贿金额{amt:.0f}元 ≥ {espe}元，⚠️ 涉嫌行贿罪（数额特别巨大），法定刑10年以上至无期",
+                    confidence="中", confidence_note="数额特别巨大，10年以上", legal_basis=basis,
+                )
+
+        # ── 挪用公款罪 ─────────────────────────────────────────
+        if ct in ("挪用公款罪", "挪用公款"):
+            large = 50000
+            massive = 2000000
+            espe = 5000000
+            basis = "《刑法》第384条（2016解释第5条）"
+            if amt < large:
+                return ThresholdResult(
+                    crime_type="挪用公款罪", province=pk,
+                    amount=amt, threshold=large,
+                    level="NOT_CRIME",
+                    verdict=f"挪用公款{amt:.0f}元 < {large}元入罪门槛，❌ 不构成挪用公款罪",
+                    confidence="高", confidence_note="需≥5万且超3个月未还，或用于营利/非法", legal_basis=basis,
+                )
+            elif amt < massive:
+                return ThresholdResult(
+                    crime_type="挪用公款罪", province=pk,
+                    amount=amt, threshold=large,
+                    level="AMOUNT_LARGE",
+                    verdict=f"挪用公款{amt:.0f}元 ≥ {large}元，✅ 涉嫌挪用公款罪",
+                    confidence="高", confidence_note="数额较大", legal_basis=basis,
+                )
+            elif amt < espe:
+                return ThresholdResult(
+                    crime_type="挪用公款罪", province=pk,
+                    amount=amt, threshold=massive,
+                    level="MASSIVE",
+                    verdict=f"挪用公款{amt:.0f}元 ≥ {massive}元，⚠️ 涉嫌挪用公款罪（数额巨大），法定刑5年以上",
+                    confidence="高", confidence_note="数额巨大，5年以上", legal_basis=basis,
+                )
+            else:
+                return ThresholdResult(
+                    crime_type="挪用公款罪", province=pk,
+                    amount=amt, threshold=espe,
+                    level="ESPECIALLY_MASSIVE",
+                    verdict=f"挪用公款{amt:.0f}元 ≥ {espe}元，⚠️ 涉嫌挪用公款罪（情节特别严重）",
+                    confidence="高", confidence_note="情节特别严重", legal_basis=basis,
+                )
+
+        # ── 信用卡诈骗罪 ─────────────────────────────────────────
+        if ct in ("信用卡诈骗罪", "信用卡诈骗", "盗刷"):
+            large = 5000
+            massive = 50000
+            espe = 500000
+            basis = "《刑法》第196条"
+            if amt < large:
+                return ThresholdResult(
+                    crime_type="信用卡诈骗罪", province=pk,
+                    amount=amt, threshold=large,
+                    level="NOT_CRIME",
+                    verdict=f"涉案金额{amt:.0f}元 < {large}元入罪门槛，❌ 不构成信用卡诈骗罪",
+                    confidence="高", confidence_note="需≥5000元", legal_basis=basis,
+                )
+            elif amt < massive:
+                return ThresholdResult(
+                    crime_type="信用卡诈骗罪", province=pk,
+                    amount=amt, threshold=large,
+                    level="AMOUNT_LARGE",
+                    verdict=f"涉案金额{amt:.0f}元 ≥ {large}元，✅ 涉嫌信用卡诈骗罪（数额较大）",
+                    confidence="高", confidence_note="数额较大", legal_basis=basis,
+                )
+            elif amt < espe:
+                return ThresholdResult(
+                    crime_type="信用卡诈骗罪", province=pk,
+                    amount=amt, threshold=massive,
+                    level="MASSIVE",
+                    verdict=f"涉案金额{amt:.0f}元 ≥ {massive}元，⚠️ 涉嫌信用卡诈骗罪（数额巨大）",
+                    confidence="高", confidence_note="数额巨大，5-10年", legal_basis=basis,
+                )
+            else:
+                return ThresholdResult(
+                    crime_type="信用卡诈骗罪", province=pk,
+                    amount=amt, threshold=espe,
+                    level="ESPECIALLY_MASSIVE",
+                    verdict=f"涉案金额{amt:.0f}元 ≥ {espe}元，⚠️ 涉嫌信用卡诈骗罪（数额特别巨大）",
+                    confidence="高", confidence_note="数额特别巨大，可判无期", legal_basis=basis,
+                )
+
+        # ── 故意毁坏财物罪 ──────────────────────────────────────
+        if ct in ("故意毁坏财物罪", "毁坏财物", "故意毁坏"):
+            large = 5000
+            massive = 50000
+            espe = 500000
+            basis = "《刑法》第275条"
+            if amt < large:
+                return ThresholdResult(
+                    crime_type="故意毁坏财物罪", province=pk,
+                    amount=amt, threshold=large,
+                    level="NOT_CRIME",
+                    verdict=f"毁坏财物价值{amt:.0f}元 < {large}元入罪门槛，❌ 不构成故意毁坏财物罪",
+                    confidence="中", confidence_note="数额较大≥5000元，或毁坏三次以上", legal_basis=basis,
+                )
+            elif amt < massive:
+                return ThresholdResult(
+                    crime_type="故意毁坏财物罪", province=pk,
+                    amount=amt, threshold=large,
+                    level="AMOUNT_LARGE",
+                    verdict=f"毁坏财物价值{amt:.0f}元 ≥ {large}元，✅ 涉嫌故意毁坏财物罪（数额较大）",
+                    confidence="中", confidence_note="数额较大", legal_basis=basis,
+                )
+            elif amt < espe:
+                return ThresholdResult(
+                    crime_type="故意毁坏财物罪", province=pk,
+                    amount=amt, threshold=massive,
+                    level="MASSIVE",
+                    verdict=f"毁坏财物价值{amt:.0f}元 ≥ {massive}元，⚠️ 涉嫌故意毁坏财物罪（数额巨大）",
+                    confidence="中", confidence_note="数额巨大，3-7年", legal_basis=basis,
+                )
+            else:
+                return ThresholdResult(
+                    crime_type="故意毁坏财物罪", province=pk,
+                    amount=amt, threshold=espe,
+                    level="ESPECIALLY_MASSIVE",
+                    verdict=f"毁坏财物价值{amt:.0f}元 ≥ {espe}元，⚠️ 涉嫌故意毁坏财物罪（数额特别巨大）",
+                    confidence="中", confidence_note="数额特别巨大", legal_basis=basis,
+                )
+
+        # ── 非金额类（行为犯）── 均返回 BEHAVIOR_BASED ───────────
+        non_amount_crimes = {
+            "污染环境罪": "《刑法》第338条（以污染行为和后果定罪）",
+            "危险驾驶罪": "《刑法》第133条之一（行为犯，醉驾即入罪）",
+            "拒不支付劳动报酬罪": "《刑法》第276条之一（以逃避支付行为定罪）",
+            "非法侵入住宅罪": "《刑法》第245条（行为犯，侵入即入罪）",
+            "寻衅滋事罪": "《刑法》第293条（行为犯，情节严重入罪）",
+        }
+        if ct in non_amount_crimes:
+            return ThresholdResult(
+                crime_type=ct, province=pk,
+                amount=amt, threshold=0,
+                level="BEHAVIOR_BASED",
+                verdict=f"⚠️ {ct}为行为犯或以情节定罪，金额{amt:.0f}元仅供参考，需结合具体行为判定",
+                confidence="低", confidence_note="行为犯/情节犯，金额不是唯一入罪标准",
+                legal_basis=non_amount_crimes[ct],
+            )
+
+        # 不支持
+        return ThresholdResult(
+            crime_type=ct, province=pk,
+            amount=amt, threshold=0,
+            level="UNKNOWN",
+            verdict="❌ 系统暂不支持该罪名的入罪门槛判断",
             confidence="低", confidence_note="暂不支持的罪名类型",
             legal_basis="需人工核查",
         )
@@ -1090,6 +1551,11 @@ class ThresholdDB:
             "故意伤害罪", "毒品犯罪", "开设赌场罪",
             "敲诈勒索罪", "交通肇事罪",
             "非法吸收公众存款罪", "集资诈骗罪",
+            "非法经营罪", "虚开增值税专用发票罪",
+            "行贿罪", "挪用公款罪",
+            "信用卡诈骗罪", "污染环境罪",
+            "危险驾驶罪", "拒不支付劳动报酬罪",
+            "非法侵入住宅罪", "故意毁坏财物罪", "寻衅滋事罪",
         ]
 
     def get_drug_types(self) -> List[str]:

@@ -34,6 +34,344 @@ class DefenseOpinionSection:
         }
 
 
+CRIME_SPECIFIC_TEMPLATES = {
+    # ── 财产类 ──────────────────────────────────────────────────────
+    "盗窃罪": {
+        "alias": "盗窃",
+        "category": "财产类",
+        "argument_focus": "秘密窃取 vs 公开取得、主从犯区分、犯罪未遂",
+        "legal_defense": "犯罪未遂（未控制财物即被抓获）/ 部分退赃 / 初犯偶犯 / 赔偿谅解",
+        "key_articles": ["《刑法》第264条", "最高法《关于办理盗窃刑事案件适用法律若干问题的解释》"],
+        "sentencing_defense": [
+            "犯罪金额认定异议：现有证据无法充分证明涉案金额",
+            "被告人系从犯：在共同犯罪中起次要作用，应从轻或减轻处罚",
+            "属犯罪未遂：尚未实际控制涉案财物即被抓获",
+            "主观恶性较小：系初犯、偶犯，无前科劣迹",
+            "积极退赃退赔：已全额/部分退赃，弥补被害人损失",
+        ],
+        "key_evidence": ["监控录像", "失窃现场勘验", "指纹/DNA鉴定", "银行转账记录"],
+        "mitigation_factors": ["初犯", "偶犯", "自首", "坦白", "全部退赃", "取得谅解"],
+        "aggravating_factors": ["入户盗窃", "扒窃", "惯犯", "，流窜作案"],
+    },
+
+    "诈骗罪": {
+        "alias": "诈骗",
+        "category": "财产类",
+        "argument_focus": "非法占有目的认定、欺诈行为与民事纠纷的区分",
+        "legal_defense": "民事欺诈≠刑事诈骗 / 存在真实交易背景 / 经营失败非主观故意",
+        "key_articles": ["《刑法》第266条", "最高法《关于审理诈骗刑事案件具体应用法律若干问题的解释》"],
+        "sentencing_defense": [
+            "定性异议：被告人行为属于民事欺诈范畴，不构成刑事诈骗罪",
+            "非法占有目的认定事实不清：涉案款项用于正常经营，未转移隐匿",
+            "存在真实交易背景：双方曾有合作关系，纠纷源于商业争议",
+            "积极退赃：被告人已退还全部/部分涉案款项",
+            "认罪认罚：被告人自愿认罪认罚，态度诚恳",
+        ],
+        "key_evidence": ["合同文本", "银行流水", "证人证言", "被告人供述与辩解"],
+        "mitigation_factors": ["全部退赃", "取得谅解", "自首", "坦白", "认罪认罚"],
+        "aggravating_factors": ["诈骗老年人", "诈骗残疾人", "诈骗救灾款物", "冒充国家工作人员"],
+    },
+
+    "抢夺罪": {
+        "alias": "抢夺",
+        "category": "财产类",
+        "argument_focus": "趁人不备 vs 有预谋、暴力程度、主从犯",
+        "legal_defense": "未使用暴力 / 临时起意 / 犯罪未遂 / 分赃较少",
+        "key_articles": ["《刑法》第267条", "最高法《关于抢夺罪具体应用法律若干问题的解释》"],
+        "sentencing_defense": [
+            "定性异议：被告人的行为更符合盗窃罪特征，非趁人不备抢夺",
+            "暴力程度较低：未对被害人造成人身伤害，仅涉及财产",
+            "属犯罪未遂：被当场抓获，未实际取得财物",
+            "从犯：在共同犯罪中负责望风，分赃较少",
+            "初犯偶犯：此前无任何违法犯罪记录",
+        ],
+        "key_evidence": ["被害人陈述", "监控视频", "伤情鉴定", "现场目击证人"],
+        "mitigation_factors": ["初犯", "自首", "坦白", "退赃", "取得谅解"],
+        "aggravating_factors": ["驾驶机动车抢夺", "抢夺老年人/未成年人", "多次抢夺", "造成伤害"],
+    },
+
+    "职务侵占罪": {
+        "alias": "职务侵占",
+        "category": "财产类",
+        "argument_focus": "利用职务便利认定、单位知情、内部纠纷",
+        "legal_defense": "公司内部民事争议 / 未利用职务便利 / 主观上无非法占有目的",
+        "key_articles": ["《刑法》第271条", "最高检公安部《关于公安机关管辖的刑事案件立案追诉标准（二）》"],
+        "sentencing_defense": [
+            "定性异议：被告人与公司之间存在劳动争议和报酬纠纷，属于民事法律关系",
+            "未利用职务便利：被告人支取款项经过了公司内部审批程序",
+            "主观上无非法占有目的：涉案款项用于公司业务支出，有账目记录",
+            "已返还部分款项：被告人愿意与公司进行结算",
+            "公司存在过错：公司未及时足额支付劳动报酬在先",
+        ],
+        "key_evidence": ["劳动合同", "工资台账", "公司财务凭证", "证人证言"],
+        "mitigation_factors": ["初犯", "认罪悔罪", "部分退赔", "公司谅解"],
+        "aggravating_factors": ["挪用后拒不归还", "伪造财务凭证", "多次侵占"],
+    },
+
+    "敲诈勒索罪": {
+        "alias": "敲诈勒索",
+        "category": "财产类",
+        "argument_focus": "正当权利 vs 非法占有、恐吓程度、被害人过错",
+        "legal_defense": "存在真实债务纠纷 / 维权行为 / 恐吓程度轻微 / 犯罪未遂",
+        "key_articles": ["《刑法》第274条", "最高法《关于敲诈勒索罪具体应用法律若干问题的解释》"],
+        "sentencing_defense": [
+            "定性异议：被告人系主张合法债权，不具有非法占有目的",
+            "存在真实债权债务关系：被告人与被害人之间存在经济纠纷",
+            "恐吓程度轻微：被告人未使用严重暴力或威胁手段",
+            "被害人存在过错：被害人在先行为引发本案",
+            "未遂：被害人未实际交付财物即案发",
+        ],
+        "key_evidence": ["借条/债务凭证", "通信记录", "证人证言", "被害人陈述"],
+        "mitigation_factors": ["初犯", "自首", "坦白", "未遂", "退赃"],
+        "aggravating_factors": ["冒充黑恶势力", "多次敲诈", "针对弱势群体"],
+    },
+
+    # ── 职务类 ──────────────────────────────────────────────────────
+    "受贿罪": {
+        "alias": "受贿",
+        "category": "职务类",
+        "argument_focus": "受贿金额认定、自首立功、追诉时效、赃款用途",
+        "legal_defense": "自首立功 / 受贿金额扣除合法报酬 / 被索贿 / 退赃彻底",
+        "key_articles": [
+            "《刑法》第385条", "第388条",
+            "最高法最高检《关于办理贪污贿赂刑事案件适用法律若干问题的解释》(2016)",
+        ],
+        "sentencing_defense": [
+            "自首：被告人主动投案并如实供述犯罪事实，构成自首",
+            "立功：被告人揭发他人犯罪行为并经查证属实，构成重大立功",
+            "受贿金额认定异议：部分款项系被告人合法劳动报酬，应当扣除",
+            "被索贿：被告人在被对方要挟的情况下被迫收受财物，应从轻处罚",
+            "全部退赃：被告人已退还全部违法所得",
+        ],
+        "key_evidence": ["银行转账记录", "证人证言", "行受贿双方的供述", "通话记录"],
+        "mitigation_factors": ["自首", "立功", "重大立功", "坦白", "全部退赃", "被索贿"],
+        "aggravating_factors": ["受贿多人为他人谋利", "索贿", "为请托人谋取不正当利益", "多次受贿"],
+    },
+
+    "行贿罪": {
+        "alias": "行贿",
+        "category": "职务类",
+        "argument_focus": "被索贿认定、不正当利益认定、自首立功",
+        "legal_defense": "被索贿 / 为获取合法利益 / 自首 / 配合调查",
+        "key_articles": ["《刑法》第389条", "第390条", "2016解释第7条"],
+        "sentencing_defense": [
+            "被索贿：被告人系在被对方明示或暗示要挟的情况下被迫行贿，应从轻或减轻处罚",
+            "为谋取正当利益：被告人所追求的利益属于合法商业利益，不属于不正当利益",
+            "自首：被告人主动投案并如实供述，构成自首",
+            "认罪认罚：被告人自愿如实供述犯罪事实，认罪态度良好",
+            "配合调查：被告人积极协助侦查机关查清案件事实",
+        ],
+        "key_evidence": ["银行转账记录", "证人证言", "通信记录", "项目审批文件"],
+        "mitigation_factors": ["自首", "被索贿", "坦白", "认罪认罚", "配合调查", "追诉时效"],
+        "aggravating_factors": ["行贿多人", "谋取不正当利益", "情节严重"],
+    },
+
+    "贪污罪": {
+        "alias": "贪污",
+        "category": "职务类",
+        "argument_focus": "主体身份认定、贪污数额、自首立功",
+        "legal_defense": "非国家工作人员 / 贪污金额扣除合法收入 / 自首立功 / 退赃",
+        "key_articles": ["《刑法》第382条", "第383条", "2016解释"],
+        "sentencing_defense": [
+            "主体身份异议：被告人并非国家工作人员，不符合贪污罪主体要件",
+            "贪污金额异议：部分款项系被告人合法绩效工资，应当扣除",
+            "自首：被告人主动投案并如实供述，构成自首",
+            "全部退赃：已退还全部涉案款项",
+        ],
+        "key_evidence": ["财务凭证", "账目记录", "银行流水", "证人证言"],
+        "mitigation_factors": ["自首", "立功", "坦白", "全部退赃", "初犯"],
+        "aggravating_factors": ["多次贪污", "贪污特定款物", "拒不交代赃款去向"],
+    },
+
+    # ── 经济类 ──────────────────────────────────────────────────────
+    "非法经营罪": {
+        "alias": "非法经营",
+        "category": "经济类",
+        "argument_focus": "是否违反国家规定、经营行为认定、情节严重程度",
+        "legal_defense": "未经许可经营≠非法经营 / 情节轻微 / 单位犯罪从轻",
+        "key_articles": ["《刑法》第225条", "最高法《关于审理非法经营罪刑事案件具体应用法律若干问题的解释》"],
+        "sentencing_defense": [
+            "定性异议：被告人行为不属于'经营'行为，或未经许可不等于非法经营",
+            "违反国家规定异议：涉案行为未违反国家规定，不符合非法经营罪构成要件",
+            "情节较轻：被告人经营时间较短，违法所得较少，社会危害性较小",
+            "单位犯罪：涉案行为系公司行为，应对单位判处罚金，对直接责任人从轻处罚",
+            "认罪认罚：被告人自愿认罪认罚",
+        ],
+        "key_evidence": ["经营账目", "银行流水", "证人证言", "行政许可证件"],
+        "mitigation_factors": ["初犯", "单位犯罪", "认罪认罚", "部分退赃"],
+        "aggravating_factors": ["曾被行政处罚", "造成严重后果", "规模较大"],
+    },
+
+    "虚开增值税专用发票罪": {
+        "alias": "虚开发票",
+        "category": "经济类",
+        "argument_focus": "虚开目的、是否造成国家税款损失、单位行为",
+        "legal_defense": "无骗税目的 / 未造成税款损失 / 不知是虚开 / 单位从轻",
+        "key_articles": [
+            "《刑法》第205条之一",
+            "最高法《关于虚开增值税专用发票刑事案件定罪量刑标准的规定》",
+        ],
+        "sentencing_defense": [
+            "主观故意异议：被告人对虚开行为不知情，主观上不具有骗税或虚开的故意",
+            "未造成税款损失：受票方已按规定抵扣，但实际已缴纳税款，未造成国家税款损失",
+            "有真实交易背景：被告人系基于真实货物交易而让他人代开发票",
+            "单位犯罪：涉案行为系公司决策，应认定为单位犯罪",
+            "从犯：被告人在共同犯罪中起次要作用",
+        ],
+        "key_evidence": ["发票原件", "纳税记录", "购销合同", "银行流水"],
+        "mitigation_factors": ["从犯", "单位犯罪", "未造成税款损失", "坦白", "认罪认罚"],
+        "aggravating_factors": ["有骗税目的", "造成税款损失", "多次虚开"],
+    },
+
+    # ── 人身类 ──────────────────────────────────────────────────────
+    "故意伤害罪": {
+        "alias": "故意伤害",
+        "category": "人身类",
+        "argument_focus": "伤情鉴定结论、正当防卫、被害人过错、邻里纠纷",
+        "legal_defense": "正当防卫 / 防卫过当 / 被害人过错 / 激情犯罪 / 赔偿谅解",
+        "key_articles": ["《刑法》第234条", "最高法《人体损伤程度鉴定标准》"],
+        "sentencing_defense": [
+            "正当防卫：被告人系为制止正在进行的不法侵害而采取的必要防卫行为",
+            "防卫过当：被告人行为超过必要限度，但系因情况紧急，属于防卫过当",
+            "被害人存在过错：被害人在先行为引发冲突，对损害结果负有过错",
+            "邻里纠纷引发：双方因琐事发生口角，被告人系激情犯罪",
+            "积极赔偿并取得谅解：被告人已赔偿被害人全部损失并取得书面谅解",
+        ],
+        "key_evidence": ["伤情鉴定意见", "监控视频", "证人证言", "被害人陈述"],
+        "mitigation_factors": ["自首", "坦白", "赔偿谅解", "被害人过错", "防卫过当", "初犯"],
+        "aggravating_factors": ["致人重伤或死亡", "使用凶器", "针对老弱病残"],
+    },
+
+    "寻衅滋事罪": {
+        "alias": "寻衅滋事",
+        "category": "人身类",
+        "argument_focus": "情节是否严重、是否无事生非、邻里纠纷例外",
+        "legal_defense": "事出有因 / 情节轻微 / 邻里纠纷 / 被害人谅解 / 犯罪未遂",
+        "key_articles": ["《刑法》第293条", "最高法最高检《关于办理寻衅滋事刑事案件适用法律若干问题的解释》"],
+        "sentencing_defense": [
+            "定性异议：被告人行为不属于'随意'殴打他人，不符合寻衅滋事罪构成要件",
+            "事出有因：被告人系因琐事与被害人发生争执，有一定起因",
+            "情节较轻：殴打行为未造成严重后果，被告人及时停止",
+            "邻里纠纷：双方系邻居关系，因日常矛盾引发冲突",
+            "已取得被害人谅解：双方已达成和解协议",
+        ],
+        "key_evidence": ["监控视频", "证人证言", "伤情鉴定", "双方和解协议"],
+        "mitigation_factors": ["自首", "坦白", "赔偿谅解", "初犯", "邻里纠纷"],
+        "aggravating_factors": ["多次实施", "纠集他人", "造成公共场所秩序严重混乱"],
+    },
+
+    # ── 交通类 ──────────────────────────────────────────────────────
+    "危险驾驶罪": {
+        "alias": "醉驾",
+        "category": "交通类",
+        "argument_focus": "血液酒精含量检测程序、是否曾被处罚",
+        "legal_defense": "酒精含量临界 / 检测程序违法 / 紧急情况 / 短距离挪车",
+        "key_articles": ["《刑法》第133条之一", "最高法 最高检 公安部《关于办理醉酒驾驶机动车刑事案件适用法律若干问题的意见》"],
+        "sentencing_defense": [
+            "血液酒精含量认定异议：对检测机构的资质或检测程序提出合理质疑",
+            "紧急情况：被告人系为将车辆移至安全位置（挪车），未实际驾驶上路",
+            "行驶距离极短：被告人驾车距离极短，未造成任何实际危险",
+            "认罪认罚：被告人自愿认罪认罚，态度诚恳",
+            "初犯：被告人系初次实施此类行为，此前无任何违法犯罪记录",
+        ],
+        "key_evidence": ["血液酒精检测报告", "执法记录视频", "证人证言", "行驶轨迹"],
+        "mitigation_factors": ["初犯", "认罪认罚", "未造成事故", "血液酒精含量较低", "挪车"],
+        "aggravating_factors": ["血液酒精含量≥200mg/100ml", "造成事故", "无证驾驶", "曾因酒驾被处罚"],
+    },
+
+    "交通肇事罪": {
+        "alias": "交通肇事",
+        "category": "交通类",
+        "argument_focus": "责任划分、逃逸认定、自首、赔偿谅解",
+        "legal_defense": "次要责任 / 非因逃逸致人死亡 / 自首 / 积极赔偿",
+        "key_articles": ["《刑法》第133条", "最高法《关于审理交通肇事刑事案件具体应用法律若干问题的解释》"],
+        "sentencing_defense": [
+            "责任划分异议：交警部门出具的责任认定书存在事实不清、法律依据不足的问题",
+            "逃逸认定异议：被告人离开现场系因救助伤员，而非逃避法律追究",
+            "自首：被告人主动投案并如实供述，构成自首",
+            "积极赔偿：被告人已赔偿被害人/被害人家属全部损失",
+            "取得谅解：被害人或其近亲属已出具书面谅解书",
+        ],
+        "key_evidence": ["交通事故认定书", "现场勘查笔录", "鉴定意见", "证人证言"],
+        "mitigation_factors": ["自首", "全部赔偿", "取得谅解", "次要责任", "坦白"],
+        "aggravating_factors": ["负主要或全部责任", "逃逸", "酒后驾驶", "无证驾驶", "造成死亡或重伤"],
+    },
+
+    # ── 毒品类 ──────────────────────────────────────────────────────
+    "贩卖毒品罪": {
+        "alias": "贩毒",
+        "category": "毒品类",
+        "argument_focus": "毒品数量、是否明知、特情介入、立功",
+        "legal_defense": "特情引诱 / 不明知是毒品 / 毒品含量鉴定 / 犯罪未遂 / 立功",
+        "key_articles": ["《刑法》第347条", "最高法《毒品犯罪座谈会纪要》(2015)"],
+        "sentencing_defense": [
+            "特情引诱：被告人系在公安机关特情人员引诱下实施犯罪，应当从轻处罚",
+            "不明知：被告人不知道涉案物品是毒品，主观上不具有贩卖毒品的故意",
+            "毒品含量异议：涉案毒品含量极低，应进行含量鉴定并据此量刑",
+            "犯罪未遂：被告人尚未完成交易即被抓获",
+            "重大立功：被告人揭发他人重大犯罪并经查证属实",
+        ],
+        "key_evidence": ["毒品鉴定意见", "通话记录", "转账记录", "证人证言"],
+        "mitigation_factors": ["特情引诱", "犯罪未遂", "立功", "重大立功", "坦白", "初犯"],
+        "aggravating_factors": ["毒品数量大", "向未成年人贩卖", "多次贩卖", "暴力抗拒检查"],
+    },
+
+    "非法持有毒品罪": {
+        "alias": "持有毒品",
+        "category": "毒品类",
+        "argument_focus": "毒品数量、是否有贩卖目的",
+        "legal_defense": "用于自己吸食 / 无贩卖目的 / 数量认定异议 / 毒品含量",
+        "key_articles": ["《刑法》第348条"],
+        "sentencing_defense": [
+            "持有目的：被告人持有毒品系供自己吸食，无贩卖目的",
+            "毒品数量异议：现有证据无法充分证明涉案毒品数量",
+            "毒品含量较低：涉案毒品含量极低，应按纯度折算",
+            "初犯：被告人系初次因毒品相关行为被查获",
+        ],
+        "key_evidence": ["毒品鉴定意见", "证人证言", "手机聊天记录", "被告人供述"],
+        "mitigation_factors": ["初犯", "坦白", "无贩卖目的", "毒品数量接近入罪门槛"],
+        "aggravating_factors": ["毒品数量大", "持有多种毒品", "曾因毒品被处罚"],
+    },
+
+    # ── 其他类 ──────────────────────────────────────────────────────
+    "开设赌场罪": {
+        "alias": "开设赌场",
+        "category": "其他类",
+        "argument_focus": "抽头渔利金额、参赌人数、是否以赌资为业",
+        "legal_defense": "不知是赌场 / 规模较小 / 从犯 / 自首 / 参赌人员有限",
+        "key_articles": ["《刑法》第303条", "最高法最高检《关于办理赌博刑事案件具体应用法律若干问题的解释》"],
+        "sentencing_defense": [
+            "定性异议：被告人仅为赌场提供场地或帮助，不明知是赌场",
+            "规模较小：赌场经营时间较短，参赌人数有限，抽头渔利金额较小",
+            "从犯：被告人在共同犯罪中起次要或辅助作用",
+            "自首：被告人主动投案并如实供述，构成自首",
+            "认罪认罚：被告人自愿认罪认罚",
+        ],
+        "key_evidence": ["赌资账目", "参赌人员证言", "监控视频", "银行流水"],
+        "mitigation_factors": ["从犯", "自首", "坦白", "认罪认罚", "初犯"],
+        "aggravating_factors": ["抽头渔利金额大", "参赌人数多", "组织未成年人参赌"],
+    },
+
+    "污染环境罪": {
+        "alias": "污染环境",
+        "category": "环境类",
+        "argument_focus": "超标程度、是否造成实际损害、单位行为",
+        "legal_defense": "排放未超标 / 意外事故 / 无主观故意 / 单位犯罪 / 已整改",
+        "key_articles": ["《刑法》第338条", "两高《关于办理环境污染刑事案件适用法律若干问题的解释》"],
+        "sentencing_defense": [
+            "排放标准异议：被告人所在企业排放的污染物未超过国家或地方污染物排放标准",
+            "因果关系异议：现有证据无法证明被害人损害与被告人的排污行为之间存在因果关系",
+            "意外事故：被告人系因设备故障等意外原因导致超标排放，不具有主观故意",
+            "单位犯罪：涉案行为系公司行为，应认定为单位犯罪",
+            "积极整改：案发后被告人所在企业已投入资金进行设备升级和整改",
+        ],
+        "key_evidence": ["环境监测报告", "排污许可证", "设备运行记录", "证人证言"],
+        "mitigation_factors": ["单位犯罪", "意外事故", "积极整改", "初犯", "坦白"],
+        "aggravating_factors": ["超标倍数高", "造成严重后果", "多次超标排放", "隐瞒排污数据"],
+    },
+}
+
+
 @dataclass
 class DefenseOpinion:
     """完整辩护意见"""
@@ -128,7 +466,12 @@ class DefenseOpinionGenerator:
         
         # 生成各章节
         sections.append(self._generate_intro(case_data))
-        
+
+        # ── 罪名专业化辩护章节（新增）────────────────────────────────
+        crime_specific = self._get_crime_template(crime)
+        if crime_specific:
+            sections.append(self._generate_crime_specific_section(crime, crime_specific))
+
         # 根据辩护类型生成相应章节
         primary_defense = self.defense_analysis.get("primary_defense") or {}
         defense_type = primary_defense.get("type", "")
@@ -239,7 +582,7 @@ class DefenseOpinionGenerator:
         content = content_map.get(defense_type, f"根据{legal_text}之规定，被告人应当认定为无罪。")
         
         return DefenseOpinionSection(
-            title="二、关于无罪辩护意见",
+            title="三、关于无罪辩护意见",
             content=content,
             importance=5,
         )
@@ -270,11 +613,87 @@ class DefenseOpinionGenerator:
 基于上述法律依据和案件事实，辩护人认为被告人的行为不符合犯罪构成要件，依法不应当追究刑事责任。"""
         
         return DefenseOpinionSection(
-            title="三、法律依据与分析",
+            title="四、法律依据与分析",
             content=content,
             importance=4,
         )
     
+    # ── 罪名专业化辩护方法（新增）────────────────────────────────────
+
+    def _get_crime_template(self, crime: str) -> Optional[Dict]:
+        """根据罪名获取专业化模板，找别名匹配"""
+        if crime in CRIME_SPECIFIC_TEMPLATES:
+            return CRIME_SPECIFIC_TEMPLATES[crime]
+        # 通过别名匹配
+        for template in CRIME_SPECIFIC_TEMPLATES.values():
+            if template.get("alias") == crime or crime in template.get("alias", ""):
+                return template
+        return None
+
+    def _generate_crime_specific_section(self, crime: str, tmpl: Dict) -> DefenseOpinionSection:
+        """生成罪名专业化辩护章节"""
+        category = tmpl.get("category", "")
+        argument_focus = tmpl.get("argument_focus", "")
+        legal_defense = tmpl.get("legal_defense", "")
+        defense_items = tmpl.get("sentencing_defense", [])
+        key_articles = tmpl.get("key_articles", [])
+        mitigating = tmpl.get("mitigation_factors", [])
+        aggravating = tmpl.get("aggravating_factors", [])
+
+        defense_text = "\n".join(f"（{chr(65+i)}）{item}" for i, item in enumerate(defense_items))
+        articles_text = "、".join(key_articles) if key_articles else "相关法律规定"
+        mitigation_text = "、".join(mitigating) if mitigating else "无"
+        aggravating_text = "、".join(aggravating) if aggravating else "无"
+
+        primary = self.defense_analysis.get("primary_defense") or {}
+        defense_type = primary.get("type", "")
+
+        content = f"""辩护人经研究本案案情，认为本案应当围绕以下专业辩护要点展开：
+
+一、本案辩护要点分析
+
+本案属于【{category}·{crime}】案件，辩护重点应围绕以下方面展开：
+
+（一）本案辩护方向
+
+{argument_focus}
+
+（二）核心辩护策略
+
+{legal_defense}
+
+（三）具体辩护意见
+
+{defense_text}
+
+二、法律依据
+
+本案主要涉及以下法律条文和司法解释：
+{articles_text}
+
+三、关于量刑情节
+
+（一）从轻/减轻处罚情节
+以下情节请法庭在量刑时予以充分考虑：
+{mitigation_text}
+
+（二）从重处罚情节（请法庭注意不存在以下情节）
+{aggravating_text}
+
+四、辩护结论
+
+基于上述分析，辩护人认为：{legal_defense.split('/')[0] if '/' in legal_defense else legal_defense}。
+
+恳请法庭在查明案件事实的基础上，依法对被告人作出公正判决。"""
+
+        return DefenseOpinionSection(
+            title=f"二、关于{crime}的专业化辩护意见",
+            content=content,
+            importance=5,
+        )
+
+    # ── 以下为原有方法 ───────────────────────────────────────────
+
     def _generate_evidence_challenge_section(self) -> DefenseOpinionSection:
         """生成证据质疑章节"""
         primary = self.defense_analysis.get("primary_defense") or {}
@@ -302,7 +721,7 @@ class DefenseOpinionGenerator:
 基于上述分析，恳请法庭依据"疑点利益归于被告人"原则，宣告被告人无罪。"""
         
         return DefenseOpinionSection(
-            title="二、关于证据不足的辩护意见",
+            title="三、关于证据不足的辩护意见",
             content=content,
             importance=5,
         )
@@ -341,7 +760,7 @@ class DefenseOpinionGenerator:
 与本案相似的案例中，类似的辩护理由获得了法庭的采纳，建议法庭参照同类案例的处理方式。"""
         
         return DefenseOpinionSection(
-            title="二、关于量刑的辩护意见",
+            title="三、关于量刑的辩护意见",
             content=content,
             importance=4,
         )
@@ -367,7 +786,7 @@ class DefenseOpinionGenerator:
 恳请法庭参照上述类案的处理方式，对本案被告人作出公正判决。"""
         
         return DefenseOpinionSection(
-            title="三、类案参考",
+            title="四、类案参考",
             content=content,
             importance=3,
         )
@@ -403,7 +822,7 @@ class DefenseOpinionGenerator:
 恳请法庭采纳辩护人的上述意见，依法对被告人作出公正判决。"""
         
         return DefenseOpinionSection(
-            title="四、量刑建议",
+            title="五、量刑建议",
             content=content,
             importance=4,
         )

@@ -11,7 +11,7 @@
 
 from functools import wraps
 from flask import session, request, jsonify, redirect, url_for, flash
-from database import db, User
+from src.database import db, User
 import logging
 
 logger = logging.getLogger(__name__)

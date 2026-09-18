@@ -82,8 +82,8 @@ cases/legaldb/*.jsonl
 cases/legaldb/.rag_cache/
 
 # 数据库
-src/data/*.db
-src/data/*.db-journal
+data/*.db
+data/*.db-journal
 
 # 工作区记忆和配置
 memory/
