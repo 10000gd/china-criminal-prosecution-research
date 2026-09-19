@@ -653,3 +653,7 @@ def _save_pdf_report_alt2(report: DefenseReport, output_dir: Path = None) -> Pat
     """便捷函数：直接生成辩护 PDF"""
     builder = DefenseReportBuilderPDF(output_dir=output_dir)
     return builder.save_pdf(report)
+
+
+# 便捷别名（兼容旧代码引用）
+save_defense_report_pdf = _save_pdf_report
