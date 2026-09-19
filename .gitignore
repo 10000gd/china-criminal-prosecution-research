@@ -1,7 +1,24 @@
-# Agent workspace files
+# Agent workspace files - 核心隐私文件
+AGENTS.md
+SOUL.md
+IDENTITY.md
+USER.md
+MEMORY.md
+TOOLS.md
+HEARTBEAT.md
+CHANGELOG.md
+BOOTSTRAP.md
 memory/
 .agent/
 .agent-config/
+
+# OpenClaw 内部文件
+.openclaw/
+
+# 审计和内部文档
+audit/
+audit-deleted/
+architecture-review-*.html
 
 # Project build/generated files
 prosecution_system/data/
@@ -9,4 +26,4 @@ prosecution_system/data/
 # Build outputs (top-level)
 data/
 hengda_final_report/
-music
+music/
